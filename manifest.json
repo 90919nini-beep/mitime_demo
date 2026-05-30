@@ -1,0 +1,11 @@
+{
+  "name": "mitime",
+  "short_name": "mitime",
+  "icons": [
+    { "src": "app_icon_rounded.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#778EE3"
+}

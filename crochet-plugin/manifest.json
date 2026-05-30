@@ -1,0 +1,7 @@
+{
+  "name": "CrochetNoteCard Generator",
+  "id": "crochet-note-card-gen-001",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}
