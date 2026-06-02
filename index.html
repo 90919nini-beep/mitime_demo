@@ -11,7 +11,7 @@
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22mitime%22%2C%22short_name%22%3A%22mitime%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22app_icon_rounded.svg%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22start_url%22%3A%22.%2Fpreview.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F2F2F7%22%2C%22theme_color%22%3A%22%23778EE3%22%7D"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="mitime"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -24,7 +24,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *{-webkit-font-smoothing:antialiased;box-sizing:border-box;}
-    body{background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif;margin:0;}
+    html,body{background:var(--bg-page,#F2F2F7);}
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif;margin:0;}
     .shadow-card{box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     .fade-up{animation:fadeUp .2s ease;}
@@ -10741,7 +10742,7 @@ function CreatePage({yarnLib,patterns,setPatterns,setPage}){
         <div aria-hidden="true" style={{position:"absolute",top:-2,left:-2,right:-2,bottom:-2,pointerEvents:"none",background:"radial-gradient(ellipse 60% 130% at 88% 50%, rgba(227,194,119,0.65) 0%, rgba(227,194,119,0.28) 40%, transparent 65%), linear-gradient(to right, rgba(97,131,255,0.22) 0%, transparent 44%)",animation:"ambA 36s ease-in-out infinite"}}/>
         <div aria-hidden="true" style={{position:"absolute",top:-2,left:-2,right:-2,bottom:-2,pointerEvents:"none",background:"radial-gradient(ellipse 60% 130% at 24% 50%, rgba(227,194,119,0.65) 0%, rgba(227,194,119,0.28) 40%, transparent 65%), linear-gradient(to left, rgba(97,131,255,0.22) 0%, transparent 44%)",animation:"ambB 36s ease-in-out infinite"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:58,background:"linear-gradient(to bottom,transparent 0%,var(--bg-page) 85%)",pointerEvents:"none"}}/>
-        <div style={{position:"relative",maxWidth:600,margin:"0 auto",padding:"40px 16px 48px",width:"100%"}}>
+        <div style={{position:"relative",maxWidth:600,margin:"0 auto",padding:`calc(40px + ${SAFE_TOP}) 16px 48px`,width:"100%"}}>
           <div style={{fontSize:12,fontWeight:700,color:"#778EE3",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>{t.createPageLabel}</div>
           <div style={{fontSize:22,fontWeight:900,color:"var(--text-primary)",lineHeight:1.25,whiteSpace:"pre-line",marginTop:15}}>{t.createPageSubtitle}</div>
         </div>
@@ -14880,7 +14881,7 @@ function App(){
   const t=T[lang]||T.en;
   const[settings,setSettings]=useState(()=>{try{const s=localStorage.getItem("sc_settings");return s?JSON.parse(s):DEFAULT_SETTINGS;}catch{return DEFAULT_SETTINGS;}});
   useEffect(()=>{try{localStorage.setItem("sc_settings",JSON.stringify(settings));}catch{};},[settings]);
-  useEffect(()=>{document.body.setAttribute("data-theme",settings.theme||"light");},[settings.theme]);
+  useEffect(()=>{const theme=settings.theme||"light";document.body.setAttribute("data-theme",theme);document.documentElement.setAttribute("data-theme",theme);},[settings.theme]);
   const[myPartyIds,setMyPartyIds]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_my_parties")||"[]");}catch{return[];}});
   useEffect(()=>{try{localStorage.setItem("sc_my_parties",JSON.stringify(myPartyIds));}catch{};},[myPartyIds]);
   const[joinedParties,setJoinedParties]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_joined_parties")||"[]");}catch{return[];}});
