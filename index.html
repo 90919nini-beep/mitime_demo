@@ -9904,7 +9904,7 @@ function KnitSymLibraryPanel({onClose,knitPins,toggleKnitPin}){
     <div style={{position:"fixed",inset:0,zIndex:2000,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"var(--bg-card)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:560,
-        display:"flex",flexDirection:"column",height:"min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",paddingBottom:"env(safe-area-inset-bottom, 0px)",boxShadow:"0 -4px 32px rgba(0,0,0,0.18)"}}>
+        display:"flex",flexDirection:"column",height:"min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",boxShadow:"0 -4px 32px rgba(0,0,0,0.18)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
           padding:"14px 16px 10px",borderBottom:"1px solid var(--border-soft)",flexShrink:0}}>
           <div style={{fontSize:16,fontWeight:800,color:"var(--text-primary)"}}>Knit Symbol Library</div>
@@ -9928,7 +9928,7 @@ function KnitSymLibraryPanel({onClose,knitPins,toggleKnitPin}){
               style={chipSt(activeCat===cat.key)}>{cat.label}</button>
           ))}
         </div>
-        <div style={{flex:1,overflowY:"auto",padding:"0 16px 24px"}}>
+        <div style={{flex:1,overflowY:"auto",padding:"0 16px 0",paddingBottom:`calc(24px + ${SAFE_BOTTOM})`}}>
           {groups.map(group=>(
             <div key={group.key}>
               {activeCat==="all"&&(
@@ -10008,7 +10008,7 @@ function StitchLibraryPanel({term,onClose,rowPins,togglePin}){
     <div style={{position:"fixed",inset:0,zIndex:2000,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"var(--bg-card)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:560,
-        display:"flex",flexDirection:"column",height:"min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",paddingBottom:"env(safe-area-inset-bottom, 0px)",boxShadow:"0 -4px 32px rgba(0,0,0,0.18)"}}>
+        display:"flex",flexDirection:"column",height:"min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",boxShadow:"0 -4px 32px rgba(0,0,0,0.18)"}}>
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
           padding:"14px 16px 10px",borderBottom:"1px solid var(--border-soft)",flexShrink:0}}>
@@ -10037,7 +10037,7 @@ function StitchLibraryPanel({term,onClose,rowPins,togglePin}){
           ))}
         </div>
         {/* List */}
-        <div style={{flex:1,overflowY:"auto",padding:"0 16px 24px"}}>
+        <div style={{flex:1,overflowY:"auto",padding:"0 16px 0",paddingBottom:`calc(24px + ${SAFE_BOTTOM})`}}>
           {groups.map(group=>(
             <div key={group.key}>
               {activeCat==="all"&&(
