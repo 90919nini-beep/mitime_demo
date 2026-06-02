@@ -6402,7 +6402,7 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
             </div>
           </>)}
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           <button onClick={submit} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>
             {editMode?t.saveChanges:t.startProject}
           </button>
@@ -6666,7 +6666,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
             </div>
           </FormField>
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};editing?onEdit(data):onAdd({...data,id:uid()});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
         </div>
       </div>
@@ -6692,7 +6692,7 @@ function BallsNumpad({value,onChange,onClose}){
       justifyContent:"center",background:"rgba(0,0,0,0.35)"}}
       onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"var(--bg-card)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:360,
-        display:"flex",flexDirection:"column",padding:"20px 20px 36px",
+        display:"flex",flexDirection:"column",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,
         boxShadow:"0 -4px 28px rgba(0,0,0,0.15)",gap:16}}>
 
         {/* Top — label + stepper */}
@@ -6943,7 +6943,7 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
           </div>
           <FormField label={t.toolNotes}><input style={iS} value={form.notes} onChange={e=>s("notes",e.target.value)} placeholder="Optional notes"/></FormField>
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           {isEdit
             ?<button onClick={()=>{onEdit({...editing,...form,qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#3B6FD4,#6366F1)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>Save Changes</button>
             :<button onClick={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.addToolBtn}</button>
@@ -7328,7 +7328,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           <FormField label={t.patternTags}><input style={iS} value={form.tags} onChange={e=>s("tags",e.target.value)} placeholder="Lace, Gift, Quick"/></FormField>
           <FormField label={t.patternNotes}><textarea style={{...iS,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>s("notes",e.target.value)} placeholder="Any notes..."/></FormField>
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           <button disabled={!form.name.trim()} onClick={save} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer",opacity:form.name.trim()?1:0.5}}>{editing?t.saveChanges:creationMethod==='import'?'Add Imported Pattern':t.addPatternBtn}</button>
         </div>
       </div>
@@ -9070,7 +9070,7 @@ function PickPatternModal({patterns,onClose,onPick}){
             <div style={{height:8}}/>
           </div>
           {/* Attach CTA */}
-          <div style={{padding:"12px 16px 28px",borderTop:"1px solid var(--border-soft)",flexShrink:0}}>
+          <div style={{padding:"12px 16px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,borderTop:"1px solid var(--border-soft)",flexShrink:0}}>
             <button onClick={()=>{onPick(preview);onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:`linear-gradient(135deg,${accent},${accent}cc)`,color:"#fff",fontSize:15,fontWeight:700,border:"none",cursor:"pointer",boxShadow:`0 4px 14px ${accent}44`}}>
               Attach to Project
             </button>
@@ -9277,7 +9277,7 @@ function DashLayoutModal({layout,setLayout,onClose}){
             );
           })}
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)",display:"flex",gap:10}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)",display:"flex",gap:10}}>
           <button onClick={reset} style={{flex:1,padding:"12px",borderRadius:14,background:"var(--bg-subtle)",border:"none",cursor:"pointer",fontWeight:700,fontSize:14,color:"var(--text-secondary)"}}>{t.dashLayoutReset}</button>
           <button onClick={onClose} style={{flex:2,padding:"12px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:15,fontWeight:700,border:"none",cursor:"pointer"}}>{t.dashLayoutDone}</button>
         </div>
@@ -10605,7 +10605,7 @@ function GaugeCalculator({onClose}){
   const fieldLabel={fontSize:11,color:"var(--text-secondary)",marginBottom:5};
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:200,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 40px",maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
+      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{fontSize:17,fontWeight:800,color:"var(--text-primary)"}}>{t.gaugeCalc}</div>
@@ -10689,7 +10689,7 @@ function PaletteGeneratorModal({onClose}){
   ];
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:200,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 36px",maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
+      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
           <div style={{fontSize:17,fontWeight:800,color:"var(--text-primary)"}}>{t.paletteGen||"Palette Generator"}</div>
           <button onClick={onClose} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -11476,7 +11476,7 @@ function CircularChartPage(){
   const tfm=`translate(${CX+pan.x},${CY+pan.y}) scale(${scale}) translate(${-CX},${-CY})`;
 
   return(
-    <div style={{flex:1,overflowY:"auto",paddingBottom:`calc(88px + ${SAFE_BOTTOM})`}}>
+    <div style={{flex:1,overflowY:"auto",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`}}>
       <div style={{maxWidth:420,margin:"0 auto",padding:"0 14px"}}>
 
         {/* ── Page header ── */}
@@ -13824,7 +13824,7 @@ function CreatePartyModal({onClose,onCreated,settings}){
           )}
         </div>
         {!createdCode&&(
-          <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+          <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
             <button onClick={submit} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:loading?"default":"pointer",opacity:loading?0.7:1}}>
               {loading?t.partyLoading:t.partyCreate}
             </button>
@@ -13945,7 +13945,7 @@ function JoinPartyModal({onClose,onJoined,settings,initialParty=null}){
             </div>
           )}
         </div>
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           {step==="code"&&<button onClick={lookup} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:loading?"default":"pointer",opacity:loading?0.7:1}}>{loading?t.partyLoading:"Look up →"}</button>}
           {step==="confirm"&&!(party?.max_attendees&&attendeeCount>=party.max_attendees)&&<button onClick={confirm} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:loading?"default":"pointer",opacity:loading?0.7:1}}>{loading?t.partyLoading:t.partyJoinTitle}</button>}
           {step==="done"&&<button onClick={onClose} style={{width:"100%",padding:"14px",borderRadius:14,background:"var(--bg-subtle)",color:"var(--text-muted)",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>Done</button>}
@@ -14492,7 +14492,7 @@ function PartyDetailModal({party,attendeeCount,isJoined,onClose,onJoin,onLeave})
           </div>
         )}
         {/* Footer */}
-        <div style={{padding:"12px 20px 28px",flexShrink:0,borderTop:"1px solid var(--border-soft)",display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)",display:"flex",flexDirection:"column",gap:8}}>
           {onJoin&&!full&&!isJoined?(
             <button onClick={onJoin} style={{width:"100%",padding:"14px",borderRadius:14,background:`linear-gradient(135deg,${accent},${accent}bb)`,color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.partyJoinBtn} →</button>
           ):onJoin&&full?(
