@@ -846,12 +846,30 @@ const T={
 const LangCtx=createContext({lang:"en",t:T.en});
 const useLang=()=>useContext(LangCtx);
 let _scrollLockCount=0,_savedScrollY=0;
+function _applyScrollLock(){
+  _savedScrollY=window.scrollY;
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.top=`-${_savedScrollY}px`;
+  document.body.style.width='100%';
+}
+function _releaseScrollLock(){
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.top='';
+  document.body.style.width='';
+  window.scrollTo(0,_savedScrollY);
+}
 function useBodyScrollLock(){
-  useEffect(()=>{_scrollLockCount++;return()=>{_scrollLockCount--;};},[]);
+  useEffect(()=>{if(++_scrollLockCount===1)_applyScrollLock();return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};},[]);
 }
 function ScrollLock({children}){useBodyScrollLock();return children;}
 function useBodyScrollLockWhen(active){
-  useEffect(()=>{if(!active)return;_scrollLockCount++;return()=>{_scrollLockCount--;};},[active]);
+  useEffect(()=>{
+    if(!active)return;
+    if(++_scrollLockCount===1)_applyScrollLock();
+    return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};
+  },[active]);
 }
 const SettingsCtx=createContext({readHighlightColor:"#BBC7F1",canvasBg:"#FDFAF6",chartGridVisible:true,chartHighlightRow:true});
 const useSettings=()=>useContext(SettingsCtx);
@@ -5568,6 +5586,7 @@ function ReadModeBottomSheet({title,open,onClose,children}){
 }
 
 function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress}){
+  useBodyScrollLock();
   const[rowIdx,setRowIdx]=useState(()=>{
     const rl=[...new Set((pattern?.crochetStitches||[]).map(s=>Math.round(s.y)))].sort((a,b)=>b-a);
     const pm=pattern.progressMarker;
@@ -5604,8 +5623,8 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
         if(e.key==="ArrowLeft"||e.key==="ArrowUp")setRowIdx(i=>Math.max(0,i-1));
       }
     };
-    document.addEventListener("keydown",fn);document.body.style.overflow="hidden";
-    return()=>{document.removeEventListener("keydown",fn);document.body.style.overflow="";};
+    document.addEventListener("keydown",fn);
+    return()=>{document.removeEventListener("keydown",fn);};
   },[onClose,totalRows,rowLevels.length]);
 
   // Legend: show symbols in current row, fall back to all
@@ -6653,11 +6672,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
 }
 
 function BallsNumpad({value,onChange,onClose}){
-  useEffect(()=>{
-    const prev=document.body.style.overflow;
-    document.body.style.overflow="hidden";
-    return()=>{document.body.style.overflow=prev;};
-  },[]);
+  useBodyScrollLock();
   const num=Math.max(0,Number(value)||0);
   const tap=(d)=>{
     if(d==="⌫"){onChange(value.length>1?value.slice(0,-1):"0");}
@@ -9863,15 +9878,11 @@ const KNIT_LIB_CATS=[
   {key:"more",     label:"More"},
 ];
 function KnitSymLibraryPanel({onClose,knitPins,toggleKnitPin}){
+  useBodyScrollLock();
   const[query,setQuery]=useState("");
   const[activeCat,setActiveCat]=useState("all");
   const{theme}=useSettings();
   const symColor=theme==="dark"?"#EDE9F4":"#374151";
-  useEffect(()=>{
-    const prev=document.body.style.overflow;
-    document.body.style.overflow="hidden";
-    return()=>{document.body.style.overflow=prev;};
-  },[]);
   const q=query.trim().toLowerCase();
   const catLabel=key=>KNIT_LIB_CATS.find(c=>c.key===key)?.label||key;
   const filtered=KNIT_SYMS.filter(sym=>{
@@ -9962,15 +9973,11 @@ function KnitSymLibraryPanel({onClose,knitPins,toggleKnitPin}){
   );
 }
 function StitchLibraryPanel({term,onClose,rowPins,togglePin}){
+  useBodyScrollLock();
   const[query,setQuery]=useState("");
   const[activeCat,setActiveCat]=useState("all");
   const{theme}=useSettings();
   const symColor=theme==="dark"?"#EDE9F4":"#374151";
-  useEffect(()=>{
-    const prev=document.body.style.overflow;
-    document.body.style.overflow="hidden";
-    return()=>{document.body.style.overflow=prev;};
-  },[]);
   const q=query.trim().toLowerCase();
   const nonAll=LIB_CATS.filter(c=>c.key!=="all");
   const allItems=nonAll.flatMap(cat=>
