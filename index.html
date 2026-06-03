@@ -5564,7 +5564,7 @@ function ReadModeBottomSheet({title,open,onClose,children}){
   return createPortal(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200000,display:"flex",
       flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.18)"}}>
-      <div onClick={e=>e.stopPropagation()}
+      <div className="modal-in" onClick={e=>e.stopPropagation()}
         style={{background:"var(--bg-card)",borderRadius:"16px 16px 0 0",
           boxShadow:"0 -4px 28px rgba(0,0,0,0.13)",maxHeight:"58vh",
           display:"flex",flexDirection:"column"}}>
@@ -5688,7 +5688,7 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
           </div>
 
           {/* Bottom navigation panel */}
-          <div style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+          <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
             {/* Active row info + prev/next */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
               <div style={{minWidth:0}}>
@@ -7523,7 +7523,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
         </div>
       </div>
       {/* Bottom navigation panel */}
-      <div style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{displayRow!==null?`Row ${displayRow}`:"— —"}</div>
@@ -13140,7 +13140,7 @@ function CPM_Preview({pattern,onBack,themeColor="#111111",notes}){
       </div>
 
       {/* Round navigation panel */}
-      <div style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         {/* Active round info + prev/next */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
@@ -13331,7 +13331,7 @@ function CPM_RoundsReader({pattern,themeColor,onBack,notes,onSaveProgress,rowNot
         </svg>
       </div>
       {/* Navigation panel */}
-      <div style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>R{active.roundIndex}</div>
