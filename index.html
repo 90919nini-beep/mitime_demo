@@ -2389,7 +2389,7 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
   return(
     <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'var(--bg-page)',position:'relative'}}>
       {/* Top bar */}
-      <div style={{background:'var(--bg-card)',borderBottom:'1px solid var(--border)',paddingTop:`calc(6px + ${SAFE_TOP})`,paddingBottom:'6px',paddingLeft:'10px',paddingRight:'10px',flexShrink:0,display:'flex',alignItems:'center',gap:4}}>
+      <div style={{background:'var(--bg-card)',borderBottom:'1px solid var(--border)',padding:'6px 10px',flexShrink:0,display:'flex',alignItems:'center',gap:4}}>
         <button type="button" title="Select / Move" onClick={()=>{setActiveTool('select');setSelectedKey(null);setHoverCell(null);}}
           style={{...kBtnSt,border:`1.5px solid ${activeTool==='select'?'#778EE3':'var(--border)'}`,background:activeTool==='select'?'var(--accent-soft)':'var(--bg-card)'}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={activeTool==='select'?'#778EE3':'var(--text-secondary)'} strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
