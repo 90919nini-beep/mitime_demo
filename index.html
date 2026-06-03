@@ -24,7 +24,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *{-webkit-font-smoothing:antialiased;box-sizing:border-box;}
-    html,body{background:var(--bg-page,#F2F2F7);}
+    html,body{background:var(--bg-page,#F2F2F7);min-height:100dvh;}
+    #root{min-height:100dvh;background:var(--bg-page);}
     body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif;margin:0;}
     .shadow-card{box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -2959,7 +2960,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
             onMouseUp={()=>{painting.current=false;sync();}}
             onMouseLeave={()=>{painting.current=false;setHoverCell(null);sync();}}/>
         </div>
-        <div style={{flexShrink:0,padding:"8px 16px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`}}>
+        <div style={{flexShrink:0,padding:"8px 16px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-page)"}}>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Cols</span>
           <input type="range" min="5" max="120" value={cols}
@@ -5035,7 +5036,7 @@ function PatternTypePicker({initialCraft,onSelect,onClose}){
   }
   const cardSt={width:"100%",padding:"22px 18px",borderRadius:16,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,textAlign:"center"};
   return(
-    <div style={{position:"fixed",inset:0,background:"var(--bg-page)",zIndex:200,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-page)",zIndex:200,display:"flex",flexDirection:"column"}}>
       <div style={{padding:"14px 16px 12px",borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         {step===2&&!initialCraft&&(
           <button type="button" onClick={()=>setStep(1)} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -5162,7 +5163,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
 
   /* Crochet rounds → open CircularPatternMaker as the single circular editor */
   if(type==="crochet"&&crochetLayout==="rounds") return(
-    <div style={{position:"fixed",inset:0,background:"var(--bg-page)",zIndex:220,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-page)",zIndex:220,display:"flex",flexDirection:"column"}}>
       <CircularPatternMaker
         initialPattern={crochetRoundsRef.current}
         onSave={design=>{
@@ -5175,7 +5176,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
     </div>
   );
   return(
-    <div style={{position:"fixed",inset:0,background:"var(--bg-page)",zIndex:200,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-page)",zIndex:200,display:"flex",flexDirection:"column"}}>
       {/* Page header */}
       <div style={{padding:`calc(12px + ${SAFE_TOP}) 14px 10px`,background:"var(--bg-card)",borderBottom:"1px solid #EEF0FD",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{minWidth:0,flex:1}}>
@@ -5647,7 +5648,7 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   }
   if(pattern.type==="knit"&&pattern.knitStitches?.length){
     return createPortal(
-      <div style={{position:"fixed",inset:0,background:"white",zIndex:99999,display:"flex",flexDirection:"column"}}>
+      <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:99999,display:"flex",flexDirection:"column"}}>
         <div style={{padding:`calc(12px + ${SAFE_TOP}) 14px 12px`,borderBottom:"1px solid #EFEFEF",display:"flex",alignItems:"center",gap:10}}>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
           <span style={{fontSize:15,fontWeight:700,color:"var(--text-primary)"}}>Color Grid</span>
@@ -5658,14 +5659,14 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
       </div>,document.body);
   }
   if(pattern.type==="rounds"){
-    return createPortal(<div style={{position:"fixed",inset:0,background:"white",zIndex:99999,display:"flex",flexDirection:"column"}}><CPM_RoundsReader pattern={pattern} themeColor={pattern.themeColor||"#778EE3"} onBack={onClose} notes={notes||""} onSaveProgress={onSaveProgress} rowNotes={pattern?.rowNotes||{}} onSaveRowNotes={onSaveRowNotes}/></div>,document.body);
+    return createPortal(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:99999,display:"flex",flexDirection:"column"}}><CPM_RoundsReader pattern={pattern} themeColor={pattern.themeColor||"#778EE3"} onBack={onClose} notes={notes||""} onSaveProgress={onSaveProgress} rowNotes={pattern?.rowNotes||{}} onSaveRowNotes={onSaveRowNotes}/></div>,document.body);
   }
   if(pattern.type==="imported"){
     return createPortal(<StepReader steps={pattern.steps||[]} patName={""} onBack={onClose} progressMarker={pattern.progressMarker??null} onSaveProgress={onSaveProgress}/>,document.body);
   }
 
   return createPortal(
-    <div style={{position:"fixed",inset:0,zIndex:99999,background:"white",display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",zIndex:99999,background:"var(--bg-card)",display:"flex",flexDirection:"column"}}>
       <StitchCounter/>
 
       {/* Header — matches CPM_Preview */}
@@ -6412,7 +6413,7 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
     {showPatternPicker&&<PickPatternModal patterns={patterns} onClose={()=>setShowPatternPicker(false)} onPick={pat=>{setLinkedPattern({id:pat.id,name:pat.name});setShowPatternPicker(false);}}/>}
     {showPicker&&<PatternTypePicker onSelect={onPickerSelect} onClose={()=>setShowPicker(false)}/>}
     {showPattern&&<PatternMaker pattern={pattern} forcedType={pattern?.type==="knit"?"knit":pattern?.type==="crochet"?"crochet":makerForced?.forcedType} forcedKnitMode={pattern?.knitStitches?.length?"symbols":makerForced?.forcedKnitMode} onSave={p=>{setPattern(p);setMakerForced(null);}} onClose={()=>{setShowPattern(false);setMakerForced(null);}} patterns={patterns}/>}
-    {showRounds&&(<div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}><CircularPatternMaker initialPattern={pattern?.type==="rounds"?pattern:null} onSave={design=>{setPattern({...design,type:"rounds"});setShowRounds(false);}} onClose={()=>setShowRounds(false)}/></div>)}
+    {showRounds&&(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}><CircularPatternMaker initialPattern={pattern?.type==="rounds"?pattern:null} onSave={design=>{setPattern({...design,type:"rounds"});setShowRounds(false);}} onClose={()=>setShowRounds(false)}/></div>)}
     </>
   );
 }
@@ -7126,7 +7127,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
     />
   );
   if(openMaker==="rounds") return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
       <CircularPatternMaker
         initialPattern={form.designData?.type==="rounds"?form.designData:null}
         onSave={design=>{s("designData",{...design,type:"rounds"});}}
@@ -7501,7 +7502,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   const displayRow=activeRow!==null?rows-activeRow:null;
 
   return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
       <StitchCounter/>
       {/* Header */}
       <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
@@ -7685,7 +7686,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   };
 
   if(!steps.length) return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
       <Ico n="basil:clipboard-outline" sz={48}/>
       <p style={{fontSize:16,color:"var(--text-secondary)",margin:0}}>No steps found.</p>
       <button onClick={onBack} style={{padding:"10px 28px",borderRadius:12,background:"#778EE3",color:"white",border:"none",fontWeight:700,fontSize:14,cursor:"pointer"}}>Back</button>
@@ -7693,7 +7694,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   );
 
   return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
 
       <style>{`
         @keyframes sr-pop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
@@ -7959,7 +7960,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
     />
   );
   if(openRoundsMaker) return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
       <CircularPatternMaker
         initialPattern={pat.designData?.type==="rounds"?pat.designData:null}
         onSave={design=>{onUpdate({...pat,designData:{...design,type:"rounds"}});}}
@@ -7984,7 +7985,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
     />
   );
   if(showRoundsRead) return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
       <CPM_RoundsReader pattern={pat.designData} themeColor={pat.designData?.themeColor||accentColor} onBack={()=>setShowRoundsRead(false)} notes={pat.notes}/>
     </div>
   );
@@ -13441,7 +13442,7 @@ function CPM_ReadModal({pat,onClose,onUpdate}){
   const[showEditor,setShowEditor]=useState(false);
 
   if(showEditor) return(
-    <div style={{position:"fixed",inset:0,background:"white",zIndex:110,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:110,display:"flex",flexDirection:"column"}}>
       <CircularPatternMaker
         initialPattern={pattern}
         onSave={design=>{onUpdate({...pat,designData:{...design,type:"rounds"}});}}
@@ -14901,7 +14902,7 @@ function App(){
   return(
     <LangCtx.Provider value={{lang,t}}>
     <SettingsCtx.Provider value={settings}>
-      <div data-theme={settings.theme||"light"} style={{minHeight:"100vh",background:"var(--bg-page)",display:"flex",flexDirection:"column",maxWidth:600,margin:"0 auto",width:"100%"}}>
+      <div data-theme={settings.theme||"light"} style={{minHeight:"100dvh",background:"var(--bg-page)",display:"flex",flexDirection:"column",maxWidth:600,margin:"0 auto",width:"100%"}}>
         {page!=="settings"&&(
           <button onClick={()=>setPage("settings")} style={{position:"fixed",top:`calc(16px + ${SAFE_TOP})`,right:60,zIndex:50,background:"var(--bg-card)",border:"none",borderRadius:12,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px var(--shadow)",cursor:"pointer"}}>
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" style={{color:"#778EE3"}}><g fill="currentColor" fillRule="evenodd" clipRule="evenodd"><path d="M12 3.08L9.787 5.368a1.25 1.25 0 0 1-.899.381H5.75v3.138c0 .34-.138.664-.381.9L3.079 12l2.29 2.213c.243.235.381.56.381.899v3.138h3.138c.34 0 .664.138.9.381L12 20.921l2.213-2.29a1.25 1.25 0 0 1 .899-.381h3.138v-3.138c0-.34.138-.664.381-.9L20.921 12l-2.29-2.213a1.25 1.25 0 0 1-.381-.899V5.75h-3.138a1.25 1.25 0 0 1-.9-.381zm-.899-1.23a1.25 1.25 0 0 1 1.798 0l2.319 2.4H18.5c.69 0 1.25.56 1.25 1.25v3.282l2.4 2.32a1.25 1.25 0 0 1 0 1.797l-2.4 2.319V18.5c0 .69-.56 1.25-1.25 1.25h-3.282l-2.32 2.4a1.25 1.25 0 0 1-1.797 0l-2.319-2.4H5.5c-.69 0-1.25-.56-1.25-1.25v-3.282l-2.4-2.32a1.25 1.25 0 0 1 0-1.797l2.4-2.319V5.5c0-.69.56-1.25 1.25-1.25h3.282z"/><path d="M7.25 12a4.75 4.75 0 1 1 9.5 0a4.75 4.75 0 0 1-9.5 0M12 8.75a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 0 0 0-6.5"/></g></svg>
