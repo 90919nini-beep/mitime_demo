@@ -5121,9 +5121,12 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
   const[hasDraft,setHasDraft]=useState(()=>{try{return!!localStorage.getItem(DRAFT_KEY);}catch{return false;}});
   const[saveFlash,setSaveFlash]=useState(false);
 
+  const isDirtyRef=useRef(false);
+  const[showCloseSheet,setShowCloseSheet]=useState(false);
   const writeDraft=useRef(null);
   const draftMounted=useRef(false);
   writeDraft.current=()=>{
+    isDirtyRef.current=true;
     try{localStorage.setItem(DRAFT_KEY,JSON.stringify({type,crochetStitches,crochetLayout,knitGrid:knitRef.current,knitStitches:knitStRef.current,savedAt:Date.now()}));}catch{}
   };
   useEffect(()=>{
@@ -5157,6 +5160,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
     const underlayToSave=u?{patternId:u.patternId,opacity:u.opacity,visible:u.visible,fitMode:u.fitMode??"preserve"}:null;
     onSave({type,grid:knitRef.current,knitStitches:knitStRef.current,crochetStitches,crochetLayout,crochetRoundsData:crochetRoundsRef.current,underlay:underlayToSave});
     localStorage.removeItem(DRAFT_KEY);
+    isDirtyRef.current=false;
     setSaveFlash(true);
     setTimeout(()=>setSaveFlash(false),2000);
   };
@@ -5190,7 +5194,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
             <span style={{fontSize:12,fontWeight:700,color:"#059669",background:"#F0FDF4",padding:"4px 10px",borderRadius:8}}>Saved ✓</span>
           )}
           {(onBack||onClose)&&(
-            <button type="button" onClick={onBack||onClose} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <button type="button" onClick={()=>{if(isDirtyRef.current){setShowCloseSheet(true);}else{(onBack||onClose)();}}} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           )}
@@ -5213,6 +5217,14 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
           :<CrochetBuilder stitches={crochetStitches} setStitches={setCrochetStitches} layout={crochetLayout} setLayout={setCrochetLayout} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
         }
       </div>
+      {showCloseSheet&&(
+        <ClosingActionSheet
+          message="You have unsaved changes."
+          onSaveDraft={()=>{setShowCloseSheet(false);(onBack||onClose)();}}
+          onDiscard={()=>{dismissDraft();setShowCloseSheet(false);(onBack||onClose)();}}
+          onCancel={()=>setShowCloseSheet(false)}
+        />
+      )}
     </div>
   );
 }
@@ -5583,6 +5595,24 @@ function ReadModeBottomSheet({title,open,onClose,children}){
           </button>
         </div>
         <div style={{overflowY:"auto",padding:"0 16px 0",paddingBottom:`calc(24px + ${SAFE_BOTTOM})`}}>{children}</div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel}){
+  return createPortal(
+    <div onClick={onCancel} style={{position:"fixed",inset:0,zIndex:300000,display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.4)"}}>
+      <div className="modal-in" onClick={e=>e.stopPropagation()}
+        style={{background:"var(--bg-card)",borderRadius:"16px 16px 0 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`}}>
+        <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
+          <div style={{width:36,height:4,borderRadius:999,background:"#E5E7EB"}}/>
+        </div>
+        <div style={{padding:"0 20px 12px",fontSize:14,fontWeight:700,color:"var(--text-primary)"}}>{message}</div>
+        <button type="button" onClick={onSaveDraft} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#778EE3",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Save Draft</button>
+        <button type="button" onClick={onDiscard} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#EF4444",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Discard Changes</button>
+        <button type="button" onClick={onCancel} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"var(--text-secondary)",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Cancel</button>
       </div>
     </div>,
     document.body
@@ -7114,6 +7144,11 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
     setGeneratedCount(lines.length);
   };
   const openDesign=()=>setOpenMaker(form.craft==="Crochet"&&layout==="rounds"?"rounds":"rows");
+  const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const FORM_DRAFT_KEY="sc_draft_pattern_form";
+  const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
+  const isDirty=form.name.trim()!==""||((form.photos||[]).length>0);
+  const handleClose=()=>{if(isDirty){setShowCloseSheet(true);}else{onClose();}};
   if(openMaker==="rows") return(
     <PatternMaker
       pattern={form.designData?.type!=="rounds"?form.designData:null}
@@ -7136,11 +7171,11 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
     </div>
   );
   return createPortal(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)handleClose();}}>
       <div className="modal-in" style={{background:"var(--bg-card)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:480,maxHeight:"min(90vh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"20px 20px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
           <div style={{fontSize:20,fontWeight:800,color:"var(--text-primary)"}}>{editing?t.editProject.replace("Project","Pattern"):t.addPatternTitle}</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <button onClick={handleClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -7333,6 +7368,14 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           <button disabled={!form.name.trim()} onClick={save} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer",opacity:form.name.trim()?1:0.5}}>{editing?t.saveChanges:creationMethod==='import'?'Add Imported Pattern':t.addPatternBtn}</button>
         </div>
       </div>
+      {showCloseSheet&&(
+        <ClosingActionSheet
+          message="You have unsaved changes."
+          onSaveDraft={()=>{saveFormDraft();setShowCloseSheet(false);onClose();}}
+          onDiscard={()=>{try{localStorage.removeItem(FORM_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          onCancel={()=>setShowCloseSheet(false)}
+        />
+      )}
     </div>
   , document.body);
 }
@@ -13487,6 +13530,8 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
   const CPM_DRAFT_KEY="sc_draft_rounds";
   const cpmDraftTimer=useRef(null);
   const[hasDraft,setHasDraft]=useState(()=>{try{return onSave&&!!localStorage.getItem(CPM_DRAFT_KEY);}catch{return false;}});
+  const cpmIsDirtyRef=useRef(false);
+  const[showCpmCloseSheet,setShowCpmCloseSheet]=useState(false);
 
   const cpmDraftMounted=useRef(false);
   useEffect(()=>{
@@ -13494,6 +13539,7 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
     if(!cpmDraftMounted.current){cpmDraftMounted.current=true;return;}
     clearTimeout(cpmDraftTimer.current);
     cpmDraftTimer.current=setTimeout(()=>{
+      cpmIsDirtyRef.current=true;
       try{localStorage.setItem(CPM_DRAFT_KEY,JSON.stringify({...pattern,themeColor,savedAt:Date.now()}));}catch{}
     },800);
     return()=>clearTimeout(cpmDraftTimer.current);
@@ -13518,6 +13564,7 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
   const handleSave=onSave?design=>{
     onSave(design);
     localStorage.removeItem(CPM_DRAFT_KEY);
+    cpmIsDirtyRef.current=false;
     setSaveFlash(true);
     setTimeout(()=>setSaveFlash(false),2000);
   }:null;
@@ -13540,7 +13587,7 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
             <button onClick={startOver} style={{padding:"6px 13px",borderRadius:10,border:"1px solid #E5DDD0",background:"var(--bg-card)",color:"#7A6651",fontSize:11,fontWeight:600,cursor:"pointer"}}>New</button>
           )}
           {onClose&&(
-            <button onClick={onClose} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <button onClick={()=>{if(cpmIsDirtyRef.current){setShowCpmCloseSheet(true);}else{onClose();}}} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           )}
@@ -13556,6 +13603,14 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
       )}
       {mode==="editor"&&<CPM_Editor pattern={pattern} setPattern={setPattern} onPreview={()=>setMode("preview")} onSave={handleSave} themeColor={themeColor} setThemeColor={setThemeColor} yarnColors={yarnColors}/>}
       {mode==="preview"&&pattern&&<CPM_Preview pattern={pattern} onBack={()=>setMode("editor")} themeColor={themeColor}/>}
+      {showCpmCloseSheet&&(
+        <ClosingActionSheet
+          message="You have unsaved changes."
+          onSaveDraft={()=>{setShowCpmCloseSheet(false);onClose();}}
+          onDiscard={()=>{dismissCpmDraft();setShowCpmCloseSheet(false);onClose();}}
+          onCancel={()=>setShowCpmCloseSheet(false)}
+        />
+      )}
     </div>
   );
 }
