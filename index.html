@@ -6584,13 +6584,17 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
   const setRow=(i,key,val)=>s("composition",form.composition.map((r,idx)=>idx===i?{...r,[key]:val}:r));
   const addRow=()=>s("composition",[...form.composition,{fibre:"Wool",pct:0}]);
   const removeRow=i=>s("composition",form.composition.filter((_,idx)=>idx!==i));
+  const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const YARN_DRAFT_KEY="sc_draft_add_yarn";
+  const yarnIsDirty=form.brand.trim()!==""||form.name.trim()!==""||form.colorway.trim()!==""||!!form.photo;
+  const handleClose=()=>{if(yarnIsDirty){setShowCloseSheet(true);}else{onClose();}};
 
   return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)handleClose();}}>
       <div className="modal-in" style={{background:"var(--bg-card)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:480,maxHeight:"min(85vh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"20px 20px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
           <div style={{fontSize:20,fontWeight:800,color:"var(--text-primary)"}}>{editing?t.editProject.replace("Project","Yarn"):t.addYarnTitle}</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <button onClick={handleClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -6701,6 +6705,14 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
           <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};editing?onEdit(data):onAdd({...data,id:uid()});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
         </div>
       </div>
+      {showCloseSheet&&(
+        <ClosingActionSheet
+          message="You have unsaved changes."
+          onSaveDraft={()=>{try{localStorage.setItem(YARN_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}setShowCloseSheet(false);onClose();}}
+          onDiscard={()=>{try{localStorage.removeItem(YARN_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          onCancel={()=>setShowCloseSheet(false)}
+        />
+      )}
     </div>
   );
 }
@@ -6954,12 +6966,16 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const iS={width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,color:"var(--text-primary)",background:"var(--bg-subtle)"};
   const isEdit=!!editing;
+  const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const TOOL_DRAFT_KEY="sc_draft_add_tool";
+  const toolIsDirty=form.brand.trim()!==""||form.notes.trim()!=="";
+  const handleClose=()=>{if(toolIsDirty){setShowCloseSheet(true);}else{onClose();}};
   return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)handleClose();}}>
       <div className="modal-in" style={{background:"var(--bg-card)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:480,maxHeight:"min(80vh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"20px 20px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
           <div style={{fontSize:20,fontWeight:800,color:"var(--text-primary)"}}>{isEdit?"Edit Tool":t.addToolTitle}</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <button onClick={handleClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -6981,6 +6997,14 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
           }
         </div>
       </div>
+      {showCloseSheet&&(
+        <ClosingActionSheet
+          message="You have unsaved changes."
+          onSaveDraft={()=>{try{localStorage.setItem(TOOL_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}setShowCloseSheet(false);onClose();}}
+          onDiscard={()=>{try{localStorage.removeItem(TOOL_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          onCancel={()=>setShowCloseSheet(false)}
+        />
+      )}
     </div>
   );
 }
