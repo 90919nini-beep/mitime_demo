@@ -1570,7 +1570,7 @@ function ImageToPatternModal({initCols,initRows,initialState,yarnColors,onApply,
           </button>
         </div>
 
-        <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:"14px 20px"}}>
+        <div style={{flex:"0 1 auto",minHeight:0,overflowY:"auto",padding:"14px 20px"}}>
           {step==="upload"&&(
             <div onClick={()=>fileRef.current.click()} style={{border:"2px dashed var(--border)",borderRadius:16,padding:"44px 20px",textAlign:"center",cursor:"pointer",background:"var(--bg-subtle)"}}>
               <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}><Ico n="basil:image-outline" sz={36}/></div>
@@ -5049,7 +5049,7 @@ function PatternTypePicker({initialCraft,onSelect,onClose}){
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div style={{flex:"1 1 auto",minHeight:0,display:"flex",flexDirection:"column",gap:12,padding:"24px 20px",overflowY:"auto"}}>
+      <div style={{flex:"0 1 auto",minHeight:0,display:"flex",flexDirection:"column",gap:12,padding:"24px 20px",overflowY:"auto"}}>
         {step===1&&(<>
           <button type="button" onClick={()=>pickCraft("Knitting")} style={cardSt}>
             <Ico n="basil:knot-outline" sz={36}/>
@@ -5296,7 +5296,7 @@ function YarnLibPickerSheet({yarnLib,alreadyAdded,onPick,onClose}){
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",flex:"0 1 auto",minHeight:0}}>
           {yarnLib.length===0?(
             <div style={{textAlign:"center",padding:"44px 24px",color:"var(--text-secondary)"}}>
               <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}><Ico n="basil:needle-outline" sz={36}/></div>
@@ -6307,7 +6307,7 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
           {error&&<div style={{background:"var(--bg-subtle)",color:"#DC2626",padding:"8px 12px",borderRadius:10,fontSize:13,marginBottom:13}}>{error}</div>}
 
           <FormField label={t.projectName} req><input style={iS} value={form.title} onChange={e=>sf("title",e.target.value)} placeholder="e.g. Autumn Harvest Shawl"/></FormField>
@@ -6563,7 +6563,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
           {/* Photo upload */}
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
             {form.photo?(
@@ -6932,7 +6932,7 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <FormField label={t.toolType}><select style={{...iS,appearance:"none"}} value={form.type} onChange={e=>s("type",e.target.value)}>{TOOL_TYPES.map(x=><option key={x}>{x}</option>)}</select></FormField>
             <FormField label={t.toolSize}><input style={iS} value={form.size} onChange={e=>s("size",e.target.value)} placeholder="5.0mm"/></FormField>
@@ -7143,7 +7143,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
 
           {/* Photos — up to 3, no crop */}
           <div style={{marginBottom:14}}>
@@ -7729,7 +7729,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
       </div>
 
       {/* ── Scrollable checklist ── */}
-      <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",paddingBottom:32}}>
+      <div style={{flex:"0 1 auto",minHeight:0,overflowY:"auto",paddingBottom:32}}>
         {items.map((item,idx)=>{
 
           /* ── Section divider ── */
@@ -8010,7 +8010,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
 
         </div>
 
-        <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto"}}>
+        <div style={{flex:"0 1 auto",minHeight:0,overflowY:"auto"}}>
 
           {/* ── Photos gallery (up to 3, no crop) ── */}
           {((pat.photos||[]).length>0||pat.image)&&(
@@ -9027,7 +9027,7 @@ function PickPatternModal({patterns,onClose,onPick}){
             </button>
           </div>
           {/* Chart / image preview */}
-          <div style={{overflowY:"auto",flex:"1 1 auto",minHeight:0}}>
+          <div style={{overflowY:"auto",flex:"0 1 auto",minHeight:0}}>
             {hasDesign?(
               <div style={{width:"100%",height:PREV_H,overflow:"hidden",flexShrink:0}}>
                 <PatternCardPreview patData={preview.designData} accent={accent}/>
@@ -9096,7 +9096,7 @@ function PickPatternModal({patterns,onClose,onPick}){
             <button key={c} onClick={()=>setFilter(c)} style={{padding:"4px 12px",borderRadius:999,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:filter===c?"#778EE3":"var(--bg-subtle)",color:filter===c?"white":"var(--text-secondary)"}}>{c==="All"?t.filterAll:(t.crafts?.[c]||c)}</button>
           ))}
         </div>
-        <div style={{overflowY:"auto",padding:"4px 16px 24px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"4px 16px 24px",flex:"0 1 auto",minHeight:0}}>
           {list.length===0&&(
             <div style={{textAlign:"center",padding:"40px 20px",color:"var(--text-secondary)"}}>
               <div style={{fontSize:14,fontWeight:600,color:"var(--text-muted)"}}>{t.noPatterns}</div>
@@ -10257,7 +10257,7 @@ function AvatarPage({config={}, onChange, onBack}){
         <button onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#778EE3",padding:"4px 8px 4px 0",lineHeight:1}}>←</button>
         <div style={{fontSize:18,fontWeight:800,color:"var(--text-primary)"}}>My Avatar</div>
       </div>
-      <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:"20px 16px 60px"}}>
+      <div style={{flex:"0 1 auto",minHeight:0,overflowY:"auto",padding:"20px 16px 60px"}}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
           {/* Live preview */}
           <div style={{marginBottom:22}}>
@@ -13762,7 +13762,7 @@ function CreatePartyModal({onClose,onCreated,settings}){
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
           {error&&<div style={{background:"var(--bg-subtle)",color:"#DC2626",padding:"8px 12px",borderRadius:10,fontSize:13,marginBottom:13}}>{error}</div>}
           {createdCode?(
             <div style={{textAlign:"center",padding:"20px 0"}}>
@@ -13897,7 +13897,7 @@ function JoinPartyModal({onClose,onJoined,settings,initialParty=null}){
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
           {error&&<div style={{background:"var(--bg-subtle)",color:"#DC2626",padding:"8px 12px",borderRadius:10,fontSize:13,marginBottom:13}}>{error}</div>}
           {step==="done"&&(
             <div style={{textAlign:"center",padding:"20px 0"}}>
@@ -14074,7 +14074,7 @@ function ManagePartyModal({partyId,onClose,onDeleted,settings}){
           </div>
           <div style={{display:"flex",gap:6,marginBottom:2}}>{tabBtn("attendees",t.partyTabAttendees)}{tabBtn("edit",t.partyTabEdit)}{tabBtn("announce",t.partyTabAnnounce)}</div>
         </div>
-        <div style={{overflowY:"auto",padding:"14px 20px 24px",flex:"1 1 auto",minHeight:0}}>
+        <div style={{overflowY:"auto",padding:"14px 20px 24px",flex:"0 1 auto",minHeight:0}}>
           {loading?<div style={{textAlign:"center",padding:"24px",color:"var(--text-secondary)"}}>{t.partyLoading}</div>:(
             <>
               {error&&<div style={{background:"var(--bg-subtle)",color:"#DC2626",padding:"8px 12px",borderRadius:10,fontSize:13,marginBottom:12}}>{error}</div>}
@@ -14395,7 +14395,7 @@ function PartyDetailModal({party,attendeeCount,isJoined,onClose,onJoin,onLeave})
           </div>
         )}
         {/* Body */}
-        <div style={{overflowY:"auto",padding:"16px 20px",flex:"1 1 auto",minHeight:0,isolation:"isolate"}}>
+        <div style={{overflowY:"auto",padding:"16px 20px",flex:"0 1 auto",minHeight:0,isolation:"isolate"}}>
           {party.description&&<div style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.6,marginBottom:14,padding:"12px 14px",background:"var(--bg-subtle)",borderRadius:12}}>{party.description}</div>}
           <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
             {dateTime&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"var(--text-muted)"}}>
