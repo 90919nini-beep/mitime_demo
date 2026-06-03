@@ -83,6 +83,7 @@
       100%{opacity:0}
     }
     .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));}
+    @media(display-mode:standalone){.modal-in{margin-bottom:0;}}
     input:focus,select:focus,textarea:focus{outline:none;border-color:#778EE3!important;box-shadow:0 0 0 3px #778EE322;}
     input,select,textarea{outline:none;}
     ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:#E5E7EB;border-radius:99px;}
@@ -6691,9 +6692,8 @@ function BallsNumpad({value,onChange,onClose}){
     <div style={{position:"fixed",inset:0,zIndex:3000,display:"flex",alignItems:"flex-end",
       justifyContent:"center",background:"rgba(0,0,0,0.35)"}}
       onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{background:"var(--bg-card)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:360,
+      <div className="modal-in" style={{background:"var(--bg-card)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:360,
         display:"flex",flexDirection:"column",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,
-        marginBottom:`calc(-1 * ${SAFE_BOTTOM})`,
         boxShadow:"0 -4px 28px rgba(0,0,0,0.15)",gap:16}}>
 
         {/* Top — label + stepper */}
@@ -10606,7 +10606,7 @@ function GaugeCalculator({onClose}){
   const fieldLabel={fontSize:11,color:"var(--text-secondary)",marginBottom:5};
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:200,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:`0 auto calc(-1 * ${SAFE_BOTTOM})`}} onClick={e=>e.stopPropagation()}>
+      <div className="modal-in" style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{fontSize:17,fontWeight:800,color:"var(--text-primary)"}}>{t.gaugeCalc}</div>
@@ -10690,7 +10690,7 @@ function PaletteGeneratorModal({onClose}){
   ];
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:200,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:`0 auto calc(-1 * ${SAFE_BOTTOM})`}} onClick={e=>e.stopPropagation()}>
+      <div className="modal-in" style={{width:"100%",background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 0",paddingBottom:`calc(20px + ${SAFE_BOTTOM})`,maxWidth:420,margin:"0 auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
           <div style={{fontSize:17,fontWeight:800,color:"var(--text-primary)"}}>{t.paletteGen||"Palette Generator"}</div>
           <button onClick={onClose} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
