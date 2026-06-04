@@ -2874,9 +2874,11 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       if(e.touches.length<2){kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;}
       if(e.touches.length===0&&painting.current){painting.current=false;const g=gridRef.current;if(typeof onGridChange==='function')onGridChange(g.map(r=>[...r]));}
     };
+    const onTC=()=>{kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;painting.current=false;};
     cv.addEventListener("touchstart",onTS,{passive:false});
     cv.addEventListener("touchmove",onTM,{passive:false});
     cv.addEventListener("touchend",onTE);
+    cv.addEventListener("touchcancel",onTC);
     const cont=containerRef.current;
     const onWheel=e=>{
       e.preventDefault();
@@ -2884,7 +2886,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       setKgZoom(z=>Math.max(0.3,Math.min(4,parseFloat((z+delta).toFixed(2)))));
     };
     if(cont)cont.addEventListener("wheel",onWheel,{passive:false});
-    return()=>{cv.removeEventListener("touchstart",onTS);cv.removeEventListener("touchmove",onTM);cv.removeEventListener("touchend",onTE);if(cont)cont.removeEventListener("wheel",onWheel);};
+    return()=>{cv.removeEventListener("touchstart",onTS);cv.removeEventListener("touchmove",onTM);cv.removeEventListener("touchend",onTE);cv.removeEventListener("touchcancel",onTC);if(cont)cont.removeEventListener("wheel",onWheel);};
   },[]);
 
   return(
@@ -4540,13 +4542,16 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     const onTS=e=>_ccTSRef.current(e);
     const onTM=e=>_ccTMRef.current(e);
     const onTE=e=>_ccTERef.current(e);
+    const onTC=()=>{ccPinchRef.current=null;ccPinchStateRef.current=null;ccPinchRatioRef.current=1;ccPinchHappenedRef.current=false;ir.current={};setDragSt(null);};
     cv.addEventListener("touchstart",onTS,{passive:false});
     cv.addEventListener("touchmove",onTM,{passive:false});
     cv.addEventListener("touchend",onTE);
+    cv.addEventListener("touchcancel",onTC);
     return()=>{
       cv.removeEventListener("touchstart",onTS);
       cv.removeEventListener("touchmove",onTM);
       cv.removeEventListener("touchend",onTE);
+      cv.removeEventListener("touchcancel",onTC);
     };
   },[]);
 
@@ -5037,7 +5042,7 @@ function PatternTypePicker({initialCraft,onSelect,onClose}){
   const cardSt={width:"100%",padding:"22px 18px",borderRadius:16,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,textAlign:"center"};
   return(
     <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-page)",zIndex:200,display:"flex",flexDirection:"column"}}>
-      <div style={{padding:"14px 16px 12px",borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <div style={{padding:`calc(14px + ${SAFE_TOP}) 16px 12px`,borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         {step===2&&!initialCraft&&(
           <button type="button" onClick={()=>setStep(1)} style={{width:30,height:30,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -7428,13 +7433,21 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
 
   useEffect(()=>{
     const el=containerRef.current;if(!el)return;
-    const onTS=e=>{if(e.touches.length===2){e.preventDefault();krcPinchRef.current=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}};
+    const onTS=e=>{
+      if(e.touches.length>=2){
+        e.preventDefault();
+        dragRef.current=null;setGrabbing(false);
+        krcPinchRef.current=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      }
+    };
     const onTM=e=>{if(e.touches.length===2&&krcPinchRef.current!==null){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);setScale(s=>Math.max(0.3,Math.min(4,s*d/krcPinchRef.current)));krcPinchRef.current=d;}};
     const onTE=e=>{if(e.touches.length<2)krcPinchRef.current=null;};
+    const onTC=()=>{krcPinchRef.current=null;dragRef.current=null;setGrabbing(false);};
     el.addEventListener("touchstart",onTS,{passive:false});
     el.addEventListener("touchmove",onTM,{passive:false});
     el.addEventListener("touchend",onTE);
-    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);};
+    el.addEventListener("touchcancel",onTC);
+    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);el.removeEventListener("touchcancel",onTC);};
   },[]);
 
   useEffect(()=>{
@@ -7525,7 +7538,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
 
   /* ── Pan: pointer events on the container ── */
   const onPD=useCallback(e=>{
-    if(scale<=1)return;
+    if(!e.isPrimary||scale<=1)return;
     dragRef.current={startX:e.clientX,startY:e.clientY,startPanX:pan.x,startPanY:pan.y,moved:false};
     e.currentTarget.setPointerCapture(e.pointerId);
     setGrabbing(true);
@@ -8836,10 +8849,12 @@ function CrochetChartView({stitches=[],highlightY=null,currentRowY=null,onRowCli
       }
     };
     const onTE=e=>{if(e.touches.length<2)pState=null;};
+    const onTC=()=>{pState=null;};
     el.addEventListener("touchstart",onTS,{passive:false});
     el.addEventListener("touchmove",onTM,{passive:false});
     el.addEventListener("touchend",onTE);
-    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);};
+    el.addEventListener("touchcancel",onTC);
+    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);el.removeEventListener("touchcancel",onTC);};
   },[showControls]);
 
   // Track container size via ResizeObserver
@@ -12122,10 +12137,12 @@ function useCpmCanvas(svgRef){
       }
     };
     const onTE=e=>{if(e.touches.length<2)pState=null;if(e.touches.length===0)touchPan=null;};
+    const onTC=()=>{pState=null;touchPan=null;};
     el.addEventListener("touchstart",onTS,{passive:false});
     el.addEventListener("touchmove",onTM,{passive:false});
     el.addEventListener("touchend",onTE);
-    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);};
+    el.addEventListener("touchcancel",onTC);
+    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);el.removeEventListener("touchcancel",onTC);};
   },[svgRef]);
 
   const onMD=useCallback((e)=>{
@@ -13320,7 +13337,7 @@ function CPM_RoundsReader({pattern,themeColor,onBack,notes,onSaveProgress,rowNot
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <StitchCounter/>
       {/* Header */}
-      <div style={{padding:"9px 12px",background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+      <div style={{padding:onBack?`calc(9px + ${SAFE_TOP}) 12px 9px`:"9px 12px",background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
         {onBack&&<button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>← Back</button>}
       </div>
@@ -13520,7 +13537,7 @@ function CPM_ReadModal({pat,onClose,onUpdate}){
 
   return(
     <div style={{position:"fixed",inset:0,background:canvasBg,zIndex:100,display:"flex",flexDirection:"column"}}>
-      <div style={{padding:"12px 14px 10px",background:"var(--bg-card)",borderBottom:"1px solid #EEF0FD",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,gap:8}}>
+      <div style={{padding:`calc(12px + ${SAFE_TOP}) 14px 10px`,background:"var(--bg-card)",borderBottom:"1px solid #EEF0FD",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,gap:8}}>
         <div style={{minWidth:0,flex:1}}>
           <div style={{fontSize:10,fontWeight:700,color:"#778EE3",letterSpacing:"0.08em",textTransform:"uppercase"}}>Round Chart</div>
           <div style={{fontSize:16,fontWeight:800,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{pat.name}</div>
