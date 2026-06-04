@@ -7436,11 +7436,19 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     const onTS=e=>{
       if(e.touches.length>=2){
         e.preventDefault();
-        dragRef.current=null;setGrabbing(false);
-        krcPinchRef.current=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+        dragRef.current=null;
+        krcPinchRef.current=0; // sentinel: wait for first touchmove to init distance
       }
     };
-    const onTM=e=>{if(e.touches.length===2&&krcPinchRef.current!==null){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);setScale(s=>Math.max(0.3,Math.min(4,s*d/krcPinchRef.current)));krcPinchRef.current=d;}};
+    const onTM=e=>{
+      if(e.touches.length===2&&krcPinchRef.current!==null){
+        e.preventDefault();
+        const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+        if(krcPinchRef.current===0){krcPinchRef.current=d;return;} // first move: init, skip scale
+        setScale(s=>Math.max(0.3,Math.min(4,s*d/krcPinchRef.current)));
+        krcPinchRef.current=d;
+      }
+    };
     const onTE=e=>{if(e.touches.length<2)krcPinchRef.current=null;};
     const onTC=()=>{krcPinchRef.current=null;dragRef.current=null;setGrabbing(false);};
     el.addEventListener("touchstart",onTS,{passive:false});
@@ -8829,6 +8837,7 @@ function CrochetChartView({stitches=[],highlightY=null,currentRowY=null,onRowCli
     const onTS=e=>{
       if(e.touches.length===2){
         e.preventDefault();
+        dragRef.current=null;setDragging(false); // cancel any active pan drag
         const t0=e.touches[0],t1=e.touches[1];
         const dist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
         const r=el.getBoundingClientRect();
@@ -9031,6 +9040,7 @@ function CrochetChartView({stitches=[],highlightY=null,currentRowY=null,onRowCli
 
   // Drag to pan
   const onPointerDown=e=>{
+    if(!e.isPrimary)return;
     dragRef.current={sx:e.clientX,sy:e.clientY,sp:{...pan},moved:false};
     setDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
