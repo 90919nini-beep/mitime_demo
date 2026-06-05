@@ -83,7 +83,8 @@
       0%  {opacity:1}
       100%{opacity:0}
     }
-    .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));will-change:transform;overscroll-behavior:contain;}
+    .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));will-change:transform;overscroll-behavior:contain;touch-action:pan-y;}
+    body.modal-open{touch-action:none;}
     .modal-overlay{transition:none!important;will-change:opacity;}
     @media(display-mode:standalone){.modal-in{margin-bottom:0;}}
     input:focus,select:focus,textarea:focus{outline:none;border-color:#778EE3!important;box-shadow:0 0 0 3px #778EE322;}
@@ -859,11 +860,11 @@ const useLang=()=>useContext(LangCtx);
 let _scrollLockCount=0;
 function _preventBgScroll(e){if(!e.target.closest('.modal-in'))e.preventDefault();}
 function _applyScrollLock(){
-  document.addEventListener('touchmove',_preventBgScroll,{passive:false});
+  document.body.classList.add('modal-open');
   document.addEventListener('wheel',_preventBgScroll,{passive:false});
 }
 function _releaseScrollLock(){
-  document.removeEventListener('touchmove',_preventBgScroll);
+  document.body.classList.remove('modal-open');
   document.removeEventListener('wheel',_preventBgScroll);
 }
 function useBodyScrollLock(){
@@ -6493,24 +6494,35 @@ function FormField({label,req,children}){
 }
 
 /* ─── Add Yarn to Library Modal ────────────────────────────────────────────── */
-/* ── Yarn Photo Crop Modal ── */
-function YarnPhotoCropModal({src,onCrop,onClose}){
-  const CROP=260;
+/* ── Shared Photo Crop Modal (Free / 1:1) ── */
+function PhotoCropModal({src,onCrop,onClose}){
+  const MAXDIM=260;
   const containerRef=useRef(null);
   const[natural,setNatural]=useState(null);
+  const[mode,setMode]=useState("1:1"); // "1:1" | "free"
   const[scale,setScale]=useState(1);
   const[offset,setOffset]=useState({x:0,y:0});
   const pointersRef=useRef(new Map());
-  const dragRef=useRef(null); // {sx,sy} = clientXY minus current offset
+  const dragRef=useRef(null);
   const lastDistRef=useRef(null);
+
+  const cropW=!natural||mode==="1:1"?MAXDIM:natural.w>=natural.h?MAXDIM:Math.round(MAXDIM*natural.w/natural.h);
+  const cropH=!natural||mode==="1:1"?MAXDIM:natural.h>=natural.w?MAXDIM:Math.round(MAXDIM*natural.h/natural.w);
 
   const onLoad=(e)=>{
     const nw=e.target.naturalWidth,nh=e.target.naturalHeight;
-    const s=Math.max(CROP/nw,CROP/nh);
     setNatural({w:nw,h:nh});
-    setScale(s);
+    setScale(Math.max(MAXDIM/nw,MAXDIM/nh));
     setOffset({x:0,y:0});
   };
+
+  useEffect(()=>{
+    if(!natural)return;
+    const nW=mode==="1:1"?MAXDIM:natural.w>=natural.h?MAXDIM:Math.round(MAXDIM*natural.w/natural.h);
+    const nH=mode==="1:1"?MAXDIM:natural.h>=natural.w?MAXDIM:Math.round(MAXDIM*natural.h/natural.w);
+    setScale(Math.max(nW/natural.w,nH/natural.h));
+    setOffset({x:0,y:0});
+  },[mode]);
 
   const onPDown=(e)=>{
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -6549,25 +6561,33 @@ function YarnPhotoCropModal({src,onCrop,onClose}){
   const apply=()=>{
     if(!natural||!containerRef.current)return;
     const canvas=document.createElement("canvas");
-    canvas.width=CROP;canvas.height=CROP;
+    canvas.width=cropW;canvas.height=cropH;
     const ctx=canvas.getContext("2d");
     const{clientWidth:cW,clientHeight:cH}=containerRef.current;
     const imgL=cW/2-natural.w*scale/2+offset.x;
     const imgT=cH/2-natural.h*scale/2+offset.y;
-    const cL=cW/2-CROP/2,cT=cH/2-CROP/2;
+    const cL=cW/2-cropW/2,cT=cH/2-cropH/2;
     const srcX=(cL-imgL)/scale,srcY=(cT-imgT)/scale;
-    const srcW=CROP/scale,srcH=CROP/scale;
+    const srcW=cropW/scale,srcH=cropH/scale;
     const img=new Image();
-    img.onload=()=>{ctx.drawImage(img,srcX,srcY,srcW,srcH,0,0,CROP,CROP);onCrop(canvas.toDataURL("image/jpeg",0.85));};
+    img.onload=()=>{ctx.drawImage(img,srcX,srcY,srcW,srcH,0,0,cropW,cropH);onCrop(canvas.toDataURL("image/jpeg",0.85));};
     img.src=src;
   };
 
   return createPortal(
     <div style={{position:"fixed",inset:0,background:"#111",zIndex:300,display:"flex",flexDirection:"column"}}>
-      <div style={{padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+      <div style={{padding:`calc(14px + ${SAFE_TOP}) 20px 14px`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
         <button onClick={onClose} style={{color:"rgba(255,255,255,0.65)",background:"none",border:"none",fontSize:15,fontWeight:600,cursor:"pointer",padding:0}}>Cancel</button>
-        <span style={{color:"white",fontSize:15,fontWeight:700}}>Move &amp; Crop</span>
-        <button onClick={apply} style={{color:"#3850A6",background:"none",border:"none",fontSize:15,fontWeight:700,cursor:"pointer",padding:0}}>Apply</button>
+        <div style={{display:"flex",gap:2,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:2}}>
+          {[["free","Free"],["1:1","1:1"]].map(([v,lbl])=>(
+            <button key={v} type="button" onClick={()=>setMode(v)}
+              style={{padding:"4px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,
+                background:mode===v?"white":"transparent",color:mode===v?"#111":"rgba(255,255,255,0.6)"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        <button onClick={apply} style={{color:"#778EE3",background:"none",border:"none",fontSize:15,fontWeight:700,cursor:"pointer",padding:0}}>Apply</button>
       </div>
 
       <div ref={containerRef}
@@ -6582,14 +6602,13 @@ function YarnPhotoCropModal({src,onCrop,onClose}){
             pointerEvents:"none",userSelect:"none",draggable:false
           }}/>
         )}
-        {/* Crop square overlay */}
-        <div style={{position:"absolute",left:"50%",top:"50%",width:CROP,height:CROP,transform:"translate(-50%,-50%)",boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",pointerEvents:"none"}}>
+        {/* Crop overlay */}
+        <div style={{position:"absolute",left:"50%",top:"50%",width:cropW,height:cropH,transform:"translate(-50%,-50%)",boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",pointerEvents:"none"}}>
           <div style={{position:"absolute",inset:0,border:"1.5px solid rgba(255,255,255,0.55)",borderRadius:6}}/>
-          {/* Corner accents */}
-          <div style={{position:"absolute",top:-1,left:-1,width:22,height:22,borderTop:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"6px 0 0 0"}}/>
-          <div style={{position:"absolute",top:-1,right:-1,width:22,height:22,borderTop:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 6px 0 0"}}/>
-          <div style={{position:"absolute",bottom:-1,left:-1,width:22,height:22,borderBottom:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"0 0 0 6px"}}/>
-          <div style={{position:"absolute",bottom:-1,right:-1,width:22,height:22,borderBottom:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 0 6px 0"}}/>
+          <div style={{position:"absolute",top:-1,left:-1,width:20,height:20,borderTop:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"6px 0 0 0"}}/>
+          <div style={{position:"absolute",top:-1,right:-1,width:20,height:20,borderTop:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 6px 0 0"}}/>
+          <div style={{position:"absolute",bottom:-1,left:-1,width:20,height:20,borderBottom:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"0 0 0 6px"}}/>
+          <div style={{position:"absolute",bottom:-1,right:-1,width:20,height:20,borderBottom:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 0 6px 0"}}/>
         </div>
       </div>
 
@@ -6643,26 +6662,31 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
           </button>
         </div>
         <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
-          {/* Photo upload */}
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
-            {form.photo?(
-              <div style={{position:"relative",flexShrink:0}}>
-                <img src={form.photo} style={{width:64,height:64,borderRadius:12,objectFit:"cover",border:"2px solid var(--border)"}}/>
-                <button onClick={()=>s("photo",null)} style={{position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:999,background:"#EF4444",border:"2px solid white",color:"white",fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
-                <button onClick={()=>imgPick(v=>setCropSrc(v))} style={{position:"absolute",bottom:-6,right:-6,width:20,height:20,borderRadius:999,background:"#778EE3",border:"2px solid white",color:"white",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✎</button>
+          {/* Photo */}
+          <div style={{marginBottom:14}}>
+            {form.photo&&(
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <div style={{position:"relative",width:76,height:76,borderRadius:12,overflow:"hidden",flexShrink:0,border:"1.5px solid var(--border)"}}>
+                  <img src={form.photo} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                  <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
+                    <button type="button" onClick={()=>setCropSrc(form.photo)} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✎</button>
+                    <button type="button" onClick={()=>s("photo",null)} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                  </div>
+                </div>
               </div>
-            ):(
-              <button onClick={()=>imgPick(v=>setCropSrc(v))}
-                style={{width:64,height:64,borderRadius:12,border:"2px dashed #E5E7EB",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,color:"var(--text-secondary)",flexShrink:0}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span style={{fontSize:9,fontWeight:600}}>Add photo</span>
+            )}
+            {!form.photo&&(
+              <button type="button" onClick={()=>imgPick(v=>setCropSrc(v))}
+                style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <div style={{textAlign:"left"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"var(--text-primary)"}}>Add photo</div>
+                  <div style={{fontSize:11,color:"var(--text-secondary)",marginTop:2}}>1 photo · JPG or PNG</div>
+                </div>
               </button>
             )}
-            <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.5}}>
-              {form.photo?"Photo added — tap ✕ to remove":"Optional: add a photo of your yarn"}
-            </div>
           </div>
-          {cropSrc&&<YarnPhotoCropModal src={cropSrc} onCrop={v=>{s("photo",v);setCropSrc(null);}} onClose={()=>setCropSrc(null)}/>}
+          {cropSrc&&<PhotoCropModal src={cropSrc} onCrop={v=>{s("photo",v);setCropSrc(null);}} onClose={()=>setCropSrc(null)}/>}
           <FormField label={t.libBrand}><input style={iS} value={form.brand} onChange={e=>s("brand",e.target.value)} placeholder="Malabrigo"/></FormField>
           <FormField label={t.libName}><input style={iS} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="Sock"/></FormField>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -7247,6 +7271,8 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   const openDesign=()=>setOpenMaker(form.craft==="Crochet"&&layout==="rounds"?"rounds":"rows");
   const[showCloseSheet,setShowCloseSheet]=useState(false);
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
+  const[cropSrc,setCropSrc]=useState(null);
+  const[cropIdx,setCropIdx]=useState(null);
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
   const isDirty=form.name.trim()!==""||((form.photos||[]).length>0);
@@ -7283,30 +7309,33 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
         </div>
         <div style={{overflowY:"auto",padding:"16px 20px 8px",flex:"0 1 auto",minHeight:0}}>
 
-          {/* Photos — up to 3, no crop */}
+          {/* Photos — up to 3 */}
           <div style={{marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-              <label style={{fontSize:12,fontWeight:600,color:"var(--text-secondary)",display:"flex",alignItems:"center",gap:4}}><Ico n="basil:camera-outline" sz={12}/>Photos <span style={{fontSize:10,color:"var(--text-secondary)",fontWeight:400}}>({(form.photos||[]).length}/3)</span></label>
-            </div>
             {(form.photos||[]).length>0&&(
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7,marginBottom:8}}>
+              <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
                 {(form.photos||[]).map((src,i)=>(
-                  <div key={i} style={{position:"relative",borderRadius:10,overflow:"hidden",background:"var(--bg-subtle)",border:"1.5px solid var(--border)"}}>
-                    <img src={src} style={{width:"100%",height:"auto",display:"block"}}/>
-                    <button onClick={()=>s("photos",(form.photos||[]).filter((_,j)=>j!==i))}
-                      style={{position:"absolute",top:4,right:4,width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
+                  <div key={i} style={{position:"relative",width:76,height:76,borderRadius:12,overflow:"hidden",flexShrink:0,border:"1.5px solid var(--border)"}}>
+                    <img src={src} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
+                      <button type="button" onClick={()=>{setCropIdx(i);setCropSrc(src);}} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✎</button>
+                      <button type="button" onClick={()=>s("photos",(form.photos||[]).filter((_,j)=>j!==i))} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
             {(form.photos||[]).length<3&&(
-              <button onClick={()=>imgPick(v=>{if((form.photos||[]).length<3)s("photos",[...(form.photos||[]),v]);})}
-                style={{width:"100%",height:80,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,color:"var(--text-secondary)"}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span style={{fontSize:12,fontWeight:600}}>Add photo ({3-(form.photos||[]).length} left)</span>
+              <button type="button" onClick={()=>{setCropIdx(null);imgPick(v=>setCropSrc(v));}}
+                style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <div style={{textAlign:"left"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"var(--text-primary)"}}>Add photo</div>
+                  <div style={{fontSize:11,color:"var(--text-secondary)",marginTop:2}}>{3-(form.photos||[]).length} of 3 remaining · JPG or PNG</div>
+                </div>
               </button>
             )}
           </div>
+          {cropSrc&&<PhotoCropModal src={cropSrc} onCrop={v=>{if(cropIdx!==null){s("photos",(form.photos||[]).map((p,i)=>i===cropIdx?v:p));}else{s("photos",[...(form.photos||[]),v]);}setCropSrc(null);setCropIdx(null);}} onClose={()=>{setCropSrc(null);setCropIdx(null);}}/>}
 
           {creationMethod==='design'&&(<>
           {/* Step 1 — Craft */}
