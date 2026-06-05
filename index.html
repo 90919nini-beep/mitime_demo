@@ -34,7 +34,7 @@
     .sticker-outer{transition:transform .22s ease;}
     .sticker-outer:hover{transform:translateY(-3px);}
     @media(prefers-reduced-motion:reduce){.sticker-item{animation:none!important;opacity:1!important;}}
-    @keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes starSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
     @keyframes starSpinR{0%{transform:rotate(0deg)}100%{transform:rotate(-360deg)}}
@@ -83,7 +83,8 @@
       0%  {opacity:1}
       100%{opacity:0}
     }
-    .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));}
+    .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));will-change:transform;overscroll-behavior:contain;}
+    .modal-overlay{transition:none!important;will-change:opacity;}
     @media(display-mode:standalone){.modal-in{margin-bottom:0;}}
     input:focus,select:focus,textarea:focus{outline:none;border-color:#778EE3!important;box-shadow:0 0 0 3px #778EE322;}
     input,select,textarea{outline:none;}
@@ -119,13 +120,18 @@
       --fp-frost-mid:rgba(20,18,34,0.60);--fp-frost-top:rgba(20,18,34,0.68);--fp-frost-hi:rgba(55,50,78,0.70);
     }
     body{background:var(--bg-page);}
-    *,*::before,*::after{transition:background-color 0.25s ease,border-color 0.25s ease,color 0.25s ease,box-shadow 0.25s ease;}
+    *,*::before,*::after{transition:border-color 0.25s ease,color 0.25s ease,box-shadow 0.25s ease;}
+    body,#root{transition:background-color 0.25s ease;}
     /* ── Responsive scaling: bigger UI on larger screens ── */
     @media (min-width: 540px)  { html { zoom: 1.05; } }
     @media (min-width: 768px)  { html { zoom: 1.12; } }
     @media (min-width: 1024px) { html { zoom: 1.11; } }
     @media (min-width: 1400px) { html { zoom: 1.20; } }
-    @media (min-width: 1024px) { .modal-in { max-height: 78vh !important; } }
+    /* ── Modal max-height: corrected per zoom level so panels never reach the top safe area ── */
+    @media (min-width: 540px)  { .modal-in { max-height: calc(85dvh - env(safe-area-inset-top, 0px)) !important; } }
+    @media (min-width: 768px)  { .modal-in { max-height: calc(80dvh - env(safe-area-inset-top, 0px)) !important; } }
+    @media (min-width: 1024px) { .modal-in { max-height: calc(78dvh - env(safe-area-inset-top, 0px)) !important; } }
+    @media (min-width: 1400px) { .modal-in { max-height: calc(74dvh - env(safe-area-inset-top, 0px)) !important; } }
     /* ── Splash screen ── */
     #splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;overflow:hidden;transition:opacity 0.5s ease;background:radial-gradient(ellipse at 60% 40%,#dfe3f5 0%,#eceef8 60%,#e8e4f0 100%);}
     #splash.sp-dark{background:radial-gradient(ellipse at 60% 40%,#1e1a32 0%,#161519 60%,#1c1628 100%);}
@@ -850,27 +856,22 @@ const T={
 
 const LangCtx=createContext({lang:"en",t:T.en});
 const useLang=()=>useContext(LangCtx);
-let _scrollLockCount=0,_savedScrollY=0;
+let _scrollLockCount=0;
+function _preventBgScroll(e){if(!e.target.closest('.modal-in'))e.preventDefault();}
 function _applyScrollLock(){
-  _savedScrollY=window.scrollY;
-  document.body.style.overflow='hidden';
-  document.body.style.position='fixed';
-  document.body.style.top=`-${_savedScrollY}px`;
-  document.body.style.width='100%';
+  document.addEventListener('touchmove',_preventBgScroll,{passive:false});
+  document.addEventListener('wheel',_preventBgScroll,{passive:false});
 }
 function _releaseScrollLock(){
-  document.body.style.overflow='';
-  document.body.style.position='';
-  document.body.style.top='';
-  document.body.style.width='';
-  window.scrollTo(0,_savedScrollY);
+  document.removeEventListener('touchmove',_preventBgScroll);
+  document.removeEventListener('wheel',_preventBgScroll);
 }
 function useBodyScrollLock(){
-  useEffect(()=>{if(++_scrollLockCount===1)_applyScrollLock();return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};},[]);
+  useLayoutEffect(()=>{if(++_scrollLockCount===1)_applyScrollLock();return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};},[]);
 }
 function ScrollLock({children}){useBodyScrollLock();return children;}
 function useBodyScrollLockWhen(active){
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     if(!active)return;
     if(++_scrollLockCount===1)_applyScrollLock();
     return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};
@@ -1047,7 +1048,7 @@ function generatePalette(mode,locked,existing){
           c. Subject on top
    Returns transparent PNG data URL, or null on any error.
    ─────────────────────────────────────────────────────────────────────────── */
-async function applyBgRemoval(dataUrl){
+async function applyBgRemoval(dataUrl,outlineFactor=0.030){
   try{
     // ── 1. Decode ──────────────────────────────────────────────────────────
     const img=await new Promise((res,rej)=>{
@@ -1202,38 +1203,17 @@ async function applyBgRemoval(dataUrl){
     }
     wsCtx.putImageData(wsD,0,0);
 
-    // ── 8. Compose final sticker ────────────────────────────────────────
-    const OW =Math.max(4,Math.round(Math.min(TW,TH)*0.048)); // outline width
-    const OBLUR=Math.max(2,Math.round(OW*0.75));              // blur for dilation
-    const SBL =Math.max(5,Math.round(OW*2.5));                // shadow blur radius
-    const SDX =Math.round(OW*1.0), SDY=Math.round(OW*1.8);   // shadow offset (down-right)
-    const PAD =OW+SBL+Math.max(SDX,SDY)+6;
+    // ── 8. Compose final sticker (white outline, no shadow) ─────────────
+    const OW   =Math.max(2,Math.round(Math.min(TW,TH)*outlineFactor));
+    const OBLUR=Math.max(1,Math.round(OW*0.6));
+    const PAD  =OW+OBLUR+3;
     const FW=TW+PAD*2, FH=TH+PAD*2;
 
     const fcv=document.createElement('canvas');
     fcv.width=FW; fcv.height=FH;
     const fctx=fcv.getContext('2d');
 
-    // 8a. Shadow — pure black silhouette, Gaussian-blurred, offset, low opacity
-    //     Drawing order: shadow first so it sits underneath everything.
-    const shCv=document.createElement('canvas');
-    shCv.width=FW; shCv.height=FH;
-    const shCtx=shCv.getContext('2d');
-    shCtx.drawImage(wsCv,0,0,TW,TH,PAD,PAD,TW,TH);
-    const shD=shCtx.getImageData(0,0,FW,FH);
-    for(let i=0;i<shD.data.length;i+=4){
-      // Black shadow at 35% of the silhouette alpha — keeps it subtle
-      shD.data[i]=0; shD.data[i+1]=0; shD.data[i+2]=0;
-      shD.data[i+3]=Math.round(shD.data[i+3]*0.35);
-    }
-    shCtx.putImageData(shD,0,0);
-    fctx.filter=`blur(${SBL}px)`;
-    fctx.drawImage(shCv,SDX,SDY); // offset right+down → directional, not a halo
-    fctx.filter='none';
-
-    // 8b. White outline — blur the white silhouette to dilate it uniformly,
-    //     then threshold so the border is solid white with a crisp outer edge.
-    //     Using blur-dilate (not circle-shift) gives even thickness on all sides.
+    // White outline — blur-dilate silhouette for uniform border thickness
     const outCv=document.createElement('canvas');
     outCv.width=FW; outCv.height=FH;
     const outCtx=outCv.getContext('2d');
@@ -1241,23 +1221,14 @@ async function applyBgRemoval(dataUrl){
     outCtx.drawImage(wsCv,0,0,TW,TH,PAD,PAD,TW,TH);
     outCtx.filter='none';
     const od=outCtx.getImageData(0,0,FW,FH);
-    // Threshold: pixels with blurred alpha > 30 become fully opaque white.
-    // This gives a ~OW-wide border of solid white around the subject.
     for(let i=0;i<od.data.length;i+=4){
-      const a=od.data[i+3];
-      if(a>30){
-        od.data[i]=255; od.data[i+1]=255; od.data[i+2]=255; od.data[i+3]=255;
-      } else if(a>8){
-        // thin gray ring at outermost edge — makes white border visible on light backgrounds
-        od.data[i]=160; od.data[i+1]=160; od.data[i+2]=160; od.data[i+3]=200;
-      } else {
-        od.data[i+3]=0;
-      }
+      if(od.data[i+3]>30){od.data[i]=255;od.data[i+1]=255;od.data[i+2]=255;od.data[i+3]=255;}
+      else{od.data[i+3]=0;}
     }
     outCtx.putImageData(od,0,0);
     fctx.drawImage(outCv,0,0);
 
-    // 8c. Subject on top — centred at (PAD, PAD)
+    // Subject on top — centred at (PAD, PAD)
     fctx.drawImage(cv,minX,minY,TW,TH,PAD,PAD,TW,TH);
 
     return fcv.toDataURL('image/png');
@@ -5624,6 +5595,25 @@ function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel}){
   );
 }
 
+function DraftCard({icon,title,subtitle,onContinue,onDiscard}){
+  return(
+    <div style={{marginBottom:12,padding:"11px 14px",borderRadius:14,background:"var(--accent-soft)",border:"1.5px solid #BBC8F0",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{width:34,height:34,borderRadius:10,background:"#778EE322",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        {icon||<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#778EE3" strokeWidth="2.2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:1}}>Draft</div>
+        <div style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
+        {subtitle&&<div style={{fontSize:11,color:"var(--text-secondary)",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{subtitle}</div>}
+      </div>
+      <div style={{display:"flex",gap:6,flexShrink:0}}>
+        <button type="button" onClick={onContinue} style={{padding:"5px 12px",borderRadius:8,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Continue</button>
+        <button type="button" onClick={onDiscard} style={{padding:"5px 10px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:12,fontWeight:600,cursor:"pointer"}}>✕</button>
+      </div>
+    </div>
+  );
+}
+
 function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress}){
   useBodyScrollLock();
   const[rowIdx,setRowIdx]=useState(()=>{
@@ -5914,6 +5904,8 @@ function Card({project,patterns=[],onDelete,onEdit,onPickPattern,onAddPart,onRem
   const activePct=activeTotalRows>0?Math.min(100,Math.round(activeRows/activeTotalRows*100)):0;
   const photoCardRef=useRef(null);
   const[processingPhoto,setProcessingPhoto]=useState(false);
+  const[stickerPreview,setStickerPreview]=useState(null);
+  const[outlineStep,setOutlineStep]=useState(2);
 
   const doShare=()=>{
     const yarnsText=(project.yarns||[]).map(y=>[y.brand,y.name].filter(Boolean).join(" ")).join(", ")||"—";
@@ -6179,11 +6171,13 @@ function Card({project,patterns=[],onDelete,onEdit,onPickPattern,onAddPart,onRem
                 reader.onload=async ev=>{
                   const original=ev.target.result;
                   setProcessingPhoto(true);
+                  const initStep=2;
                   let cutout=null;
-                  try{cutout=await applyBgRemoval(original);}
-                  catch(err){console.warn("Background removal failed, using original:",err);}
+                  try{cutout=await applyBgRemoval(original,[0.020,0.060,0.100][initStep-1]);}
+                  catch(err){console.warn("Background removal failed:",err);}
                   setProcessingPhoto(false);
-                  onFinishedPhoto({original,cutout});
+                  if(cutout){setStickerPreview({original,cutout});setOutlineStep(initStep);}
+                  else onFinishedPhoto({original,cutout:null});
                 };
                 reader.readAsDataURL(f);
               }}/>
@@ -6262,6 +6256,46 @@ function Card({project,patterns=[],onDelete,onEdit,onPickPattern,onAddPart,onRem
         </div>
       </div>
     </ScrollLock>)}
+    {stickerPreview&&createPortal(
+      <ScrollLock><div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        <div style={{width:"100%",maxWidth:480,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",padding:"20px 20px env(safe-area-inset-bottom,24px)"}}>
+          <div style={{textAlign:"center",fontSize:16,fontWeight:800,color:"var(--text-primary)",marginBottom:16}}>Your Sticker</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
+            <div style={{width:148,height:148,borderRadius:16,background:"repeating-conic-gradient(#E5E7EB 0% 25%,white 0% 50%) 0 0/20px 20px",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+              {processingPhoto
+                ?<div style={{width:32,height:32,border:"3px solid #778EE3",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>
+                :<img src={stickerPreview.cutout} style={{maxWidth:128,maxHeight:128,objectFit:"contain",display:"block"}}/>
+              }
+            </div>
+          </div>
+          <div style={{marginBottom:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--text-secondary)",marginBottom:6}}>
+              <span style={{fontWeight:600}}>Outline size</span>
+              <span style={{fontWeight:700,color:"#778EE3"}}>{["Thin","Medium","Thick"][outlineStep-1]}</span>
+            </div>
+            <input type="range" min={1} max={3} step={1} value={outlineStep}
+              style={{width:"100%",accentColor:"#778EE3",cursor:"pointer"}}
+              onChange={async e=>{
+                const s=Number(e.target.value);
+                setOutlineStep(s);
+                setProcessingPhoto(true);
+                let c=null;
+                try{c=await applyBgRemoval(stickerPreview.original,[0.020,0.060,0.100][s-1]);}catch{}
+                setProcessingPhoto(false);
+                if(c) setStickerPreview(prev=>({...prev,cutout:c}));
+              }}/>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-secondary)",marginTop:2}}>
+              <span>Thin</span><span>Medium</span><span>Thick</span>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setStickerPreview(null)} style={{flex:1,padding:"12px",borderRadius:14,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-muted)",fontWeight:700,fontSize:14,cursor:"pointer"}}>Cancel</button>
+            <button onClick={()=>{onFinishedPhoto({original:stickerPreview.original,cutout:stickerPreview.cutout});setStickerPreview(null);}} style={{flex:2,padding:"12px",borderRadius:14,border:"none",background:"#778EE3",color:"white",fontWeight:700,fontSize:14,cursor:"pointer"}}>Save Sticker</button>
+          </div>
+        </div>
+      </div></ScrollLock>,
+      document.body
+    )}
   </>);
 }
 
@@ -6567,7 +6601,7 @@ function YarnPhotoCropModal({src,onCrop,onClose}){
   );
 }
 
-function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
+function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
   useBodyScrollLock();
   const editing=!!initialYarn;
   const{t}=useLang();
@@ -6580,6 +6614,10 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
     composition:initialYarn.composition&&initialYarn.composition.length>0
       ?initialYarn.composition
       :[{fibre:initialYarn.fibre||"Merino Wool",pct:100}],
+  }:initialDraft?{
+    brand:"",name:"",colorway:"",color:SWATCHES[0],photo:null,composition:[{fibre:"Merino Wool",pct:100}],weight:"Worsted",ballsOwned:1,yarnUnit:"ball",physWeight:"",physWeightUnit:"oz",yarnLength:"",yarnLengthUnit:"yd",price:"",currency:yarnCurrency,
+    ...initialDraft,
+    savedAt:undefined,
   }:{brand:"",name:"",colorway:"",color:SWATCHES[0],photo:null,composition:[{fibre:"Merino Wool",pct:100}],weight:"Worsted",ballsOwned:1,yarnUnit:"ball",physWeight:"",physWeightUnit:"oz",yarnLength:"",yarnLengthUnit:"yd",price:"",currency:yarnCurrency});
   const[cropSrc,setCropSrc]=useState(null);
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -6590,6 +6628,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
   const addRow=()=>s("composition",[...form.composition,{fibre:"Wool",pct:0}]);
   const removeRow=i=>s("composition",form.composition.filter((_,idx)=>idx!==i));
   const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initialYarn?.colorway||Number(initialYarn?.price)>0)));
   const YARN_DRAFT_KEY="sc_draft_add_yarn";
   const yarnIsDirty=form.brand.trim()!==""||form.name.trim()!==""||form.colorway.trim()!==""||!!form.photo;
   const handleClose=()=>{if(yarnIsDirty){setShowCloseSheet(true);}else{onClose();}};
@@ -6626,7 +6665,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
           {cropSrc&&<YarnPhotoCropModal src={cropSrc} onCrop={v=>{s("photo",v);setCropSrc(null);}} onClose={()=>setCropSrc(null)}/>}
           <FormField label={t.libBrand}><input style={iS} value={form.brand} onChange={e=>s("brand",e.target.value)} placeholder="Malabrigo"/></FormField>
           <FormField label={t.libName}><input style={iS} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="Sock"/></FormField>
-          <FormField label={t.libColorway}><input style={iS} value={form.colorway} onChange={e=>s("colorway",e.target.value)} placeholder="Aguas"/></FormField>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <FormField label={t.libWeight}><select style={{...iS,appearance:"none"}} value={form.weight} onChange={e=>s("weight",e.target.value)}>{WEIGHTS.map(w=><option key={w}>{w}</option>)}</select></FormField>
             <FormField label={form.yarnUnit==="cone"?"Cones Owned":"Balls Owned"}>
@@ -6644,15 +6682,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
               </div>
             </FormField>
           </div>
-          <FormField label={`Price per ${form.yarnUnit||"ball"} (optional)`}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <input type="text" value={form.currency} onChange={e=>s("currency",e.target.value||yarnCurrency)}
-                style={{width:48,padding:"9px 6px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,
-                  color:"var(--text-muted)",fontWeight:700,background:"var(--bg-subtle)",textAlign:"center",flexShrink:0}}
-                placeholder="$" maxLength={4}/>
-              <input style={iS} type="number" min="0" step="0.01" value={form.price} onChange={e=>s("price",e.target.value)} placeholder="0.00"/>
-            </div>
-          </FormField>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <FormField label={t.libPhysWeight}>
               <div style={{display:"flex",gap:6}}>
@@ -6705,9 +6734,27 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
               <input type="color" value={form.color} onChange={e=>s("color",e.target.value)} style={{width:26,height:26,borderRadius:7,border:"1.5px solid var(--border)",padding:2,cursor:"pointer"}}/>
             </div>
           </FormField>
+          <button type="button" onClick={()=>setShowExtra(v=>!v)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"2px 0 6px",color:"var(--text-secondary)",fontSize:13,fontWeight:600}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{transition:"transform .2s",transform:showExtra?"rotate(180deg)":"rotate(0deg)"}}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            {showExtra?"Less options":"More options"}
+          </button>
+          {showExtra&&(
+            <>
+              <FormField label={t.libColorway}><input style={iS} value={form.colorway} onChange={e=>s("colorway",e.target.value)} placeholder="Aguas"/></FormField>
+              <FormField label={`Price per ${form.yarnUnit||"ball"}`}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <input type="text" value={form.currency} onChange={e=>s("currency",e.target.value||yarnCurrency)}
+                    style={{width:48,padding:"9px 6px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,
+                      color:"var(--text-muted)",fontWeight:700,background:"var(--bg-subtle)",textAlign:"center",flexShrink:0}}
+                    placeholder="$" maxLength={4}/>
+                  <input style={iS} type="number" min="0" step="0.01" value={form.price} onChange={e=>s("price",e.target.value)} placeholder="0.00"/>
+                </div>
+              </FormField>
+            </>
+          )}
         </div>
         <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
-          <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};editing?onEdit(data):onAdd({...data,id:uid()});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
+          <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};if(editing){onEdit(data);}else{if(initialDraft){try{localStorage.removeItem("sc_draft_add_yarn");}catch{}}onAdd({...data,id:uid()});}onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
         </div>
       </div>
       {showCloseSheet&&(
@@ -6808,6 +6855,8 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
   const[editingBalls,setEditingBalls]=useState(null);
   const[editingYarn,setEditingYarn]=useState(null);
   const[confirmDelete,setConfirmDelete]=useState(null);
+  const[yarnDraft,setYarnDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_add_yarn")||"null");}catch{return null;}});
+  const yarnDraftRef=useRef(null);
 
   const usedMap={};
   projects.forEach(p=>(p.yarns||[]).forEach(y=>{if(y.libId)usedMap[y.libId]=(usedMap[y.libId]||0)+(Number(y.balls)||0);}));
@@ -6820,7 +6869,7 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
     (filterWeight==="All"||y.weight===filterWeight)
   );
 
-  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none"};
+  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none",width:120};
 
   return(
     <div style={{flex:1,overflowY:"auto",padding:"4px 16px 0",paddingBottom:`calc(88px + ${SAFE_BOTTOM})`}}>
@@ -6830,6 +6879,16 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
+
+      {/* Yarn draft card */}
+      {yarnDraft&&(
+        <DraftCard
+          title={[yarnDraft.brand,yarnDraft.name].filter(Boolean).join(" — ")||"Yarn draft"}
+          subtitle={yarnDraft.colorway||yarnDraft.weight||null}
+          onContinue={()=>{yarnDraftRef.current=yarnDraft;setShowAdd(true);}}
+          onDiscard={()=>{try{localStorage.removeItem("sc_draft_add_yarn");}catch{}setYarnDraft(null);}}
+        />
+      )}
 
       {/* Filters */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
@@ -6954,7 +7013,7 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
           );
         })}
       </div>
-      {showAdd&&<AddYarnModal onClose={()=>setShowAdd(false)} onAdd={y=>setYarnLib(p=>[...p,y])}/>}
+      {showAdd&&<AddYarnModal onClose={()=>{setShowAdd(false);yarnDraftRef.current=null;}} onAdd={y=>{setYarnLib(p=>[...p,y]);setYarnDraft(null);yarnDraftRef.current=null;}} initialDraft={yarnDraftRef.current||undefined}/>}
       {editingYarn&&<AddYarnModal onClose={()=>setEditingYarn(null)} initialYarn={editingYarn} onEdit={updated=>setYarnLib(p=>p.map(y=>y.id===updated.id?updated:y))}/>}
       {editingBalls&&<BallsNumpad value={editingBalls.value}
         onChange={v=>setEditingBalls(b=>({...b,value:v}))}
@@ -6964,10 +7023,10 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
 }
 
 /* ─── Tools Library ─────────────────────────────────────────────────────────── */
-function AddToolModal({onClose,onAdd,editing,onEdit}){
+function AddToolModal({onClose,onAdd,editing,onEdit,initialDraft}){
   useBodyScrollLock();
   const{t}=useLang();
-  const[form,setForm]=useState(editing||{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:""});
+  const[form,setForm]=useState(editing||initialDraft?{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:"",...(editing||initialDraft),savedAt:undefined}:{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:""});
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const iS={width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,color:"var(--text-primary)",background:"var(--bg-subtle)"};
   const isEdit=!!editing;
@@ -6998,7 +7057,7 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
         <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           {isEdit
             ?<button onClick={()=>{onEdit({...editing,...form,qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#3B6FD4,#6366F1)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>Save Changes</button>
-            :<button onClick={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.addToolBtn}</button>
+            :<button onClick={()=>{if(initialDraft){try{localStorage.removeItem("sc_draft_add_tool");}catch{}}onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.addToolBtn}</button>
           }
         </div>
       </div>
@@ -7019,9 +7078,11 @@ function ToolsLibPage({tools,setTools}){
   const[showAdd,setShowAdd]=useState(false);
   const[editingTool,setEditingTool]=useState(null);
   const[filterType,setFilterType]=useState("All");
+  const[toolDraft,setToolDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_add_tool")||"null");}catch{return null;}});
+  const toolDraftRef=useRef(null);
   const COND_COLOR={New:"#059669",Good:"#3B6FD4",Fair:"#E3C277",Worn:"#EF4444"};
   const TOOL_ICON={"Crochet Hook":"basil:scissors-outline","Knitting Needle":"basil:needle-outline","Circular Needle":"basil:loop-outline","Double Pointed Needle":"basil:arrows-out-outline","Tunisian Hook":"basil:scissors-outline","Other":"basil:tool-outline"};
-  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none"};
+  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none",width:120};
   const filtered=tools.filter(tool=>filterType==="All"||tool.type===filterType);
 
   return(
@@ -7032,6 +7093,16 @@ function ToolsLibPage({tools,setTools}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
+
+      {/* Tool draft card */}
+      {toolDraft&&(
+        <DraftCard
+          title={[toolDraft.type,toolDraft.size].filter(Boolean).join(" — ")||"Tool draft"}
+          subtitle={toolDraft.brand||toolDraft.material||null}
+          onContinue={()=>{toolDraftRef.current=toolDraft;setShowAdd(true);}}
+          onDiscard={()=>{try{localStorage.removeItem("sc_draft_add_tool");}catch{}setToolDraft(null);}}
+        />
+      )}
 
       {/* Filter */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
@@ -7085,7 +7156,7 @@ function ToolsLibPage({tools,setTools}){
           </div>
         ))}
       </div>
-      {showAdd&&<AddToolModal onClose={()=>setShowAdd(false)} onAdd={tool=>setTools(p=>[...p,tool])}/>}
+      {showAdd&&<AddToolModal onClose={()=>{setShowAdd(false);toolDraftRef.current=null;}} onAdd={tool=>{setTools(p=>[...p,tool]);setToolDraft(null);toolDraftRef.current=null;}} initialDraft={toolDraftRef.current||undefined}/>}
       {editingTool&&<AddToolModal editing={editingTool} onEdit={updated=>setTools(p=>p.map(x=>x.id===updated.id?updated:x))} onClose={()=>setEditingTool(null)}/>}
     </div>
   );
@@ -7133,13 +7204,13 @@ function imgPick(cb){
 }
 
 /* ── Pattern Form (Add + Edit) ── */
-function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patterns=[]}){
+function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patterns=[],initialDraft,autoOpenMaker}){
   useBodyScrollLock();
   const editing=!!initial;
   const{t}=useLang();
   const blank={name:"",category:"Shawl",craft:"Crochet",difficulty:"Beginner",source:"",notes:"",tags:"",image:null,photos:[],designData:null,importText:"",importImage:null,importPdf:null};
-  const[form,setForm]=useState(editing?{...blank,...initial,tags:Array.isArray(initial.tags)?initial.tags.join(", "):initial.tags||""}:blank);
-  const[openMaker,setOpenMaker]=useState(null); // null | "rows" | "rounds"
+  const[form,setForm]=useState(editing?{...blank,...initial,tags:Array.isArray(initial.tags)?initial.tags.join(", "):initial.tags||""}:initialDraft?{...blank,...initialDraft,tags:Array.isArray(initialDraft.tags)?initialDraft.tags.join(", "):initialDraft.tags||"",savedAt:undefined}:blank);
+  const[openMaker,setOpenMaker]=useState(autoOpenMaker?"rows":null); // null | "rows" | "rounds"
   // derive layout from existing designData, or default to "rows"
   const[layout,setLayout]=useState(editing&&initial?.designData?.type==="rounds"?"rounds":editing&&initial?.designData?.knitStitches?.length?"knitSymbol":"rows");
   const[creationMethod,setCreationMethod]=useState(initialMethod||(editing&&initial?.designData?.type==="imported"?"import":"design"));
@@ -7157,6 +7228,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
       const lines=form.importText.split(/\n|!/).map(l=>l.trim()).filter(Boolean);
       if(lines.length) designData={type:'imported',steps:lines.map((text,i)=>({id:`s${i}`,text}))};
     }
+    if(!editing&&initialDraft){try{localStorage.removeItem("sc_draft_pattern_form");}catch{}}
     onSave({...form,designData,id:editing?initial.id:uid(),
       tags:typeof form.tags==="string"?form.tags.split(",").map(x=>x.trim()).filter(Boolean):form.tags,
       photos,
@@ -7174,6 +7246,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   };
   const openDesign=()=>setOpenMaker(form.craft==="Crochet"&&layout==="rounds"?"rounds":"rows");
   const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
   const isDirty=form.name.trim()!==""||((form.photos||[]).length>0);
@@ -7387,11 +7460,18 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <FormField label={t.patternCategory}><select style={{...iS,appearance:"none"}} value={form.category} onChange={e=>s("category",e.target.value)}>{PATTERN_CATEGORIES.map(x=><option key={x} value={x}>{t.cats?.[x]||x}</option>)}</select></FormField>
             <FormField label={t.patternCraft}>{creationMethod==='import'?<select style={{...iS,appearance:"none"}} value={form.craft} onChange={e=>s("craft",e.target.value)}><option value="Crochet">{t.crafts?.Crochet||"Crochet"}</option><option value="Knitting">{t.crafts?.Knitting||"Knitting"}</option></select>:<div style={{...iS,background:"var(--bg-subtle)",color:"var(--text-muted)",fontWeight:600,display:"flex",alignItems:"center",cursor:"default"}}>{t.crafts?.[form.craft]||form.craft}</div>}</FormField>
-            <FormField label={t.patternDifficulty}><select style={{...iS,appearance:"none"}} value={form.difficulty} onChange={e=>s("difficulty",e.target.value)}>{PATTERN_DIFFICULTIES.map(x=><option key={x} value={x}>{t.diffs?.[x]||x}</option>)}</select></FormField>
           </div>
-          <FormField label={t.patternSource}><input style={iS} value={form.source} onChange={e=>s("source",e.target.value)} placeholder="https://www.ravelry.com/..."/></FormField>
-          <FormField label={t.patternTags}><input style={iS} value={form.tags} onChange={e=>s("tags",e.target.value)} placeholder="Lace, Gift, Quick"/></FormField>
           <FormField label={t.patternNotes}><textarea style={{...iS,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>s("notes",e.target.value)} placeholder="Any notes..."/></FormField>
+          <button type="button" onClick={()=>setShowExtra(v=>!v)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"2px 0 6px",color:"var(--text-secondary)",fontSize:13,fontWeight:600}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{transition:"transform .2s",transform:showExtra?"rotate(180deg)":"rotate(0deg)"}}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            {showExtra?"Less options":"More options"}
+          </button>
+          {showExtra&&(
+            <>
+              <FormField label={t.patternSource}><input style={iS} value={form.source} onChange={e=>s("source",e.target.value)} placeholder="https://www.ravelry.com/..."/></FormField>
+              <FormField label={t.patternTags}><input style={iS} value={form.tags} onChange={e=>s("tags",e.target.value)} placeholder="Lace, Gift, Quick"/></FormField>
+            </>
+          )}
         </div>
         <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           <button disabled={!form.name.trim()} onClick={save} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer",opacity:form.name.trim()?1:0.5}}>{editing?t.saveChanges:creationMethod==='import'?'Add Imported Pattern':t.addPatternBtn}</button>
@@ -8615,9 +8695,12 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
   const[editing,setEditing]=useState(null);
   const[filterCraft,setFilterCraft]=useState("All");
   const[filterDiff,setFilterDiff]=useState("All");
+  const[patternFormDraft,setPatternFormDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");}catch{return null;}});
+  const[patternMakerDraft,setPatternMakerDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_pattern")||"null");}catch{return null;}});
+  const patternDraftModeRef=useRef(null); // null | "form" | "maker"
   const[patternView,setPatternView]=useState(null); // for PatternViewModal (grid/crochet fullscreen)
   const[readingRounds,setReadingRounds]=useState(null); // for CPM_ReadModal
-  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none"};
+  const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none",width:120};
 
   // Derive project-sourced pattern entries (not duplicating library entries)
   const projectPatterns=projects
@@ -8649,6 +8732,24 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
+      {/* Pattern draft cards */}
+      {patternFormDraft&&(
+        <DraftCard
+          title={patternFormDraft.name||"Unnamed pattern"}
+          subtitle={[patternFormDraft.craft,patternFormDraft.category].filter(Boolean).join(" · ")||null}
+          onContinue={()=>{patternDraftModeRef.current="form";setShowAdd(true);}}
+          onDiscard={()=>{try{localStorage.removeItem("sc_draft_pattern_form");}catch{}setPatternFormDraft(null);}}
+        />
+      )}
+      {patternMakerDraft&&(
+        <DraftCard
+          title={"Pattern design"+(patternMakerDraft.type?" ("+patternMakerDraft.type+")":"")}
+          subtitle={"Visual pattern maker draft"}
+          onContinue={()=>{patternDraftModeRef.current="maker";setShowAdd(true);}}
+          onDiscard={()=>{try{localStorage.removeItem("sc_draft_pattern");}catch{}setPatternMakerDraft(null);}}
+        />
+      )}
+
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
         <select value={filterCraft} onChange={e=>setFilterCraft(e.target.value)} style={selStyle}>
           <option value="All">{t.filterAll} craft</option>
@@ -8712,7 +8813,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
       onClose={()=>setReadingRounds(null)}
       onUpdate={updated=>{update(updated);setReadingRounds(updated);}}
     />}
-    {showAdd&&<PatternFormModal onClose={()=>setShowAdd(false)} onSave={p=>setPatterns(prev=>[...prev,p])} yarnLib={yarnLib} patterns={patterns}/>}
+    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;}} onSave={p=>{setPatterns(prev=>[...prev,p]);if(patternDraftModeRef.current==="form")setPatternFormDraft(null);if(patternDraftModeRef.current==="maker")setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
     {editing&&<PatternFormModal onClose={()=>setEditing(null)} initial={editing} onSave={updated=>{update(updated);setEditing(null);setViewing(updated);}} yarnLib={yarnLib} patterns={patterns}/>}
     {viewing&&!viewing._fromProject&&<PatternDetailModal
       pat={patterns.find(p=>p.id===viewing.id)||viewing}
@@ -14866,16 +14967,61 @@ function PhotoReminderModal({project,onPhoto,onSkip}){
   const cameraRef=useRef(null);
   const galleryRef=useRef(null);
   const[processing,setProcessing]=useState(false);
+  const[stickerPreview,setStickerPreview]=useState(null);
+  const[outlineStep,setOutlineStep]=useState(2);
   const handleFile=async e=>{
     const f=e.target.files?.[0];if(!f)return;
     e.target.value="";
     const original=await new Promise(res=>{const r=new FileReader();r.onload=ev=>res(ev.target.result);r.readAsDataURL(f);});
     setProcessing(true);
+    const initStep=2;
     let cutout=null;
-    try{cutout=await applyBgRemoval(original);}catch(err){console.warn("bg removal failed:",err);}
+    try{cutout=await applyBgRemoval(original,[0.020,0.060,0.100][initStep-1]);}catch(err){console.warn("bg removal failed:",err);}
     setProcessing(false);
-    onPhoto({original,cutout});
+    if(cutout){setStickerPreview({original,cutout});setOutlineStep(initStep);}
+    else onPhoto({original,cutout:null});
   };
+  if(stickerPreview){
+    return(
+      <div style={{position:"fixed",inset:0,zIndex:490,background:"rgba(0,0,0,0.72)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        <div style={{width:"100%",maxWidth:480,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",padding:"20px 20px env(safe-area-inset-bottom,24px)"}}>
+          <div style={{textAlign:"center",fontSize:16,fontWeight:800,color:"var(--text-primary)",marginBottom:16}}>Your Sticker</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
+            <div style={{width:148,height:148,borderRadius:16,background:"repeating-conic-gradient(#E5E7EB 0% 25%,white 0% 50%) 0 0/20px 20px",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+              {processing
+                ?<div style={{width:32,height:32,border:"3px solid #778EE3",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>
+                :<img src={stickerPreview.cutout} style={{maxWidth:128,maxHeight:128,objectFit:"contain",display:"block"}}/>
+              }
+            </div>
+          </div>
+          <div style={{marginBottom:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--text-secondary)",marginBottom:6}}>
+              <span style={{fontWeight:600}}>Outline size</span>
+              <span style={{fontWeight:700,color:"#778EE3"}}>{["Thin","Medium","Thick"][outlineStep-1]}</span>
+            </div>
+            <input type="range" min={1} max={3} step={1} value={outlineStep}
+              style={{width:"100%",accentColor:"#778EE3",cursor:"pointer"}}
+              onChange={async e=>{
+                const s=Number(e.target.value);
+                setOutlineStep(s);
+                setProcessing(true);
+                let c=null;
+                try{c=await applyBgRemoval(stickerPreview.original,[0.020,0.060,0.100][s-1]);}catch{}
+                setProcessing(false);
+                if(c) setStickerPreview(prev=>({...prev,cutout:c}));
+              }}/>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-secondary)",marginTop:2}}>
+              <span>Thin</span><span>Medium</span><span>Thick</span>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setStickerPreview(null)} style={{flex:1,padding:"12px",borderRadius:14,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-muted)",fontWeight:700,fontSize:14,cursor:"pointer"}}>Cancel</button>
+            <button onClick={()=>{onPhoto({original:stickerPreview.original,cutout:stickerPreview.cutout});setStickerPreview(null);}} style={{flex:2,padding:"12px",borderRadius:14,border:"none",background:"#778EE3",color:"white",fontWeight:700,fontSize:14,cursor:"pointer"}}>Save Sticker</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return(
     <div style={{position:"fixed",inset:0,zIndex:490,background:"rgba(0,0,0,0.72)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{background:"var(--bg-card)",borderRadius:28,padding:"28px 24px 24px",width:"100%",maxWidth:320,textAlign:"center",boxShadow:"0 24px 64px rgba(0,0,0,.35)"}}>
