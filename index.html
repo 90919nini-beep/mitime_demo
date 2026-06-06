@@ -6589,160 +6589,215 @@ function FormField({label,req,children}){
 /* ── Shared Photo Crop Modal (Free / 1:1) ── */
 function PhotoCropModal({src,onCrop,onClose}){
   const MAXDIM=260;
-  const MIN_CROP=80;
-  const containerRef=useRef(null);
-  const[natural,setNatural]=useState(null);
+  const MIN_CROP=60;
+  const HIT=22; // corner handle hit radius in canvas px
+  const canvasRef=useRef(null);
+  const imgRef=useRef(null);       // loaded Image element
+  const modeRef=useRef("1:1");
   const[mode,setMode]=useState("1:1");
 
-  // Image pan/zoom — refs mirror state so handlers never read stale closures
-  const[scale,setScaleState]=useState(1);
-  const[offset,setOffsetState]=useState({x:0,y:0});
+  // All state in refs — no React re-renders needed for animation
   const scaleRef=useRef(1);
-  const offsetRef=useRef({x:0,y:0});
-  const sr=(v)=>{const n=typeof v==="function"?v(scaleRef.current):v;scaleRef.current=n;setScaleState(n);};
-  const or=(v)=>{const n=typeof v==="function"?v(offsetRef.current):v;offsetRef.current=n;setOffsetState(n);};
+  const offRef=useRef({x:0,y:0}); // image centre offset from canvas centre (canvas px)
+  const cropRef=useRef({x:0,y:0,w:MAXDIM,h:MAXDIM}); // crop box in canvas px (absolute)
 
-  // Crop box size + center offset (Free mode only)
-  const[cropW,setCropWState]=useState(MAXDIM);
-  const[cropH,setCropHState]=useState(MAXDIM);
-  const[cropOX,setCropOXState]=useState(0); // crop box centre offset from container centre
-  const[cropOY,setCropOYState]=useState(0);
-  const cwRef=useRef(MAXDIM),chRef=useRef(MAXDIM);
-  const coxRef=useRef(0),coyRef=useRef(0);
-  const setCW=v=>{const n=typeof v==="function"?v(cwRef.current):v;cwRef.current=n;setCropWState(n);};
-  const setCH=v=>{const n=typeof v==="function"?v(chRef.current):v;chRef.current=n;setCropHState(n);};
-  const setCOX=v=>{const n=typeof v==="function"?v(coxRef.current):v;coxRef.current=n;setCropOXState(n);};
-  const setCOY=v=>{const n=typeof v==="function"?v(coyRef.current):v;coyRef.current=n;setCropOYState(n);};
-
-  // Pan/pinch state
+  // Gesture tracking — positions stored in canvas px via getXY
   const ptrs=useRef(new Map());
-  const dragRef=useRef(null);
-  // pinchRef updated EVERY frame — stores previous frame values for delta computation
-  const pinchRef=useRef(null); // {dist, scale, off:{x,y}, midX, midY}
+  const dragRef=useRef(null);  // {type:"pan"|"handle", ...}
+  const pinchRef=useRef(null); // per-frame state: {dist,scale,off,midX,midY}
 
-  // Corner handle drag (Free mode)
-  const hdRef=useRef(null); // {corner, sx, sy, sw, sh, sox, soy}
+  const rafRef=useRef(null);
 
-  const resetView=(nw,nh,m)=>{
+  // ── Coordinate helper — same trick as CropTool ────────────────────────────
+  // getBoundingClientRect gives viewport px; canvas.width/dpr gives layout px.
+  // Their ratio = 1/cssZoom, so multiplying by it converts e.clientX → canvas px.
+  const getXY=useCallback((e)=>{
+    const c=canvasRef.current; if(!c)return{cx:0,cy:0};
+    const rect=c.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const sx=(c.width/dpr)/rect.width, sy=(c.height/dpr)/rect.height;
+    return{cx:(e.clientX-rect.left)*sx, cy:(e.clientY-rect.top)*sy};
+  },[]);
+
+  // ── Canvas draw ───────────────────────────────────────────────────────────
+  const scheduleDraw=useCallback(()=>{
+    if(rafRef.current)cancelAnimationFrame(rafRef.current);
+    rafRef.current=requestAnimationFrame(()=>{
+      rafRef.current=null;
+      const c=canvasRef.current, img=imgRef.current; if(!c||!img)return;
+      const dpr=window.devicePixelRatio||1;
+      const CW=c.offsetWidth||300, CH=c.offsetHeight||400;
+      c.width=Math.round(CW*dpr); c.height=Math.round(CH*dpr);
+      const ctx=c.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const s=scaleRef.current, off=offRef.current, cr=cropRef.current;
+      const iw=img.naturalWidth*s, ih=img.naturalHeight*s;
+      const imgX=CW/2+off.x-iw/2, imgY=CH/2+off.y-ih/2;
+
+      // Background + image
+      ctx.fillStyle="#111"; ctx.fillRect(0,0,CW,CH);
+      ctx.drawImage(img,imgX,imgY,iw,ih);
+
+      // Dark overlay outside crop (even-odd = punches hole for crop box)
+      ctx.fillStyle="rgba(0,0,0,0.55)";
+      ctx.beginPath(); ctx.rect(0,0,CW,CH); ctx.rect(cr.x,cr.y,cr.w,cr.h);
+      ctx.fill("evenodd");
+
+      // Crop border
+      ctx.strokeStyle="rgba(255,255,255,0.55)"; ctx.lineWidth=1.5;
+      ctx.strokeRect(cr.x+0.75,cr.y+0.75,cr.w-1.5,cr.h-1.5);
+
+      // Corner brackets
+      const BL=18; ctx.strokeStyle="white"; ctx.lineWidth=2.5; ctx.lineCap="square";
+      for(const[bx,by,dx,dy]of[[cr.x,cr.y,1,1],[cr.x+cr.w,cr.y,-1,1],[cr.x,cr.y+cr.h,1,-1],[cr.x+cr.w,cr.y+cr.h,-1,-1]]){
+        ctx.beginPath(); ctx.moveTo(bx+dx*BL,by); ctx.lineTo(bx,by); ctx.lineTo(bx,by+dy*BL); ctx.stroke();
+      }
+
+      // Rule-of-thirds guides
+      ctx.strokeStyle="rgba(255,255,255,0.18)"; ctx.lineWidth=0.5;
+      for(let i=1;i<3;i++){
+        ctx.beginPath(); ctx.moveTo(cr.x+i*cr.w/3,cr.y); ctx.lineTo(cr.x+i*cr.w/3,cr.y+cr.h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cr.x,cr.y+i*cr.h/3); ctx.lineTo(cr.x+cr.w,cr.y+i*cr.h/3); ctx.stroke();
+      }
+    });
+  },[]);
+
+  // ── Init / mode change ────────────────────────────────────────────────────
+  const initView=useCallback((nw,nh,m,CW,CH)=>{
     const cW=m==="1:1"?MAXDIM:nw>=nh?MAXDIM:Math.round(MAXDIM*nw/nh);
     const cH=m==="1:1"?MAXDIM:nh>=nw?MAXDIM:Math.round(MAXDIM*nh/nw);
-    cwRef.current=cW;setCropWState(cW);
-    chRef.current=cH;setCropHState(cH);
-    coxRef.current=0;setCropOXState(0);
-    coyRef.current=0;setCropOYState(0);
-    sr(Math.max(cW/nw,cH/nh));
-    or({x:0,y:0});
-  };
-  const onLoad=(e)=>{
-    const nw=e.target.naturalWidth,nh=e.target.naturalHeight;
-    setNatural({w:nw,h:nh});
-    resetView(nw,nh,"1:1");
-  };
-  useEffect(()=>{if(natural)resetView(natural.w,natural.h,mode);},[mode]);
+    cropRef.current={x:CW/2-cW/2, y:CH/2-cH/2, w:cW, h:cH};
+    scaleRef.current=Math.max(cW/nw,cH/nh);
+    offRef.current={x:0,y:0};
+  },[]);
 
-  // ── Image pan / pinch-to-zoom ─────────────────────────────────────────────
-  const onPD=(e)=>{
+  useEffect(()=>{
+    const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>{
+      imgRef.current=img;
+      const c=canvasRef.current;
+      if(c) initView(img.naturalWidth,img.naturalHeight,"1:1",c.offsetWidth||300,c.offsetHeight||400);
+      scheduleDraw();
+    };
+    img.src=src;
+  },[src]);
+
+  useEffect(()=>{
+    modeRef.current=mode;
+    const img=imgRef.current, c=canvasRef.current; if(!img||!c)return;
+    initView(img.naturalWidth,img.naturalHeight,mode,c.offsetWidth||300,c.offsetHeight||400);
+    scheduleDraw();
+  },[mode]);
+
+  // ── Corner hit test ───────────────────────────────────────────────────────
+  const getHandle=useCallback((cx,cy)=>{
+    if(modeRef.current!=="free")return null;
+    const cr=cropRef.current;
+    for(const[id,hx,hy]of[["tl",cr.x,cr.y],["tr",cr.x+cr.w,cr.y],["bl",cr.x,cr.y+cr.h],["br",cr.x+cr.w,cr.y+cr.h]]){
+      if(Math.hypot(hx-cx,hy-cy)<HIT)return id;
+    }
+    return null;
+  },[]);
+
+  // ── Pointer handlers ──────────────────────────────────────────────────────
+  const onPD=useCallback((e)=>{
     e.currentTarget.setPointerCapture(e.pointerId);
-    ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const{cx,cy}=getXY(e);
+    ptrs.current.set(e.pointerId,{cx,cy});
     if(ptrs.current.size===1){
-      dragRef.current={sx:e.clientX-offsetRef.current.x,sy:e.clientY-offsetRef.current.y};
       pinchRef.current=null;
-    } else if(ptrs.current.size===2){
+      const handle=getHandle(cx,cy);
+      if(handle){
+        dragRef.current={type:"handle",handle,sx:cx,sy:cy,origCrop:{...cropRef.current}};
+      }else{
+        dragRef.current={type:"pan",sx:cx-offRef.current.x,sy:cy-offRef.current.y};
+      }
+    }else if(ptrs.current.size===2){
       dragRef.current=null;
       const p=[...ptrs.current.values()];
-      const dist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
-      // Store current frame state — updated every onPM so delta is always frame-to-frame
-      pinchRef.current={dist,scale:scaleRef.current,off:{...offsetRef.current},midX:(p[0].x+p[1].x)/2,midY:(p[0].y+p[1].y)/2};
+      const dist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
+      pinchRef.current={dist,scale:scaleRef.current,off:{...offRef.current},midX:(p[0].cx+p[1].cx)/2,midY:(p[0].cy+p[1].cy)/2};
     }
-  };
-  const onPM=(e)=>{
-    ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  },[getXY,getHandle]);
+
+  const onPM=useCallback((e)=>{
+    const{cx,cy}=getXY(e);
+    ptrs.current.set(e.pointerId,{cx,cy});
     const p=[...ptrs.current.values()];
+
     if(p.length===1&&dragRef.current){
-      or({x:e.clientX-dragRef.current.sx,y:e.clientY-dragRef.current.sy});
-    } else if(p.length===2&&pinchRef.current){
-      // Per-frame delta: compare to PREVIOUS frame stored in pinchRef
-      const newDist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
-      const newMidX=(p[0].x+p[1].x)/2, newMidY=(p[0].y+p[1].y)/2;
+      const d=dragRef.current;
+      if(d.type==="pan"){
+        offRef.current={x:cx-d.sx, y:cy-d.sy};
+      }else if(d.type==="handle"){
+        // Opposite corner is fixed; dragged corner follows finger
+        const{handle:h,sx,sy,origCrop:oc}=d;
+        const dx=cx-sx, dy=cy-sy;
+        let{x,y,w,ww}={x:oc.x,y:oc.y,w:oc.w,ww:oc.h};
+        if(h==="tl"){x=oc.x+dx;y=oc.y+dy;w=oc.w-dx;ww=oc.h-dy;}
+        else if(h==="tr"){y=oc.y+dy;w=oc.w+dx;ww=oc.h-dy;}
+        else if(h==="bl"){x=oc.x+dx;w=oc.w-dx;ww=oc.h+dy;}
+        else{w=oc.w+dx;ww=oc.h+dy;}
+        if(w<MIN_CROP){w=MIN_CROP;if(h==="tl"||h==="bl")x=oc.x+oc.w-MIN_CROP;}
+        if(ww<MIN_CROP){ww=MIN_CROP;if(h==="tl"||h==="tr")y=oc.y+oc.h-MIN_CROP;}
+        cropRef.current={x,y,w,h:ww};
+      }
+      scheduleDraw();
+    }else if(p.length===2&&pinchRef.current){
+      // Per-frame pinch: all coords already in canvas px — no CSS-zoom correction needed
       const{dist:pd,scale:ps,off:po,midX:pmx,midY:pmy}=pinchRef.current;
+      const newDist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
+      const newMidX=(p[0].cx+p[1].cx)/2, newMidY=(p[0].cy+p[1].cy)/2;
       const ratio=newDist/pd;
       const ns=Math.max(0.2,Math.min(10,ps*ratio));
-      // e.clientX and window.innerWidth are both in viewport CSS pixels (unaffected by html zoom).
-      // Do NOT divide by zoom here — the anchor must be in the same space as e.clientX.
-      const vcx=window.innerWidth/2, vcy=window.innerHeight/2;
-      // Offset update: keep the image point under prev midpoint fixed, then pan with midpoint movement
+      const c=canvasRef.current;
+      const vcx=(c?.offsetWidth||300)/2, vcy=(c?.offsetHeight||400)/2;
       const no={
         x:(newMidX-vcx)+(po.x-(pmx-vcx))*ratio,
         y:(newMidY-vcy)+(po.y-(pmy-vcy))*ratio,
       };
-      scaleRef.current=ns; offsetRef.current=no;
-      // Advance pinchRef to this frame so next frame delta is frame-to-frame
+      scaleRef.current=ns; offRef.current=no;
       pinchRef.current={dist:newDist,scale:ns,off:no,midX:newMidX,midY:newMidY};
-      setScaleState(ns); setOffsetState(no);
+      scheduleDraw();
     }
-  };
-  const onPU=(e)=>{
+  },[getXY,scheduleDraw]);
+
+  const onPU=useCallback((e)=>{
     ptrs.current.delete(e.pointerId);
     pinchRef.current=null;
     if(ptrs.current.size===0)dragRef.current=null;
     else if(ptrs.current.size===1){
       const[rem]=[...ptrs.current.values()];
-      dragRef.current={sx:rem.x-offsetRef.current.x,sy:rem.y-offsetRef.current.y};
+      dragRef.current={type:"pan",sx:rem.cx-offRef.current.x,sy:rem.cy-offRef.current.y};
     }
-  };
-  const onWheel=useCallback((e)=>{
-    e.preventDefault();
-    sr(s=>Math.max(0.2,Math.min(10,s*(e.deltaY>0?0.9:1.1))));
   },[]);
-  useEffect(()=>{const el=containerRef.current;if(!el)return;el.addEventListener("wheel",onWheel,{passive:false});return()=>el.removeEventListener("wheel",onWheel);},[onWheel]);
 
-  // ── Crop handle drag (Free mode) ──────────────────────────────────────────
-  // Corner id encodes which axis grows: right=R, bottom=B  → "tl"=!R!B, "tr"=R!B, "bl"=!RB, "br"=RB
-  const onHD=(e,corner)=>{
-    e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    hdRef.current={corner,sx:e.clientX,sy:e.clientY,sw:cwRef.current,sh:chRef.current,sox:coxRef.current,soy:coyRef.current};
-  };
-  const onHM=(e,corner)=>{
-    const h=hdRef.current; if(!h||h.corner!==corner)return;
-    e.stopPropagation();
-    const dx=e.clientX-h.sx, dy=e.clientY-h.sy;
-    const isR=corner==="tr"||corner==="br", isB=corner==="bl"||corner==="br";
-    const nw=Math.max(MIN_CROP,h.sw+(isR?dx:-dx));
-    const nh=Math.max(MIN_CROP,h.sh+(isB?dy:-dy));
-    // Centre of crop box shifts by half the ACTUAL size change in the corner's direction
-    const wDelta=nw-h.sw, hDelta=nh-h.sh;
-    setCW(nw); setCH(nh);
-    setCOX(h.sox+(isR?wDelta:-wDelta)/2);
-    setCOY(h.soy+(isB?hDelta:-hDelta)/2);
-  };
-  const onHU=(e,corner)=>{if(hdRef.current?.corner===corner)hdRef.current=null;};
+  useEffect(()=>{
+    const c=canvasRef.current; if(!c)return;
+    const onWheel=(e)=>{
+      e.preventDefault();
+      scaleRef.current=Math.max(0.2,Math.min(10,scaleRef.current*(e.deltaY>0?0.9:1.1)));
+      scheduleDraw();
+    };
+    c.addEventListener("wheel",onWheel,{passive:false});
+    return()=>c.removeEventListener("wheel",onWheel);
+  },[scheduleDraw]);
 
-  const apply=()=>{
-    if(!natural||!containerRef.current)return;
-    const s=scaleRef.current,off=offsetRef.current;
-    const cw=cwRef.current,ch=chRef.current,cox=coxRef.current,coy=coyRef.current;
-    const canvas=document.createElement("canvas");
-    canvas.width=cw;canvas.height=ch;
-    const ctx=canvas.getContext("2d");
-    const{clientWidth:vW,clientHeight:vH}=containerRef.current;
-    const imgL=vW/2-natural.w*s/2+off.x;
-    const imgT=vH/2-natural.h*s/2+off.y;
-    // Crop box centre in container space includes the offset from centre
-    const boxCX=vW/2+cox, boxCY=vH/2+coy;
-    const srcX=(boxCX-cw/2-imgL)/s, srcY=(boxCY-ch/2-imgT)/s;
-    const img=new Image();
-    img.onload=()=>{ctx.drawImage(img,srcX,srcY,cw/s,ch/s,0,0,cw,ch);onCrop(canvas.toDataURL("image/jpeg",0.85));};
-    img.src=src;
-  };
-
-  const HPAD=22; // half touch-target size for corner handles
-  const cornerDefs=[
-    {id:"tl",pos:{top:-HPAD,left:-HPAD},vis:{borderTop:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"6px 0 0 0"},cursor:"nwse-resize"},
-    {id:"tr",pos:{top:-HPAD,right:-HPAD},vis:{borderTop:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 6px 0 0"},cursor:"nesw-resize"},
-    {id:"bl",pos:{bottom:-HPAD,left:-HPAD},vis:{borderBottom:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"0 0 0 6px"},cursor:"nesw-resize"},
-    {id:"br",pos:{bottom:-HPAD,right:-HPAD},vis:{borderBottom:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 0 6px 0"},cursor:"nwse-resize"},
-  ];
+  // ── Apply crop ────────────────────────────────────────────────────────────
+  const apply=useCallback(()=>{
+    const img=imgRef.current, c=canvasRef.current; if(!img||!c)return;
+    const s=scaleRef.current, off=offRef.current, cr=cropRef.current;
+    const CW=c.offsetWidth||300, CH=c.offsetHeight||400;
+    const imgX=CW/2+off.x-img.naturalWidth*s/2;
+    const imgY=CH/2+off.y-img.naturalHeight*s/2;
+    const srcX=(cr.x-imgX)/s, srcY=(cr.y-imgY)/s;
+    const srcW=cr.w/s, srcH=cr.h/s;
+    const oc=document.createElement("canvas");
+    oc.width=Math.round(cr.w); oc.height=Math.round(cr.h);
+    oc.getContext("2d").drawImage(img,srcX,srcY,srcW,srcH,0,0,cr.w,cr.h);
+    onCrop(oc.toDataURL("image/jpeg",0.85));
+  },[onCrop]);
 
   return createPortal(
     <div style={{position:"fixed",inset:0,background:"#111",zIndex:300,display:"flex",flexDirection:"column"}}>
@@ -6760,40 +6815,12 @@ function PhotoCropModal({src,onCrop,onClose}){
         <button onClick={apply} style={{color:"#778EE3",background:"none",border:"none",fontSize:15,fontWeight:700,cursor:"pointer",padding:0}}>Apply</button>
       </div>
 
-      <div ref={containerRef}
-        style={{flex:1,position:"relative",overflow:"hidden",touchAction:"none",cursor:"grab",userSelect:"none"}}
-        onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPU}>
-        <img src={src} onLoad={onLoad} style={{position:"absolute",opacity:0,pointerEvents:"none",width:1,height:1,top:0,left:0}}/>
-        {natural&&(
-          <img src={src} style={{
-            position:"absolute",left:"50%",top:"50%",
-            width:natural.w*scale,height:natural.h*scale,
-            transform:`translate(calc(-50% + ${offset.x}px),calc(-50% + ${offset.y}px))`,
-            pointerEvents:"none",userSelect:"none",draggable:false
-          }}/>
-        )}
-        {/* Crop overlay — box centre follows cropOX/OY offset */}
-        <div style={{position:"absolute",left:`calc(50% + ${cropOX}px)`,top:`calc(50% + ${cropOY}px)`,width:cropW,height:cropH,transform:"translate(-50%,-50%)",boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",pointerEvents:"none"}}>
-          <div style={{position:"absolute",inset:0,border:"1.5px solid rgba(255,255,255,0.55)",borderRadius:6}}/>
-          {cornerDefs.map(({id,pos,vis,cursor})=>(
-            <div key={id} style={{
-              position:"absolute",...pos,
-              width:HPAD*2,height:HPAD*2,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              pointerEvents:mode==="free"?"all":"none",touchAction:"none",cursor,zIndex:2,
-            }}
-              onPointerDown={mode==="free"?e=>onHD(e,id):undefined}
-              onPointerMove={mode==="free"?e=>onHM(e,id):undefined}
-              onPointerUp={mode==="free"?e=>onHU(e,id):undefined}
-              onPointerCancel={mode==="free"?e=>onHU(e,id):undefined}>
-              <div style={{width:20,height:20,...vis}}/>
-            </div>
-          ))}
-        </div>
-      </div>
+      <canvas ref={canvasRef}
+        style={{flex:1,display:"block",touchAction:"none",userSelect:"none",cursor:"grab"}}
+        onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPU}/>
 
       <div style={{padding:"10px 20px 36px",textAlign:"center",color:"rgba(255,255,255,0.35)",fontSize:12,flexShrink:0}}>
-        {mode==="free"?"Drag corners to resize · Drag image to reposition · Pinch to zoom":"Drag to reposition · Pinch or scroll to zoom"}
+        {mode==="free"?"Drag corners to resize · Drag to reposition · Pinch to zoom":"Drag to reposition · Pinch or scroll to zoom"}
       </div>
     </div>,
     document.body
