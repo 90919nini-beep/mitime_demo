@@ -1135,6 +1135,46 @@ async function applyBgRemoval(dataUrl,outlineFactor=0.030){
       }
     }
 
+    // ── 3c. Shadow removal: flood bg into cast-shadow regions ─────────────
+    // Shadows are darker versions of the background (same chromaticity, lower lum).
+    // Seed from fg pixels adjacent to confirmed bg, then flood inward.
+    const bgLum=0.299*br+0.587*bg_+0.114*bb;
+    if(bgLum>80){ // only worth running on light-ish backgrounds
+      const chromaDist=(r,g,b)=>{
+        const ls=r+g+b||1,lb=br+bg_+bb||1;
+        return Math.abs(r/ls-br/lb)+Math.abs(g/ls-bg_/lb)+Math.abs(b/ls-bb/lb);
+      };
+      const shadowLumT=bgLum*0.82, shadowHueT=0.18;
+      const sq=[];
+      for(let vi=0;vi<W*H;vi++){
+        if(visited[vi]!==2)continue;
+        const x=vi%W,y=(vi/W)|0;
+        let adjBg=false;
+        for(const[dx,dy] of DIRS8){
+          const nx=x+dx,ny=y+dy;
+          if(nx>=0&&nx<W&&ny>=0&&ny<H&&visited[ny*W+nx]===1){adjBg=true;break;}
+        }
+        if(!adjBg)continue;
+        const i=pxI(x,y);
+        if(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]<shadowLumT&&chromaDist(d[i],d[i+1],d[i+2])<shadowHueT){
+          visited[vi]=1;sq.push(x,y);
+        }
+      }
+      let sqi=0;
+      while(sqi<sq.length){
+        const x=sq[sqi++],y=sq[sqi++];
+        for(const[dx,dy] of DIRS8){
+          const nx=x+dx,ny=y+dy;
+          if(nx<0||nx>=W||ny<0||ny>=H)continue;
+          const vi=ny*W+nx;if(visited[vi]!==2)continue;
+          const i=pxI(nx,ny);
+          if(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]<shadowLumT&&chromaDist(d[i],d[i+1],d[i+2])<shadowHueT){
+            visited[vi]=1;sq.push(nx,ny);
+          }
+        }
+      }
+    }
+
     const fgMask=new Uint8Array(W*H);
     for(let vi=0;vi<W*H;vi++) fgMask[vi]=visited[vi]!==1?1:0;
 
@@ -1233,48 +1273,53 @@ async function applyBgRemoval(dataUrl,outlineFactor=0.030){
     }
     wsCtx.putImageData(wsD,0,0);
 
-    // ── 8. Compose sticker: manual dilation outline (works in all browsers) ─
-    // Canvas ctx.filter/blur is silently ignored in some Safari versions,
-    // so we dilate the alpha mask with a prefix-sum separable pass instead.
+    // ── 8. Compose sticker: EDT-based smooth circular outline ──────────────
+    // Uses a Chamfer distance transform (8-connected, two-pass) so the outline
+    // is circular rather than square, with a 1-px anti-aliased outer edge.
+    // Pure JS — no ctx.filter, works in all browsers including older Safari.
     const OW=Math.max(2,Math.round(Math.min(TW,TH)*outlineFactor));
     const PAD=OW+4;
     const FW=TW+PAD*2, FH=TH+PAD*2;
 
-    // Seed mask: opaque pixels of the white silhouette placed at offset (PAD,PAD)
-    const seed=new Uint8Array(FW*FH);
+    // Seed: alpha > 100 pixels of the white silhouette in FW×FH space
+    const edt=new Float32Array(FW*FH).fill(9999);
     for(let y=0;y<TH;y++) for(let x=0;x<TW;x++){
-      if(wsD.data[(y*TW+x)*4+3]>30) seed[(y+PAD)*FW+(x+PAD)]=1;
+      if(wsD.data[(y*TW+x)*4+3]>100) edt[(y+PAD)*FW+(x+PAD)]=0;
     }
 
-    // Horizontal dilation using prefix sums — O(W*H), no inner loop over radius
-    const hDil=new Uint8Array(FW*FH);
-    for(let y=0;y<FH;y++){
-      const ps=new Int32Array(FW+1);
-      for(let x=0;x<FW;x++) ps[x+1]=ps[x]+(seed[y*FW+x]?1:0);
-      for(let x=0;x<FW;x++){
-        if(ps[Math.min(FW,x+OW+1)]-ps[Math.max(0,x-OW)]>0) hDil[y*FW+x]=1;
-      }
+    // Forward pass: top-left → bottom-right
+    for(let y=0;y<FH;y++) for(let x=0;x<FW;x++){
+      const i=y*FW+x; if(edt[i]===0)continue;
+      let m=edt[i];
+      if(x>0)         {const n=edt[i-1]+1;      if(n<m)m=n;}
+      if(y>0)         {const n=edt[i-FW]+1;     if(n<m)m=n;}
+      if(x>0&&y>0)    {const n=edt[i-FW-1]+1.4142;if(n<m)m=n;}
+      if(x<FW-1&&y>0) {const n=edt[i-FW+1]+1.4142;if(n<m)m=n;}
+      edt[i]=m;
     }
-    // Vertical dilation using prefix sums
-    const outMask=new Uint8Array(FW*FH);
-    for(let x=0;x<FW;x++){
-      const ps=new Int32Array(FH+1);
-      for(let y=0;y<FH;y++) ps[y+1]=ps[y]+(hDil[y*FW+x]?1:0);
-      for(let y=0;y<FH;y++){
-        if(ps[Math.min(FH,y+OW+1)]-ps[Math.max(0,y-OW)]>0) outMask[y*FW+x]=1;
-      }
+    // Backward pass: bottom-right → top-left
+    for(let y=FH-1;y>=0;y--) for(let x=FW-1;x>=0;x--){
+      const i=y*FW+x; if(edt[i]===0)continue;
+      let m=edt[i];
+      if(x<FW-1)          {const n=edt[i+1]+1;      if(n<m)m=n;}
+      if(y<FH-1)          {const n=edt[i+FW]+1;     if(n<m)m=n;}
+      if(x<FW-1&&y<FH-1)  {const n=edt[i+FW+1]+1.4142;if(n<m)m=n;}
+      if(x>0&&y<FH-1)     {const n=edt[i+FW-1]+1.4142;if(n<m)m=n;}
+      edt[i]=m;
     }
 
-    // Paint final canvas: white outline, then subject on top
+    // Paint final canvas
     const fcv=document.createElement('canvas');
     fcv.width=FW; fcv.height=FH;
     const fctx=fcv.getContext('2d');
     const outId=fctx.getImageData(0,0,FW,FH);
     for(let i=0;i<FW*FH;i++){
-      if(outMask[i]){
-        outId.data[i*4]=255; outId.data[i*4+1]=255;
-        outId.data[i*4+2]=255; outId.data[i*4+3]=255;
-      }
+      const dv=edt[i];
+      if(dv===0||dv>OW+1)continue; // seed (will be covered) or outside outline
+      // Solid from dist 1 to OW-0.5; smooth anti-aliased falloff in last 1.5px
+      const alpha=dv<OW-0.5?255:Math.max(0,Math.round((OW+1-dv)/1.5*255));
+      outId.data[i*4]=255; outId.data[i*4+1]=255;
+      outId.data[i*4+2]=255; outId.data[i*4+3]=alpha;
     }
     fctx.putImageData(outId,0,0);
     fctx.drawImage(cv,minX,minY,TW,TH,PAD,PAD,TW,TH);
