@@ -2672,12 +2672,20 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   const[panelOpen,setPanelOpen]=useState(false);
   const[numRowDir,setNumRowDir]=useState("bottomToTop"); // "bottomToTop" | "topToBottom"
   const[numColDir,setNumColDir]=useState("leftToRight");  // "leftToRight" | "rightToLeft"
+  const[selMode,setSelMode]=useState(false);
+  const[selRect,setSelRect]=useState(null);   // {x1,y1,x2,y2} grid coords
+  const[placeMode,setPlaceMode]=useState(null); // 'move'|'duplicate'|null
+  const selModeRef=useRef(false);
+  const selStartRef=useRef(null);
+  const selStateRef=useRef({rect:null,clipboard:null,placeMode:null});
+  const applyClipboardRef=useRef(null);
   // Keep live refs in sync so native touch listeners always read current state
   kgZoomRef.current=kgZoom;
   kgPanLiveRef.current=kgPan;
   paintColorRef.current=paintColor;
   eraserRef.current=eraser;
   brushSizeRef.current=brushSize;
+  selModeRef.current=selMode;
   const{t}=useLang();
   const{canvasBg="#FDFAF6"}=useSettings();
 
@@ -2736,8 +2744,8 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
     // Row numbers — right-aligned, vertically centered on each 5th row
     ctx.textAlign="right";ctx.textBaseline="middle";
     for(let yi=0;yi<rows;yi++){const rl=numRowDir==="topToBottom"?yi+1:rows-yi;if(rl%5===0)ctx.fillText(String(rl),ML-4,MT+(yi+0.5)*cellSize);}
-    // Brush preview highlight
-    if(hoverCell){
+    // Brush preview highlight (only when not in select mode)
+    if(hoverCell&&!selModeRef.current){
       const half=Math.floor(brushSize/2);
       ctx.fillStyle=eraser?"rgba(239,68,68,0.18)":"rgba(124,58,237,0.18)";
       ctx.strokeStyle=eraser?"rgba(239,68,68,0.7)":"rgba(124,58,237,0.7)";
@@ -2750,6 +2758,33 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       const bx=Math.max(0,hoverCell.x-half),by=Math.max(0,hoverCell.y-half);
       const bx2=Math.min(cols-1,hoverCell.x+half),by2=Math.min(rows-1,hoverCell.y+half);
       ctx.strokeRect(ML+bx*cellSize,MT+by*cellSize,(bx2-bx+1)*cellSize,(by2-by+1)*cellSize);
+    }
+    // Selection rectangle overlay
+    const sr=selStateRef.current.rect;
+    if(sr){
+      const{x1,y1,x2,y2}=sr;
+      const sw=(x2-x1+1)*cellSize,sh=(y2-y1+1)*cellSize;
+      ctx.fillStyle="rgba(119,142,227,0.18)";
+      ctx.fillRect(ML+x1*cellSize,MT+y1*cellSize,sw,sh);
+      ctx.strokeStyle="#778EE3";ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.strokeRect(ML+x1*cellSize,MT+y1*cellSize,sw,sh);
+      ctx.setLineDash([]);
+    }
+    // Paste ghost preview when in placeMode
+    const scb=selStateRef.current.clipboard;
+    const spm=selStateRef.current.placeMode;
+    if(spm&&scb&&hoverCell&&hoverCell.x>=0&&hoverCell.y>=0){
+      ctx.globalAlpha=0.45;
+      for(let dy=0;dy<scb.h;dy++)
+        for(let dx=0;dx<scb.w;dx++){
+          const v=scb.cells[dy]?.[dx];if(!v)continue;
+          const ty=hoverCell.y+dy,tx=hoverCell.x+dx;
+          if(ty>=0&&ty<rows&&tx>=0&&tx<cols){ctx.fillStyle=v;ctx.fillRect(ML+tx*cellSize,MT+ty*cellSize,cellSize,cellSize);}
+        }
+      ctx.globalAlpha=1;
+      ctx.strokeStyle="#778EE3";ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.strokeRect(ML+hoverCell.x*cellSize,MT+hoverCell.y*cellSize,scb.w*cellSize,scb.h*cellSize);
+      ctx.setLineDash([]);
     }
   },[cols,rows,hoverCell,brushSize,eraser,canvasBg,kgZoom,numRowDir,numColDir]);
 
@@ -2856,6 +2891,88 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
     sync();
   };
 
+  // ── Selection / batch-edit helpers ──
+  const extractCells=r=>{
+    const g=gridRef.current;
+    return Array.from({length:r.y2-r.y1+1},(_,dy)=>
+      Array.from({length:r.x2-r.x1+1},(_,dx)=>g[r.y1+dy]?.[r.x1+dx]??null));
+  };
+  const applyClipboard=dest=>{
+    const cb=selStateRef.current.clipboard;if(!cb||!dest)return;
+    const pm=selStateRef.current.placeMode;
+    pushUndo();
+    const newG=gridRef.current.map(r=>[...r]);
+    if(pm==='move'){
+      for(let dy=0;dy<cb.h;dy++)
+        for(let dx=0;dx<cb.w;dx++){
+          const sy=cb.y1+dy,sx=cb.x1+dx;
+          if(sy>=0&&sy<newG.length&&sx>=0&&sx<(newG[sy]?.length||0))newG[sy][sx]=null;
+        }
+    }
+    for(let dy=0;dy<cb.h;dy++)
+      for(let dx=0;dx<cb.w;dx++){
+        const v=cb.cells[dy]?.[dx];if(!v)continue;
+        const ty=dest.y+dy,tx=dest.x+dx;
+        if(ty>=0&&ty<newG.length&&tx>=0&&tx<(newG[ty]?.length||0))newG[ty][tx]=v;
+      }
+    gridRef.current=newG;onGridChange&&onGridChange(newG.map(r=>[...r]));
+    setPlaceMode(null);selStateRef.current.placeMode=null;
+    setSelRect(null);selStateRef.current.rect=null;
+    selStateRef.current.clipboard=null;
+    setHoverCell(null);draw();
+  };
+  applyClipboardRef.current=applyClipboard;
+  const handleSelMove=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    const cells=extractCells(r);
+    const cb={cells,w:r.x2-r.x1+1,h:r.y2-r.y1+1,x1:r.x1,y1:r.y1};
+    selStateRef.current.clipboard=cb;selStateRef.current.placeMode='move';
+    setPlaceMode('move');draw();
+  };
+  const handleSelDuplicate=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    const cells=extractCells(r);
+    const cb={cells,w:r.x2-r.x1+1,h:r.y2-r.y1+1,x1:r.x1,y1:r.y1};
+    selStateRef.current.clipboard=cb;selStateRef.current.placeMode='duplicate';
+    setPlaceMode('duplicate');draw();
+  };
+  const handleSelFlipH=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    pushUndo();
+    const newG=gridRef.current.map(row=>[...row]);
+    const cells=extractCells(r);
+    const flipped=cells.map(row=>[...row].reverse());
+    for(let dy=0;dy<flipped.length;dy++)
+      for(let dx=0;dx<flipped[dy].length;dx++)newG[r.y1+dy][r.x1+dx]=flipped[dy][dx];
+    gridRef.current=newG;onGridChange&&onGridChange(newG.map(row=>[...row]));draw();
+  };
+  const handleSelFlipV=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    pushUndo();
+    const newG=gridRef.current.map(row=>[...row]);
+    const cells=extractCells(r);
+    const flipped=[...cells].reverse();
+    for(let dy=0;dy<flipped.length;dy++)
+      for(let dx=0;dx<flipped[dy].length;dx++)newG[r.y1+dy][r.x1+dx]=flipped[dy][dx];
+    gridRef.current=newG;onGridChange&&onGridChange(newG.map(row=>[...row]));draw();
+  };
+  const handleSelDelete=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    pushUndo();
+    const newG=gridRef.current.map(row=>[...row]);
+    for(let dy=r.y1;dy<=r.y2;dy++)
+      for(let dx=r.x1;dx<=r.x2;dx++)
+        if(dy>=0&&dy<newG.length&&dx>=0&&dx<(newG[dy]?.length||0))newG[dy][dx]=null;
+    gridRef.current=newG;onGridChange&&onGridChange(newG.map(row=>[...row]));
+    setSelRect(null);selStateRef.current.rect=null;draw();
+  };
+  const clearSel=()=>{
+    setSelRect(null);selStateRef.current.rect=null;
+    setPlaceMode(null);selStateRef.current.placeMode=null;
+    selStateRef.current.clipboard=null;
+    selStartRef.current=null;draw();
+  };
+
   const handleImgApply=(newGrid,newCols,newRows,savedState)=>{
     pushUndo();
     gridRef.current=newGrid;
@@ -2901,6 +3018,13 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       }
       if(changed)drawRef.current&&drawRef.current();
     };
+    const getCellT=t=>{
+      const c=canvasRef.current;if(!c)return{x:-1,y:-1};
+      const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+      const sx=(c.width/dpr)/r.width,sy=(c.height/dpr)/r.height;
+      const{cellSize,ML,MT}=GM.current;
+      return{x:Math.floor(((t.clientX-r.left)*sx-ML)/cellSize),y:Math.floor(((t.clientY-r.top)*sy-MT)/cellSize)};
+    };
     const onTS=e=>{
       if(e.touches.length>=2){
         e.preventDefault();painting.current=false;
@@ -2912,9 +3036,21 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
         kgPanRef.current={sx:(t0.clientX+t1.clientX)/2,sy:(t0.clientY+t1.clientY)/2,px:kgPanLiveRef.current.x,py:kgPanLiveRef.current.y};
       } else if(e.touches.length===1){
         e.preventDefault();
-        painting.current=true;
-        paintBlockTouch(e.touches[0]);
         kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;
+        if(selModeRef.current){
+          if(selStateRef.current.placeMode&&selStateRef.current.clipboard){
+            // touch end will handle placement
+          } else {
+            const c=getCellT(e.touches[0]);
+            selStartRef.current=c;
+            const nr={x1:c.x,y1:c.y,x2:c.x,y2:c.y};
+            selStateRef.current.rect=nr;setSelRect(nr);
+            drawRef.current&&drawRef.current();
+          }
+        } else {
+          painting.current=true;
+          paintBlockTouch(e.touches[0]);
+        }
       }
     };
     const onTM=e=>{
@@ -2929,16 +3065,36 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
         const panDy=kgPanRef.current?midY-kgPanRef.current.sy:0;
         setKgZoom(nz);
         setKgPan({x:mx*(1-nz/sz)+sp.x*nz/sz+panDx,y:my*(1-nz/sz)+sp.y*nz/sz+panDy});
-      } else if(e.touches.length===1&&painting.current){
-        e.preventDefault();
-        paintBlockTouch(e.touches[0]);
+      } else if(e.touches.length===1){
+        if(selModeRef.current){
+          e.preventDefault();
+          const c=getCellT(e.touches[0]);
+          if(selStateRef.current.placeMode){
+            setHoverCell(c.x>=0&&c.y>=0?c:null);
+          } else if(selStartRef.current){
+            const s=selStartRef.current;
+            const nr={x1:Math.min(s.x,c.x),y1:Math.min(s.y,c.y),x2:Math.max(s.x,c.x),y2:Math.max(s.y,c.y)};
+            selStateRef.current.rect=nr;setSelRect(nr);
+          }
+          drawRef.current&&drawRef.current();
+        } else if(painting.current){
+          e.preventDefault();
+          paintBlockTouch(e.touches[0]);
+        }
       }
     };
     const onTE=e=>{
       if(e.touches.length<2){kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;}
-      if(e.touches.length===0&&painting.current){painting.current=false;const g=gridRef.current;if(typeof onGridChange==='function')onGridChange(g.map(r=>[...r]));}
+      if(e.touches.length===0){
+        if(selModeRef.current&&selStateRef.current.placeMode&&selStateRef.current.clipboard&&e.changedTouches.length>0){
+          const c=getCellT(e.changedTouches[0]);
+          if(c.x>=0&&c.y>=0)applyClipboardRef.current&&applyClipboardRef.current(c);
+        }
+        selStartRef.current=null;
+        if(painting.current){painting.current=false;const g=gridRef.current;if(typeof onGridChange==='function')onGridChange(g.map(r=>[...r]));}
+      }
     };
-    const onTC=()=>{kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;painting.current=false;};
+    const onTC=()=>{kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;painting.current=false;selStartRef.current=null;};
     cv.addEventListener("touchstart",onTS,{passive:false});
     cv.addEventListener("touchmove",onTM,{passive:false});
     cv.addEventListener("touchend",onTE);
@@ -2963,9 +3119,14 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
         ))}
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         {/* Eraser */}
-        <button onClick={()=>setEraser(v=>!v)} title={t.eraser}
+        <button onClick={()=>{setEraser(v=>!v);if(selMode){setSelMode(false);clearSel();}}} title={t.eraser}
           style={{width:26,height:26,borderRadius:6,border:eraser?"1.5px solid #EF4444":"1.5px solid var(--border)",background:eraser?"var(--bg-subtle)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={eraser?"#EF4444":"var(--text-secondary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l11-11 7 7-1 8z"/><path d="M6.5 17.5l4-4"/></svg>
+        </button>
+        {/* Select tool */}
+        <button onClick={()=>{const ns=!selMode;setSelMode(ns);if(ns){setEraser(false);}else{clearSel();}}} title="Select"
+          style={{width:26,height:26,borderRadius:6,border:selMode?"1.5px solid #778EE3":"1.5px solid var(--border)",background:selMode?"var(--accent-soft)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={selMode?"#778EE3":"var(--text-secondary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
         </button>
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         {/* Undo / Redo */}
@@ -3017,29 +3178,63 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       {showImgTool&&<ImageToPatternModal initCols={cols} initRows={rows} initialState={imgState} yarnColors={yarnColors} onApply={handleImgApply} onClose={()=>setShowImgTool(false)}/>}
       <div style={{flex:1,minHeight:0,position:"relative",display:"flex",flexDirection:"column"}}>
         <div ref={containerRef} style={{flex:1,minHeight:0,background:canvasBg,display:"flex",justifyContent:"center",alignItems:"center",overflow:"hidden",touchAction:"none"}}>
-          <canvas ref={canvasRef} style={{display:"block",cursor:"crosshair",transform:`translate(${kgPan.x}px,${kgPan.y}px) scale(${kgZoom})`,transformOrigin:"center center"}}
-            onMouseDown={e=>{painting.current=true;pushUndo();paintBlock(e);}}
+          <canvas ref={canvasRef} style={{display:"block",cursor:selMode?(placeMode?"copy":"crosshair"):"crosshair",transform:`translate(${kgPan.x}px,${kgPan.y}px) scale(${kgZoom})`,transformOrigin:"center center"}}
+            onMouseDown={e=>{
+              if(selModeRef.current){
+                if(selStateRef.current.placeMode&&selStateRef.current.clipboard){const c=getCell(e);if(c.x>=0&&c.y>=0)applyClipboard(c);}
+                else{const c=getCell(e);if(c.x<0||c.y<0)return;selStartRef.current=c;const nr={x1:c.x,y1:c.y,x2:c.x,y2:c.y};selStateRef.current.rect=nr;setSelRect(nr);draw();}
+                return;
+              }
+              painting.current=true;pushUndo();paintBlock(e);
+            }}
             onMouseMove={e=>{
-              const cell=getCell(e);setHoverCell(cell.x>=0&&cell.y>=0?cell:null);
+              const cell=getCell(e);
+              setHoverCell(cell.x>=0&&cell.x<cols&&cell.y>=0&&cell.y<rows?cell:null);
+              if(selModeRef.current){
+                if(!selStateRef.current.placeMode&&selStartRef.current){
+                  const s=selStartRef.current;
+                  const nr={x1:Math.min(s.x,cell.x),y1:Math.min(s.y,cell.y),x2:Math.max(s.x,cell.x),y2:Math.max(s.y,cell.y)};
+                  selStateRef.current.rect=nr;setSelRect(nr);
+                  draw();
+                }
+                return;
+              }
               if(painting.current)paintBlock(e);
             }}
-            onMouseUp={()=>{painting.current=false;sync();}}
-            onMouseLeave={()=>{painting.current=false;setHoverCell(null);sync();}}/>
+            onMouseUp={e=>{if(selModeRef.current){selStartRef.current=null;return;}painting.current=false;sync();}}
+            onMouseLeave={e=>{if(selModeRef.current){selStartRef.current=null;setHoverCell(null);draw();return;}painting.current=false;setHoverCell(null);sync();}}/>
         </div>
+        {/* ── Selection floating action bar ── */}
+        {selMode&&selRect&&(
+          <div style={{position:"absolute",bottom:`calc(80px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:25,display:"flex",alignItems:"center",gap:5,background:"rgba(255,255,255,0.96)",borderRadius:18,padding:"7px 12px",boxShadow:"0 2px 16px rgba(0,0,0,0.16)",backdropFilter:"blur(8px)",flexWrap:"nowrap",whiteSpace:"nowrap"}}>
+            {!placeMode&&<>
+              <button onClick={handleSelMove} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer"}}>Move</button>
+              <button onClick={handleSelDuplicate} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer"}}>Duplicate</button>
+              <button onClick={handleSelFlipH} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Flip H</button>
+              <button onClick={handleSelFlipV} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Flip V</button>
+              <button onClick={handleSelDelete} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #EF4444",background:"rgba(239,68,68,0.08)",color:"#EF4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>Delete</button>
+              <button onClick={clearSel} style={{width:26,height:26,borderRadius:999,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </>}
+            {placeMode&&<>
+              <span style={{fontSize:11,fontWeight:600,color:"var(--text-secondary)"}}>Tap destination cell</span>
+              <button onClick={()=>{setPlaceMode(null);selStateRef.current.placeMode=null;selStateRef.current.clipboard=null;draw();}} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Cancel</button>
+            </>}
+          </div>
+        )}
         <div style={{flexShrink:0,padding:"8px 16px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-page)"}}>
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-          <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Cols</span>
-          <input type="range" min="5" max="120" value={cols}
-            onChange={e=>resizeCols(Number(e.target.value))}
-            onPointerDown={onResizeStart} onPointerUp={onResizeCommit}
-            style={{flex:1,minWidth:80}}/>
-          <span style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",minWidth:22,textAlign:"right"}}>{cols}</span>
-          <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Rows</span>
-          <input type="range" min="5" max="120" value={rows}
-            onChange={e=>resizeRows(Number(e.target.value))}
-            onPointerDown={onResizeStart} onPointerUp={onResizeCommit}
-            style={{flex:1,minWidth:80}}/>
-          <span style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",minWidth:22,textAlign:"right"}}>{rows}</span>
+        <div style={{display:"flex",gap:10,alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Cols</span>
+            <button onClick={()=>{onResizeStart();resizeCols(Math.max(5,cols-1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",minWidth:30,textAlign:"center"}}>{cols}</span>
+            <button onClick={()=>{onResizeStart();resizeCols(Math.min(120,cols+1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Rows</span>
+            <button onClick={()=>{onResizeStart();resizeRows(Math.max(5,rows-1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",minWidth:30,textAlign:"center"}}>{rows}</span>
+            <button onClick={()=>{onResizeStart();resizeRows(Math.min(120,rows+1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+          </div>
         </div>
         <div style={{fontSize:10,color:"#9CA3AF",marginTop:4}}>
           {cols*rows>4000?<span style={{color:"#D97706"}}>Large grid — may affect performance. </span>:null}
@@ -5707,7 +5902,7 @@ function DraftCard({icon,title,subtitle,onContinue,onDiscard}){
   );
 }
 
-function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress}){
+function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress,currentCell,onSaveCurrentCell}){
   useBodyScrollLock();
   const[rowIdx,setRowIdx]=useState(()=>{
     const rl=[...new Set((pattern?.crochetStitches||[]).map(s=>Math.round(s.y)))].sort((a,b)=>b-a);
@@ -5762,7 +5957,7 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   const cumRowStitchCount=rowLevels.slice(0,rowIdx+1).reduce((s,y)=>s+stitches.filter(st=>Math.round(st.y)===y).length,0);
 
   if(pattern.type==="knit"&&!pattern.knitStitches?.length){
-    return createPortal(<KnitReadChart grid={pattern.grid||[]} onBack={onClose} progressMarker={pattern.progressMarker??null} onSaveProgress={onSaveProgress} rowNotes={pattern?.rowNotes||{}} onSaveRowNotes={onSaveRowNotes}/>,document.body);
+    return createPortal(<KnitReadChart grid={pattern.grid||[]} onBack={onClose} progressMarker={pattern.progressMarker??null} onSaveProgress={onSaveProgress} rowNotes={pattern?.rowNotes||{}} onSaveRowNotes={onSaveRowNotes} currentCell={pattern.currentCell??null} onSaveCurrentCell={onSaveCurrentCell}/>,document.body);
   }
   if(pattern.type==="knit"&&pattern.knitStitches?.length){
     return createPortal(
@@ -6028,7 +6223,7 @@ function Card({project,patterns=[],onDelete,onEdit,onPickPattern,onAddPart,onRem
   },[project.pattern]);
 
   return(<>
-    {showPatternView&&project.pattern&&<PatternViewModal pattern={project.pattern} notes={project.notes} onClose={()=>setShowPatternView(false)} onSaveRowNotes={onUpdatePattern?(rn=>onUpdatePattern({...project.pattern,rowNotes:rn})):undefined} onSaveProgress={onUpdatePattern?(idx=>onUpdatePattern({...project.pattern,progressMarker:idx})):undefined}/>}
+    {showPatternView&&project.pattern&&<PatternViewModal pattern={project.pattern} notes={project.notes} onClose={()=>setShowPatternView(false)} onSaveRowNotes={onUpdatePattern?(rn=>onUpdatePattern({...project.pattern,rowNotes:rn})):undefined} onSaveProgress={onUpdatePattern?(idx=>onUpdatePattern({...project.pattern,progressMarker:idx})):undefined} currentCell={project.pattern.currentCell??null} onSaveCurrentCell={onUpdatePattern?(cc=>onUpdatePattern({...project.pattern,currentCell:cc})):undefined}/>}
     {viewingPartPattern&&<PatternViewModal pattern={viewingPartPattern.data} notes={""} onClose={()=>setViewingPartPattern(null)} onSaveProgress={onSavePartProgress?(idx=>onSavePartProgress(viewingPartPattern.partId,idx)):undefined}/>}
     {showAddPartPicker&&createPortal(<PickPatternModal patterns={patterns} onClose={()=>setShowAddPartPicker(false)} onPick={pat=>{setAddPartLinkedId(pat.id);setAddPartLinkedName(pat.name);setShowAddPartPicker(false);}}/>,document.body)}
     <div className="shadow-card" style={{background:"var(--bg-card)",borderRadius:24,overflow:"hidden",width:"100%"}}>
@@ -7478,7 +7673,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
 }
 
 /* ── Color Grid Read Chart ── */
-function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes}){
+function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,currentCell=null,onSaveCurrentCell}){
   const{canvasBg="#FDFAF6"}=useSettings();
   const rows=grid.length;
   const[pinToast,setPinToast]=useState(null);
@@ -7489,6 +7684,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   const[activeRow,setActiveRow]=useState(()=>progressMarker!=null&&progressMarker>=0&&progressMarker<grid.length?progressMarker:null);
   const[savedMarker,setSavedMarker]=useState(progressMarker!=null&&progressMarker>=0&&progressMarker<grid.length?progressMarker:null);
   const[localNotes,setLocalNotes]=useState(rowNotes);
+  const[localCurrentCell,setLocalCurrentCell]=useState(currentCell);
   const[krcNoteOpen,setKrcNoteOpen]=useState(false);
   const[krcNoteEdit,setKrcNoteEdit]=useState("");
   const[pan,setPan]=useState({x:0,y:0});
@@ -7608,7 +7804,21 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
       ctx.fillStyle="#059669";ctx.globalAlpha=1;
       ctx.beginPath();ctx.moveTo(2,cy-5);ctx.lineTo(12,cy);ctx.lineTo(2,cy+5);ctx.fill();
     }
-  },[grid,rows,cols,scale,activeRow,canvasBg,savedMarker]);
+    // Cell progress marker — amber ring on exact cell
+    if(localCurrentCell){
+      const{x:mx,y:my}=localCurrentCell;
+      if(mx>=0&&mx<cols&&my>=0&&my<rows){
+        const ccx=ML+(mx+0.5)*cellSize,ccy=MT+(my+0.5)*cellSize;
+        const cr=Math.max(3,cellSize*0.36);
+        ctx.strokeStyle="#F59E0B";ctx.lineWidth=Math.max(1.5,cellSize*0.12);
+        ctx.setLineDash([]);ctx.globalAlpha=0.92;
+        ctx.beginPath();ctx.arc(ccx,ccy,cr,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle="#F59E0B";ctx.globalAlpha=0.7;
+        ctx.beginPath();ctx.arc(ccx,ccy,Math.max(1.5,cr*0.32),0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha=1;
+      }
+    }
+  },[grid,rows,cols,scale,activeRow,canvasBg,savedMarker,localCurrentCell]);
 
   useLayoutEffect(()=>{draw();},[draw]);
 
@@ -7633,7 +7843,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     setGrabbing(false);
   },[]);
 
-  /* ── Row selection on click (suppressed after pan drag) ── */
+  /* ── Row selection + cell progress marker on click ── */
   const handleClick=useCallback(e=>{
     if(suppressClick.current){suppressClick.current=false;return;}
     const c=canvasRef.current,cont=containerRef.current;if(!c||!cont)return;
@@ -7641,11 +7851,20 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     const base=Math.min((cont.clientWidth-ML-MR)/Math.max(cols,1),(cont.clientHeight-MT-MB)/Math.max(rows,1));
     const cellSize=Math.max(4,base)*scale;
     const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+    const rx=(e.clientX-r.left)*(c.width/dpr)/r.width;
     const ry=(e.clientY-r.top)*(c.height/dpr)/r.height;
+    const x=Math.floor((rx-ML)/cellSize);
     const y=Math.floor((ry-MT)/cellSize);
     if(y<0||y>=rows)return;
     setActiveRow(prev=>prev===y?null:y);
-  },[cols,rows,scale]);
+    // Cell progress marker: tap cell to set; tap same cell to clear
+    if(onSaveCurrentCell&&x>=0&&x<cols){
+      const isMarked=localCurrentCell&&localCurrentCell.x===x&&localCurrentCell.y===y;
+      const next=isMarked?null:{x,y};
+      setLocalCurrentCell(next);
+      onSaveCurrentCell(next);
+    }
+  },[cols,rows,scale,localCurrentCell,onSaveCurrentCell]);
 
   /* ── Row navigation buttons ── */
   // [+] = higher row number (move up, y-1); [−] = lower row number (move down, y+1)
@@ -7701,14 +7920,23 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
             <div style={{height:"100%",width:`${((rows-activeRow)/rows)*100}%`,background:"#778EE3",borderRadius:99,transition:"width 0.35s ease"}}/>
           </div>
         )}
-        {onSaveRowNotes&&displayRow!==null&&(
+        {(onSaveRowNotes&&displayRow!==null||localCurrentCell&&onSaveCurrentCell)&&(
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:activeRow!==null?0:0}}>
-            <button onClick={()=>{setKrcNoteEdit(localNotes[String(displayRow)]||"");setKrcNoteOpen(true);}}
-              style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
-                background:(localNotes[String(displayRow)]||"").trim()?"rgba(245,158,11,0.12)":"#FEF9EC",
-                color:"#92400e",fontSize:11,fontWeight:700}}>
-              ✎ {(localNotes[String(displayRow)]||"").trim()?`Row ${displayRow} note`:"+ row note"}
-            </button>
+            {onSaveRowNotes&&displayRow!==null&&(
+              <button onClick={()=>{setKrcNoteEdit(localNotes[String(displayRow)]||"");setKrcNoteOpen(true);}}
+                style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+                  background:(localNotes[String(displayRow)]||"").trim()?"rgba(245,158,11,0.12)":"#FEF9EC",
+                  color:"#92400e",fontSize:11,fontWeight:700}}>
+                ✎ {(localNotes[String(displayRow)]||"").trim()?`Row ${displayRow} note`:"+ row note"}
+              </button>
+            )}
+            {localCurrentCell&&onSaveCurrentCell&&(
+              <button onClick={()=>{setLocalCurrentCell(null);onSaveCurrentCell(null);}}
+                style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+                  background:"rgba(245,158,11,0.1)",color:"#92400E",fontSize:11,fontWeight:700}}>
+                ✕ Clear marker
+              </button>
+            )}
           </div>
         )}
       </div>
