@@ -6609,14 +6609,14 @@ function PhotoCropModal({src,onCrop,onClose}){
   const rafRef=useRef(null);
 
   // ── Coordinate helper — same trick as CropTool ────────────────────────────
-  // getBoundingClientRect gives viewport px; canvas.width/dpr gives layout px.
-  // Their ratio = 1/cssZoom, so multiplying by it converts e.clientX → canvas px.
+  // getBoundingClientRect gives viewport px; offsetWidth gives CSS layout px.
+  // Their ratio = 1/cssZoom, converting e.clientX → canvas layout px.
+  // Using offsetWidth (not c.width/dpr) so this works before the first RAF draw.
   const getXY=useCallback((e)=>{
     const c=canvasRef.current; if(!c)return{cx:0,cy:0};
     const rect=c.getBoundingClientRect();
-    const dpr=window.devicePixelRatio||1;
-    const sx=(c.width/dpr)/rect.width, sy=(c.height/dpr)/rect.height;
-    return{cx:(e.clientX-rect.left)*sx, cy:(e.clientY-rect.top)*sy};
+    const cw=c.offsetWidth||rect.width, ch=c.offsetHeight||rect.height;
+    return{cx:(e.clientX-rect.left)*cw/rect.width, cy:(e.clientY-rect.top)*ch/rect.height};
   },[]);
 
   // ── Canvas draw ───────────────────────────────────────────────────────────
@@ -6716,8 +6716,16 @@ function PhotoCropModal({src,onCrop,onClose}){
     }else if(ptrs.current.size===2){
       dragRef.current=null;
       const p=[...ptrs.current.values()];
-      const dist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
-      pinchRef.current={dist,scale:scaleRef.current,off:{...offRef.current},midX:(p[0].cx+p[1].cx)/2,midY:(p[0].cy+p[1].cy)/2};
+      const rawDist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
+      // Use at least 30px as reference so fingers very close at start don't
+      // produce a huge ratio on the first onPM.
+      pinchRef.current={
+        dist:Math.max(rawDist,30),
+        scale:scaleRef.current,
+        off:{...offRef.current},
+        midX:(p[0].cx+p[1].cx)/2,
+        midY:(p[0].cy+p[1].cy)/2,
+      };
     }
   },[getXY,getHandle]);
 
@@ -6745,20 +6753,21 @@ function PhotoCropModal({src,onCrop,onClose}){
       }
       scheduleDraw();
     }else if(p.length===2&&pinchRef.current){
-      // Per-frame pinch: all coords already in canvas px — no CSS-zoom correction needed
-      const{dist:pd,scale:ps,off:po,midX:pmx,midY:pmy}=pinchRef.current;
+      // Absolute pinch: always compare to the INITIAL state stored at onPD.
+      // pinchRef is NEVER updated mid-gesture so there is no stale-frame ratio issue.
+      const{dist:initDist,scale:initScale,off:initOff,midX:initMx,midY:initMy}=pinchRef.current;
       const newDist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
       const newMidX=(p[0].cx+p[1].cx)/2, newMidY=(p[0].cy+p[1].cy)/2;
-      const ratio=newDist/pd;
-      const ns=Math.max(0.2,Math.min(10,ps*ratio));
+      const ratio=newDist/initDist; // always stable: initDist ≥ 30px
+      const ns=Math.max(0.2,Math.min(10,initScale*ratio));
       const c=canvasRef.current;
       const vcx=(c?.offsetWidth||300)/2, vcy=(c?.offsetHeight||400)/2;
+      // Keep the image point that was under initMid fixed, then translate with midpoint movement
       const no={
-        x:(newMidX-vcx)+(po.x-(pmx-vcx))*ratio,
-        y:(newMidY-vcy)+(po.y-(pmy-vcy))*ratio,
+        x:(newMidX-vcx)+(initOff.x-(initMx-vcx))*ratio,
+        y:(newMidY-vcy)+(initOff.y-(initMy-vcy))*ratio,
       };
       scaleRef.current=ns; offRef.current=no;
-      pinchRef.current={dist:newDist,scale:ns,off:no,midX:newMidX,midY:newMidY};
       scheduleDraw();
     }
   },[getXY,scheduleDraw]);
