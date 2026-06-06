@@ -6586,255 +6586,6 @@ function FormField({label,req,children}){
 }
 
 /* ─── Add Yarn to Library Modal ────────────────────────────────────────────── */
-/* ── Shared Photo Crop Modal (Free / 1:1) ── */
-function PhotoCropModal({src,onCrop,onClose}){
-  const MAXDIM=260;
-  const MIN_CROP=60;
-  const HIT=22; // corner handle hit radius in canvas px
-  const canvasRef=useRef(null);
-  const imgRef=useRef(null);       // loaded Image element
-  const modeRef=useRef("1:1");
-  const[mode,setMode]=useState("1:1");
-
-  // All state in refs — no React re-renders needed for animation
-  const scaleRef=useRef(1);
-  const offRef=useRef({x:0,y:0}); // image centre offset from canvas centre (canvas px)
-  const cropRef=useRef({x:0,y:0,w:MAXDIM,h:MAXDIM}); // crop box in canvas px (absolute)
-
-  // Gesture tracking — positions stored in canvas px via getXY
-  const ptrs=useRef(new Map());
-  const dragRef=useRef(null);  // {type:"pan"|"handle", ...}
-  const pinchRef=useRef(null); // per-frame state: {dist,scale,off,midX,midY}
-
-  const rafRef=useRef(null);
-
-  // ── Coordinate helper — same trick as CropTool ────────────────────────────
-  // getBoundingClientRect gives viewport px; offsetWidth gives CSS layout px.
-  // Their ratio = 1/cssZoom, converting e.clientX → canvas layout px.
-  // Using offsetWidth (not c.width/dpr) so this works before the first RAF draw.
-  const getXY=useCallback((e)=>{
-    const c=canvasRef.current; if(!c)return{cx:0,cy:0};
-    const rect=c.getBoundingClientRect();
-    const cw=c.offsetWidth||rect.width, ch=c.offsetHeight||rect.height;
-    return{cx:(e.clientX-rect.left)*cw/rect.width, cy:(e.clientY-rect.top)*ch/rect.height};
-  },[]);
-
-  // ── Canvas draw ───────────────────────────────────────────────────────────
-  const scheduleDraw=useCallback(()=>{
-    if(rafRef.current)cancelAnimationFrame(rafRef.current);
-    rafRef.current=requestAnimationFrame(()=>{
-      rafRef.current=null;
-      const c=canvasRef.current, img=imgRef.current; if(!c||!img)return;
-      const dpr=window.devicePixelRatio||1;
-      const CW=c.offsetWidth||300, CH=c.offsetHeight||400;
-      c.width=Math.round(CW*dpr); c.height=Math.round(CH*dpr);
-      const ctx=c.getContext("2d");
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-
-      const s=scaleRef.current, off=offRef.current, cr=cropRef.current;
-      const iw=img.naturalWidth*s, ih=img.naturalHeight*s;
-      const imgX=CW/2+off.x-iw/2, imgY=CH/2+off.y-ih/2;
-
-      // Background + image
-      ctx.fillStyle="#111"; ctx.fillRect(0,0,CW,CH);
-      ctx.drawImage(img,imgX,imgY,iw,ih);
-
-      // Dark overlay outside crop (even-odd = punches hole for crop box)
-      ctx.fillStyle="rgba(0,0,0,0.55)";
-      ctx.beginPath(); ctx.rect(0,0,CW,CH); ctx.rect(cr.x,cr.y,cr.w,cr.h);
-      ctx.fill("evenodd");
-
-      // Crop border
-      ctx.strokeStyle="rgba(255,255,255,0.55)"; ctx.lineWidth=1.5;
-      ctx.strokeRect(cr.x+0.75,cr.y+0.75,cr.w-1.5,cr.h-1.5);
-
-      // Corner brackets
-      const BL=18; ctx.strokeStyle="white"; ctx.lineWidth=2.5; ctx.lineCap="square";
-      for(const[bx,by,dx,dy]of[[cr.x,cr.y,1,1],[cr.x+cr.w,cr.y,-1,1],[cr.x,cr.y+cr.h,1,-1],[cr.x+cr.w,cr.y+cr.h,-1,-1]]){
-        ctx.beginPath(); ctx.moveTo(bx+dx*BL,by); ctx.lineTo(bx,by); ctx.lineTo(bx,by+dy*BL); ctx.stroke();
-      }
-
-      // Rule-of-thirds guides
-      ctx.strokeStyle="rgba(255,255,255,0.18)"; ctx.lineWidth=0.5;
-      for(let i=1;i<3;i++){
-        ctx.beginPath(); ctx.moveTo(cr.x+i*cr.w/3,cr.y); ctx.lineTo(cr.x+i*cr.w/3,cr.y+cr.h); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cr.x,cr.y+i*cr.h/3); ctx.lineTo(cr.x+cr.w,cr.y+i*cr.h/3); ctx.stroke();
-      }
-    });
-  },[]);
-
-  // ── Init / mode change ────────────────────────────────────────────────────
-  const initView=useCallback((nw,nh,m,CW,CH)=>{
-    const cW=m==="1:1"?MAXDIM:nw>=nh?MAXDIM:Math.round(MAXDIM*nw/nh);
-    const cH=m==="1:1"?MAXDIM:nh>=nw?MAXDIM:Math.round(MAXDIM*nh/nw);
-    cropRef.current={x:CW/2-cW/2, y:CH/2-cH/2, w:cW, h:cH};
-    scaleRef.current=Math.max(cW/nw,cH/nh);
-    offRef.current={x:0,y:0};
-  },[]);
-
-  useEffect(()=>{
-    const img=new Image(); img.crossOrigin="anonymous";
-    img.onload=()=>{
-      imgRef.current=img;
-      const c=canvasRef.current;
-      if(c) initView(img.naturalWidth,img.naturalHeight,"1:1",c.offsetWidth||300,c.offsetHeight||400);
-      scheduleDraw();
-    };
-    img.src=src;
-  },[src]);
-
-  useEffect(()=>{
-    modeRef.current=mode;
-    const img=imgRef.current, c=canvasRef.current; if(!img||!c)return;
-    initView(img.naturalWidth,img.naturalHeight,mode,c.offsetWidth||300,c.offsetHeight||400);
-    scheduleDraw();
-  },[mode]);
-
-  // ── Corner hit test ───────────────────────────────────────────────────────
-  const getHandle=useCallback((cx,cy)=>{
-    if(modeRef.current!=="free")return null;
-    const cr=cropRef.current;
-    for(const[id,hx,hy]of[["tl",cr.x,cr.y],["tr",cr.x+cr.w,cr.y],["bl",cr.x,cr.y+cr.h],["br",cr.x+cr.w,cr.y+cr.h]]){
-      if(Math.hypot(hx-cx,hy-cy)<HIT)return id;
-    }
-    return null;
-  },[]);
-
-  // ── Pointer handlers ──────────────────────────────────────────────────────
-  const onPD=useCallback((e)=>{
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const{cx,cy}=getXY(e);
-    ptrs.current.set(e.pointerId,{cx,cy});
-    if(ptrs.current.size===1){
-      pinchRef.current=null;
-      const handle=getHandle(cx,cy);
-      if(handle){
-        dragRef.current={type:"handle",handle,sx:cx,sy:cy,origCrop:{...cropRef.current}};
-      }else{
-        dragRef.current={type:"pan",sx:cx-offRef.current.x,sy:cy-offRef.current.y};
-      }
-    }else if(ptrs.current.size===2){
-      dragRef.current=null;
-      const p=[...ptrs.current.values()];
-      const rawDist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
-      // Use at least 30px as reference so fingers very close at start don't
-      // produce a huge ratio on the first onPM.
-      pinchRef.current={
-        dist:Math.max(rawDist,30),
-        scale:scaleRef.current,
-        off:{...offRef.current},
-        midX:(p[0].cx+p[1].cx)/2,
-        midY:(p[0].cy+p[1].cy)/2,
-      };
-    }
-  },[getXY,getHandle]);
-
-  const onPM=useCallback((e)=>{
-    const{cx,cy}=getXY(e);
-    ptrs.current.set(e.pointerId,{cx,cy});
-    const p=[...ptrs.current.values()];
-
-    if(p.length===1&&dragRef.current){
-      const d=dragRef.current;
-      if(d.type==="pan"){
-        offRef.current={x:cx-d.sx, y:cy-d.sy};
-      }else if(d.type==="handle"){
-        // Opposite corner is fixed; dragged corner follows finger
-        const{handle:h,sx,sy,origCrop:oc}=d;
-        const dx=cx-sx, dy=cy-sy;
-        let{x,y,w,ww}={x:oc.x,y:oc.y,w:oc.w,ww:oc.h};
-        if(h==="tl"){x=oc.x+dx;y=oc.y+dy;w=oc.w-dx;ww=oc.h-dy;}
-        else if(h==="tr"){y=oc.y+dy;w=oc.w+dx;ww=oc.h-dy;}
-        else if(h==="bl"){x=oc.x+dx;w=oc.w-dx;ww=oc.h+dy;}
-        else{w=oc.w+dx;ww=oc.h+dy;}
-        if(w<MIN_CROP){w=MIN_CROP;if(h==="tl"||h==="bl")x=oc.x+oc.w-MIN_CROP;}
-        if(ww<MIN_CROP){ww=MIN_CROP;if(h==="tl"||h==="tr")y=oc.y+oc.h-MIN_CROP;}
-        cropRef.current={x,y,w,h:ww};
-      }
-      scheduleDraw();
-    }else if(p.length===2&&pinchRef.current){
-      // Absolute pinch: always compare to the INITIAL state stored at onPD.
-      // pinchRef is NEVER updated mid-gesture so there is no stale-frame ratio issue.
-      const{dist:initDist,scale:initScale,off:initOff,midX:initMx,midY:initMy}=pinchRef.current;
-      const newDist=Math.hypot(p[0].cx-p[1].cx,p[0].cy-p[1].cy);
-      const newMidX=(p[0].cx+p[1].cx)/2, newMidY=(p[0].cy+p[1].cy)/2;
-      const ratio=newDist/initDist; // always stable: initDist ≥ 30px
-      const ns=Math.max(0.2,Math.min(10,initScale*ratio));
-      const c=canvasRef.current;
-      const vcx=(c?.offsetWidth||300)/2, vcy=(c?.offsetHeight||400)/2;
-      // Keep the image point that was under initMid fixed, then translate with midpoint movement
-      const no={
-        x:(newMidX-vcx)+(initOff.x-(initMx-vcx))*ratio,
-        y:(newMidY-vcy)+(initOff.y-(initMy-vcy))*ratio,
-      };
-      scaleRef.current=ns; offRef.current=no;
-      scheduleDraw();
-    }
-  },[getXY,scheduleDraw]);
-
-  const onPU=useCallback((e)=>{
-    ptrs.current.delete(e.pointerId);
-    pinchRef.current=null;
-    if(ptrs.current.size===0)dragRef.current=null;
-    else if(ptrs.current.size===1){
-      const[rem]=[...ptrs.current.values()];
-      dragRef.current={type:"pan",sx:rem.cx-offRef.current.x,sy:rem.cy-offRef.current.y};
-    }
-  },[]);
-
-  useEffect(()=>{
-    const c=canvasRef.current; if(!c)return;
-    const onWheel=(e)=>{
-      e.preventDefault();
-      scaleRef.current=Math.max(0.2,Math.min(10,scaleRef.current*(e.deltaY>0?0.9:1.1)));
-      scheduleDraw();
-    };
-    c.addEventListener("wheel",onWheel,{passive:false});
-    return()=>c.removeEventListener("wheel",onWheel);
-  },[scheduleDraw]);
-
-  // ── Apply crop ────────────────────────────────────────────────────────────
-  const apply=useCallback(()=>{
-    const img=imgRef.current, c=canvasRef.current; if(!img||!c)return;
-    const s=scaleRef.current, off=offRef.current, cr=cropRef.current;
-    const CW=c.offsetWidth||300, CH=c.offsetHeight||400;
-    const imgX=CW/2+off.x-img.naturalWidth*s/2;
-    const imgY=CH/2+off.y-img.naturalHeight*s/2;
-    const srcX=(cr.x-imgX)/s, srcY=(cr.y-imgY)/s;
-    const srcW=cr.w/s, srcH=cr.h/s;
-    const oc=document.createElement("canvas");
-    oc.width=Math.round(cr.w); oc.height=Math.round(cr.h);
-    oc.getContext("2d").drawImage(img,srcX,srcY,srcW,srcH,0,0,cr.w,cr.h);
-    onCrop(oc.toDataURL("image/jpeg",0.85));
-  },[onCrop]);
-
-  return createPortal(
-    <div style={{position:"fixed",inset:0,background:"#111",zIndex:300,display:"flex",flexDirection:"column"}}>
-      <div style={{padding:`calc(14px + ${SAFE_TOP}) 20px 14px`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-        <button onClick={onClose} style={{color:"rgba(255,255,255,0.65)",background:"none",border:"none",fontSize:15,fontWeight:600,cursor:"pointer",padding:0}}>Cancel</button>
-        <div style={{display:"flex",gap:2,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:2}}>
-          {[["free","Free"],["1:1","1:1"]].map(([v,lbl])=>(
-            <button key={v} type="button" onClick={()=>setMode(v)}
-              style={{padding:"4px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,
-                background:mode===v?"white":"transparent",color:mode===v?"#111":"rgba(255,255,255,0.6)"}}>
-              {lbl}
-            </button>
-          ))}
-        </div>
-        <button onClick={apply} style={{color:"#778EE3",background:"none",border:"none",fontSize:15,fontWeight:700,cursor:"pointer",padding:0}}>Apply</button>
-      </div>
-
-      <canvas ref={canvasRef}
-        style={{flex:1,display:"block",touchAction:"none",userSelect:"none",cursor:"grab"}}
-        onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPU}/>
-
-      <div style={{padding:"10px 20px 36px",textAlign:"center",color:"rgba(255,255,255,0.35)",fontSize:12,flexShrink:0}}>
-        {mode==="free"?"Drag corners to resize · Drag to reposition · Pinch to zoom":"Drag to reposition · Pinch or scroll to zoom"}
-      </div>
-    </div>,
-    document.body
-  );
-}
 
 function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
   useBodyScrollLock();
@@ -6854,7 +6605,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
     ...initialDraft,
     savedAt:undefined,
   }:{brand:"",name:"",colorway:"",color:SWATCHES[0],photo:null,composition:[{fibre:"Merino Wool",pct:100}],weight:"Worsted",ballsOwned:1,yarnUnit:"ball",physWeight:"",physWeightUnit:"oz",yarnLength:"",yarnLengthUnit:"yd",price:"",currency:yarnCurrency});
-  const[cropSrc,setCropSrc]=useState(null);
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const iS={width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,color:"var(--text-primary)",background:"var(--bg-subtle)"};
 
@@ -6884,15 +6634,14 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
               <div style={{display:"flex",gap:8,marginBottom:8}}>
                 <div style={{position:"relative",width:76,height:76,borderRadius:12,overflow:"hidden",flexShrink:0,border:"1.5px solid var(--border)"}}>
                   <img src={form.photo} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                  <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
-                    <button type="button" onClick={()=>setCropSrc(form.photo)} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✎</button>
+                  <div style={{position:"absolute",top:4,right:4}}>
                     <button type="button" onClick={()=>s("photo",null)} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                   </div>
                 </div>
               </div>
             )}
             {!form.photo&&(
-              <button type="button" onClick={()=>imgPick(v=>setCropSrc(v))}
+              <button type="button" onClick={()=>imgPick(v=>s("photo",v))}
                 style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <div style={{textAlign:"left"}}>
@@ -6902,7 +6651,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
               </button>
             )}
           </div>
-          {cropSrc&&<PhotoCropModal src={cropSrc} onCrop={v=>{s("photo",v);setCropSrc(null);}} onClose={()=>setCropSrc(null)}/>}
           <FormField label={t.libBrand}><input style={iS} value={form.brand} onChange={e=>s("brand",e.target.value)} placeholder="Malabrigo"/></FormField>
           <FormField label={t.libName}><input style={iS} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="Sock"/></FormField>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -7487,8 +7235,6 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   const openDesign=()=>setOpenMaker(form.craft==="Crochet"&&layout==="rounds"?"rounds":"rows");
   const[showCloseSheet,setShowCloseSheet]=useState(false);
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
-  const[cropSrc,setCropSrc]=useState(null);
-  const[cropIdx,setCropIdx]=useState(null);
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
   const isDirty=form.name.trim()!==""||((form.photos||[]).length>0);
@@ -7533,7 +7279,6 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
                   <div key={i} style={{position:"relative",width:76,height:76,borderRadius:12,overflow:"hidden",flexShrink:0,border:"1.5px solid var(--border)"}}>
                     <img src={src} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                     <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
-                      <button type="button" onClick={()=>{setCropIdx(i);setCropSrc(src);}} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✎</button>
                       <button type="button" onClick={()=>s("photos",(form.photos||[]).filter((_,j)=>j!==i))} style={{width:20,height:20,borderRadius:999,background:"rgba(0,0,0,.55)",border:"none",cursor:"pointer",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                     </div>
                   </div>
@@ -7541,7 +7286,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
               </div>
             )}
             {(form.photos||[]).length<3&&(
-              <button type="button" onClick={()=>{setCropIdx(null);imgPick(v=>setCropSrc(v));}}
+              <button type="button" onClick={()=>imgPick(v=>s("photos",[...(form.photos||[]),v]))}
                 style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <div style={{textAlign:"left"}}>
@@ -7551,8 +7296,6 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
               </button>
             )}
           </div>
-          {cropSrc&&<PhotoCropModal src={cropSrc} onCrop={v=>{if(cropIdx!==null){s("photos",(form.photos||[]).map((p,i)=>i===cropIdx?v:p));}else{s("photos",[...(form.photos||[]),v]);}setCropSrc(null);setCropIdx(null);}} onClose={()=>{setCropSrc(null);setCropIdx(null);}}/>}
-
           {creationMethod==='design'&&(<>
           {/* Step 1 — Craft */}
           <div style={{marginBottom:12}}>
