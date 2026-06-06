@@ -6589,133 +6589,161 @@ function FormField({label,req,children}){
 /* ── Shared Photo Crop Modal (Free / 1:1) ── */
 function PhotoCropModal({src,onCrop,onClose}){
   const MAXDIM=260;
+  const MIN_CROP=80;
   const containerRef=useRef(null);
   const[natural,setNatural]=useState(null);
   const[mode,setMode]=useState("1:1");
+
+  // Image pan/zoom — refs mirror state so handlers never read stale closures
   const[scale,setScaleState]=useState(1);
   const[offset,setOffsetState]=useState({x:0,y:0});
-
-  // Refs mirror state so event handlers always read the current value
-  // without relying on stale closures.
   const scaleRef=useRef(1);
   const offsetRef=useRef({x:0,y:0});
-  const setScale=v=>{const nv=typeof v==="function"?v(scaleRef.current):v;scaleRef.current=nv;setScaleState(nv);};
-  const setOffset=v=>{const nv=typeof v==="function"?v(offsetRef.current):v;offsetRef.current=nv;setOffsetState(nv);};
+  const sr=(v)=>{const n=typeof v==="function"?v(scaleRef.current):v;scaleRef.current=n;setScaleState(n);};
+  const or=(v)=>{const n=typeof v==="function"?v(offsetRef.current):v;offsetRef.current=n;setOffsetState(n);};
 
-  const pointersRef=useRef(new Map());
+  // Crop box size + center offset (Free mode only)
+  const[cropW,setCropWState]=useState(MAXDIM);
+  const[cropH,setCropHState]=useState(MAXDIM);
+  const[cropOX,setCropOXState]=useState(0); // crop box centre offset from container centre
+  const[cropOY,setCropOYState]=useState(0);
+  const cwRef=useRef(MAXDIM),chRef=useRef(MAXDIM);
+  const coxRef=useRef(0),coyRef=useRef(0);
+  const setCW=v=>{const n=typeof v==="function"?v(cwRef.current):v;cwRef.current=n;setCropWState(n);};
+  const setCH=v=>{const n=typeof v==="function"?v(chRef.current):v;chRef.current=n;setCropHState(n);};
+  const setCOX=v=>{const n=typeof v==="function"?v(coxRef.current):v;coxRef.current=n;setCropOXState(n);};
+  const setCOY=v=>{const n=typeof v==="function"?v(coyRef.current):v;coyRef.current=n;setCropOYState(n);};
+
+  // Pan/pinch state
+  const ptrs=useRef(new Map());
   const dragRef=useRef(null);
-  // Captures the full pinch start state so we can compute scale+offset together
-  const pinchRef=useRef(null); // {dist, scale0, offset0, midX, midY}
+  // pinchRef updated EVERY frame — stores previous frame values for delta computation
+  const pinchRef=useRef(null); // {dist, scale, off:{x,y}, midX, midY}
 
-  const cropW=!natural||mode==="1:1"?MAXDIM:natural.w>=natural.h?MAXDIM:Math.round(MAXDIM*natural.w/natural.h);
-  const cropH=!natural||mode==="1:1"?MAXDIM:natural.h>=natural.w?MAXDIM:Math.round(MAXDIM*natural.h/natural.w);
+  // Corner handle drag (Free mode)
+  const hdRef=useRef(null); // {corner, sx, sy, sw, sh, sox, soy}
 
-  const resetView=(nw,nh,modeOverride)=>{
-    const m=modeOverride??mode;
-    const nW=m==="1:1"?MAXDIM:nw>=nh?MAXDIM:Math.round(MAXDIM*nw/nh);
-    const nH=m==="1:1"?MAXDIM:nh>=nw?MAXDIM:Math.round(MAXDIM*nh/nw);
-    setScale(Math.max(nW/nw,nH/nh));
-    setOffset({x:0,y:0});
+  const resetView=(nw,nh,m)=>{
+    const cW=m==="1:1"?MAXDIM:nw>=nh?MAXDIM:Math.round(MAXDIM*nw/nh);
+    const cH=m==="1:1"?MAXDIM:nh>=nw?MAXDIM:Math.round(MAXDIM*nh/nw);
+    cwRef.current=cW;setCropWState(cW);
+    chRef.current=cH;setCropHState(cH);
+    coxRef.current=0;setCropOXState(0);
+    coyRef.current=0;setCropOYState(0);
+    sr(Math.max(cW/nw,cH/nh));
+    or({x:0,y:0});
   };
-
   const onLoad=(e)=>{
     const nw=e.target.naturalWidth,nh=e.target.naturalHeight;
     setNatural({w:nw,h:nh});
     resetView(nw,nh,"1:1");
   };
+  useEffect(()=>{if(natural)resetView(natural.w,natural.h,mode);},[mode]);
 
-  useEffect(()=>{
-    if(!natural)return;
-    resetView(natural.w,natural.h,mode);
-  },[mode]);
-
-  const onPDown=(e)=>{
+  // ── Image pan / pinch-to-zoom ─────────────────────────────────────────────
+  const onPD=(e)=>{
     e.currentTarget.setPointerCapture(e.pointerId);
-    pointersRef.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointersRef.current.size===1){
-      // Single finger: begin drag
+    ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.current.size===1){
       dragRef.current={sx:e.clientX-offsetRef.current.x,sy:e.clientY-offsetRef.current.y};
       pinchRef.current=null;
-    } else if(pointersRef.current.size===2){
-      // Second finger arrived: switch to pinch, freeze drag
+    } else if(ptrs.current.size===2){
       dragRef.current=null;
-      const pts=[...pointersRef.current.values()];
-      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-      pinchRef.current={
-        dist,
-        scale0:scaleRef.current,
-        offset0:{...offsetRef.current},
-        midX:(pts[0].x+pts[1].x)/2,
-        midY:(pts[0].y+pts[1].y)/2,
-      };
+      const p=[...ptrs.current.values()];
+      const dist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+      // Store current frame state — updated every onPM so delta is always frame-to-frame
+      pinchRef.current={dist,scale:scaleRef.current,off:{...offsetRef.current},midX:(p[0].x+p[1].x)/2,midY:(p[0].y+p[1].y)/2};
     }
   };
-
-  const onPMove=(e)=>{
-    pointersRef.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    const pts=[...pointersRef.current.values()];
-    if(pts.length===1&&dragRef.current){
-      setOffset({x:e.clientX-dragRef.current.sx,y:e.clientY-dragRef.current.sy});
-    } else if(pts.length===2&&pinchRef.current){
-      const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-      const ratio=d/pinchRef.current.dist;
-      const newScale=Math.max(0.2,Math.min(10,pinchRef.current.scale0*ratio));
-
-      // Scale around the pinch midpoint so the content under your fingers stays fixed.
-      // Container is position:fixed;inset:0 so its centre in client coords is
-      // (window.innerWidth/2, window.innerHeight/2) — avoids any CSS-zoom/getBCR mismatch.
+  const onPM=(e)=>{
+    ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const p=[...ptrs.current.values()];
+    if(p.length===1&&dragRef.current){
+      or({x:e.clientX-dragRef.current.sx,y:e.clientY-dragRef.current.sy});
+    } else if(p.length===2&&pinchRef.current){
+      // Per-frame delta: compare to PREVIOUS frame stored in pinchRef
+      const newDist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+      const newMidX=(p[0].x+p[1].x)/2, newMidY=(p[0].y+p[1].y)/2;
+      const{dist:pd,scale:ps,off:po,midX:pmx,midY:pmy}=pinchRef.current;
+      const ratio=newDist/pd;
+      const ns=Math.max(0.2,Math.min(10,ps*ratio));
+      // Container centre = window.innerWidth/2 (fixed full-screen modal, avoids getBCR zoom issue)
       const z=parseFloat(getComputedStyle(document.documentElement).zoom)||1;
-      const cW=window.innerWidth/z, cH=window.innerHeight/z;
-      const localMx=pinchRef.current.midX-cW/2;
-      const localMy=pinchRef.current.midY-cH/2;
-      const sr=newScale/pinchRef.current.scale0;
-      setScale(newScale);
-      setOffset({
-        x:localMx*(1-sr)+pinchRef.current.offset0.x*sr,
-        y:localMy*(1-sr)+pinchRef.current.offset0.y*sr,
-      });
+      const vcx=window.innerWidth/z/2, vcy=window.innerHeight/z/2;
+      // Offset update: scale around prev midpoint, then translate by midpoint delta
+      const no={
+        x:(newMidX-vcx)+(po.x-(pmx-vcx))*ratio,
+        y:(newMidY-vcy)+(po.y-(pmy-vcy))*ratio,
+      };
+      scaleRef.current=ns; offsetRef.current=no;
+      // Advance pinchRef to this frame so next frame delta is frame-to-frame
+      pinchRef.current={dist:newDist,scale:ns,off:no,midX:newMidX,midY:newMidY};
+      setScaleState(ns); setOffsetState(no);
     }
   };
-
-  const onPUp=(e)=>{
-    pointersRef.current.delete(e.pointerId);
+  const onPU=(e)=>{
+    ptrs.current.delete(e.pointerId);
     pinchRef.current=null;
-    if(pointersRef.current.size===0){
-      dragRef.current=null;
-    } else if(pointersRef.current.size===1){
-      // Pinch ended, one finger remaining: re-anchor drag to its current position
-      const[rem]=[...pointersRef.current.values()];
+    if(ptrs.current.size===0)dragRef.current=null;
+    else if(ptrs.current.size===1){
+      const[rem]=[...ptrs.current.values()];
       dragRef.current={sx:rem.x-offsetRef.current.x,sy:rem.y-offsetRef.current.y};
     }
   };
-
   const onWheel=useCallback((e)=>{
     e.preventDefault();
-    setScale(s=>Math.max(0.2,Math.min(10,s*(e.deltaY>0?0.9:1.1))));
+    sr(s=>Math.max(0.2,Math.min(10,s*(e.deltaY>0?0.9:1.1))));
   },[]);
-  useEffect(()=>{
-    const el=containerRef.current;if(!el)return;
-    el.addEventListener("wheel",onWheel,{passive:false});
-    return()=>el.removeEventListener("wheel",onWheel);
-  },[onWheel]);
+  useEffect(()=>{const el=containerRef.current;if(!el)return;el.addEventListener("wheel",onWheel,{passive:false});return()=>el.removeEventListener("wheel",onWheel);},[onWheel]);
+
+  // ── Crop handle drag (Free mode) ──────────────────────────────────────────
+  // Corner id encodes which axis grows: right=R, bottom=B  → "tl"=!R!B, "tr"=R!B, "bl"=!RB, "br"=RB
+  const onHD=(e,corner)=>{
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    hdRef.current={corner,sx:e.clientX,sy:e.clientY,sw:cwRef.current,sh:chRef.current,sox:coxRef.current,soy:coyRef.current};
+  };
+  const onHM=(e,corner)=>{
+    const h=hdRef.current; if(!h||h.corner!==corner)return;
+    e.stopPropagation();
+    const z=parseFloat(getComputedStyle(document.documentElement).zoom)||1;
+    const dx=(e.clientX-h.sx)/z, dy=(e.clientY-h.sy)/z;
+    const isR=corner==="tr"||corner==="br", isB=corner==="bl"||corner==="br";
+    const nw=Math.max(MIN_CROP,h.sw+(isR?dx:-dx));
+    const nh=Math.max(MIN_CROP,h.sh+(isB?dy:-dy));
+    // Centre of crop box shifts by half the ACTUAL size change in the corner's direction
+    const wDelta=nw-h.sw, hDelta=nh-h.sh;
+    setCW(nw); setCH(nh);
+    setCOX(h.sox+(isR?wDelta:-wDelta)/2);
+    setCOY(h.soy+(isB?hDelta:-hDelta)/2);
+  };
+  const onHU=(e,corner)=>{if(hdRef.current?.corner===corner)hdRef.current=null;};
 
   const apply=()=>{
     if(!natural||!containerRef.current)return;
-    // Use refs for the latest values — state may lag by one render
-    const s=scaleRef.current, off=offsetRef.current;
+    const s=scaleRef.current,off=offsetRef.current;
+    const cw=cwRef.current,ch=chRef.current,cox=coxRef.current,coy=coyRef.current;
     const canvas=document.createElement("canvas");
-    canvas.width=cropW;canvas.height=cropH;
+    canvas.width=cw;canvas.height=ch;
     const ctx=canvas.getContext("2d");
-    const{clientWidth:cW,clientHeight:cH}=containerRef.current;
-    const imgL=cW/2-natural.w*s/2+off.x;
-    const imgT=cH/2-natural.h*s/2+off.y;
-    const cL=cW/2-cropW/2,cT=cH/2-cropH/2;
-    const srcX=(cL-imgL)/s,srcY=(cT-imgT)/s;
-    const srcW=cropW/s,srcH=cropH/s;
+    const{clientWidth:vW,clientHeight:vH}=containerRef.current;
+    const imgL=vW/2-natural.w*s/2+off.x;
+    const imgT=vH/2-natural.h*s/2+off.y;
+    // Crop box centre in container space includes the offset from centre
+    const boxCX=vW/2+cox, boxCY=vH/2+coy;
+    const srcX=(boxCX-cw/2-imgL)/s, srcY=(boxCY-ch/2-imgT)/s;
     const img=new Image();
-    img.onload=()=>{ctx.drawImage(img,srcX,srcY,srcW,srcH,0,0,cropW,cropH);onCrop(canvas.toDataURL("image/jpeg",0.85));};
+    img.onload=()=>{ctx.drawImage(img,srcX,srcY,cw/s,ch/s,0,0,cw,ch);onCrop(canvas.toDataURL("image/jpeg",0.85));};
     img.src=src;
   };
+
+  const HPAD=22; // half touch-target size for corner handles
+  const cornerDefs=[
+    {id:"tl",pos:{top:-HPAD,left:-HPAD},vis:{borderTop:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"6px 0 0 0"},cursor:"nwse-resize"},
+    {id:"tr",pos:{top:-HPAD,right:-HPAD},vis:{borderTop:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 6px 0 0"},cursor:"nesw-resize"},
+    {id:"bl",pos:{bottom:-HPAD,left:-HPAD},vis:{borderBottom:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"0 0 0 6px"},cursor:"nesw-resize"},
+    {id:"br",pos:{bottom:-HPAD,right:-HPAD},vis:{borderBottom:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 0 6px 0"},cursor:"nwse-resize"},
+  ];
 
   return createPortal(
     <div style={{position:"fixed",inset:0,background:"#111",zIndex:300,display:"flex",flexDirection:"column"}}>
@@ -6735,7 +6763,7 @@ function PhotoCropModal({src,onCrop,onClose}){
 
       <div ref={containerRef}
         style={{flex:1,position:"relative",overflow:"hidden",touchAction:"none",cursor:"grab",userSelect:"none"}}
-        onPointerDown={onPDown} onPointerMove={onPMove} onPointerUp={onPUp} onPointerCancel={onPUp}>
+        onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPU}>
         <img src={src} onLoad={onLoad} style={{position:"absolute",opacity:0,pointerEvents:"none",width:1,height:1,top:0,left:0}}/>
         {natural&&(
           <img src={src} style={{
@@ -6745,18 +6773,28 @@ function PhotoCropModal({src,onCrop,onClose}){
             pointerEvents:"none",userSelect:"none",draggable:false
           }}/>
         )}
-        {/* Crop overlay */}
-        <div style={{position:"absolute",left:"50%",top:"50%",width:cropW,height:cropH,transform:"translate(-50%,-50%)",boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",pointerEvents:"none"}}>
+        {/* Crop overlay — box centre follows cropOX/OY offset */}
+        <div style={{position:"absolute",left:`calc(50% + ${cropOX}px)`,top:`calc(50% + ${cropOY}px)`,width:cropW,height:cropH,transform:"translate(-50%,-50%)",boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",pointerEvents:"none"}}>
           <div style={{position:"absolute",inset:0,border:"1.5px solid rgba(255,255,255,0.55)",borderRadius:6}}/>
-          <div style={{position:"absolute",top:-1,left:-1,width:20,height:20,borderTop:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"6px 0 0 0"}}/>
-          <div style={{position:"absolute",top:-1,right:-1,width:20,height:20,borderTop:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 6px 0 0"}}/>
-          <div style={{position:"absolute",bottom:-1,left:-1,width:20,height:20,borderBottom:"2.5px solid white",borderLeft:"2.5px solid white",borderRadius:"0 0 0 6px"}}/>
-          <div style={{position:"absolute",bottom:-1,right:-1,width:20,height:20,borderBottom:"2.5px solid white",borderRight:"2.5px solid white",borderRadius:"0 0 6px 0"}}/>
+          {cornerDefs.map(({id,pos,vis,cursor})=>(
+            <div key={id} style={{
+              position:"absolute",...pos,
+              width:HPAD*2,height:HPAD*2,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              pointerEvents:mode==="free"?"all":"none",touchAction:"none",cursor,zIndex:2,
+            }}
+              onPointerDown={mode==="free"?e=>onHD(e,id):undefined}
+              onPointerMove={mode==="free"?e=>onHM(e,id):undefined}
+              onPointerUp={mode==="free"?e=>onHU(e,id):undefined}
+              onPointerCancel={mode==="free"?e=>onHU(e,id):undefined}>
+              <div style={{width:20,height:20,...vis}}/>
+            </div>
+          ))}
         </div>
       </div>
 
       <div style={{padding:"10px 20px 36px",textAlign:"center",color:"rgba(255,255,255,0.35)",fontSize:12,flexShrink:0}}>
-        Drag to reposition · Pinch or scroll to zoom
+        {mode==="free"?"Drag corners to resize · Drag image to reposition · Pinch to zoom":"Drag to reposition · Pinch or scroll to zoom"}
       </div>
     </div>,
     document.body
