@@ -6667,10 +6667,10 @@ function PhotoCropModal({src,onCrop,onClose}){
       const{dist:pd,scale:ps,off:po,midX:pmx,midY:pmy}=pinchRef.current;
       const ratio=newDist/pd;
       const ns=Math.max(0.2,Math.min(10,ps*ratio));
-      // Container centre = window.innerWidth/2 (fixed full-screen modal, avoids getBCR zoom issue)
-      const z=parseFloat(getComputedStyle(document.documentElement).zoom)||1;
-      const vcx=window.innerWidth/z/2, vcy=window.innerHeight/z/2;
-      // Offset update: scale around prev midpoint, then translate by midpoint delta
+      // e.clientX and window.innerWidth are both in viewport CSS pixels (unaffected by html zoom).
+      // Do NOT divide by zoom here — the anchor must be in the same space as e.clientX.
+      const vcx=window.innerWidth/2, vcy=window.innerHeight/2;
+      // Offset update: keep the image point under prev midpoint fixed, then pan with midpoint movement
       const no={
         x:(newMidX-vcx)+(po.x-(pmx-vcx))*ratio,
         y:(newMidY-vcy)+(po.y-(pmy-vcy))*ratio,
@@ -6706,8 +6706,7 @@ function PhotoCropModal({src,onCrop,onClose}){
   const onHM=(e,corner)=>{
     const h=hdRef.current; if(!h||h.corner!==corner)return;
     e.stopPropagation();
-    const z=parseFloat(getComputedStyle(document.documentElement).zoom)||1;
-    const dx=(e.clientX-h.sx)/z, dy=(e.clientY-h.sy)/z;
+    const dx=e.clientX-h.sx, dy=e.clientY-h.sy;
     const isR=corner==="tr"||corner==="br", isB=corner==="bl"||corner==="br";
     const nw=Math.max(MIN_CROP,h.sw+(isR?dx:-dx));
     const nh=Math.max(MIN_CROP,h.sh+(isB?dy:-dy));
