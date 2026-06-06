@@ -6591,55 +6591,104 @@ function PhotoCropModal({src,onCrop,onClose}){
   const MAXDIM=260;
   const containerRef=useRef(null);
   const[natural,setNatural]=useState(null);
-  const[mode,setMode]=useState("1:1"); // "1:1" | "free"
-  const[scale,setScale]=useState(1);
-  const[offset,setOffset]=useState({x:0,y:0});
+  const[mode,setMode]=useState("1:1");
+  const[scale,setScaleState]=useState(1);
+  const[offset,setOffsetState]=useState({x:0,y:0});
+
+  // Refs mirror state so event handlers always read the current value
+  // without relying on stale closures.
+  const scaleRef=useRef(1);
+  const offsetRef=useRef({x:0,y:0});
+  const setScale=v=>{const nv=typeof v==="function"?v(scaleRef.current):v;scaleRef.current=nv;setScaleState(nv);};
+  const setOffset=v=>{const nv=typeof v==="function"?v(offsetRef.current):v;offsetRef.current=nv;setOffsetState(nv);};
+
   const pointersRef=useRef(new Map());
   const dragRef=useRef(null);
-  const lastDistRef=useRef(null);
+  // Captures the full pinch start state so we can compute scale+offset together
+  const pinchRef=useRef(null); // {dist, scale0, offset0, midX, midY}
 
   const cropW=!natural||mode==="1:1"?MAXDIM:natural.w>=natural.h?MAXDIM:Math.round(MAXDIM*natural.w/natural.h);
   const cropH=!natural||mode==="1:1"?MAXDIM:natural.h>=natural.w?MAXDIM:Math.round(MAXDIM*natural.h/natural.w);
 
+  const resetView=(nw,nh,modeOverride)=>{
+    const m=modeOverride??mode;
+    const nW=m==="1:1"?MAXDIM:nw>=nh?MAXDIM:Math.round(MAXDIM*nw/nh);
+    const nH=m==="1:1"?MAXDIM:nh>=nw?MAXDIM:Math.round(MAXDIM*nh/nw);
+    setScale(Math.max(nW/nw,nH/nh));
+    setOffset({x:0,y:0});
+  };
+
   const onLoad=(e)=>{
     const nw=e.target.naturalWidth,nh=e.target.naturalHeight;
     setNatural({w:nw,h:nh});
-    setScale(Math.max(MAXDIM/nw,MAXDIM/nh));
-    setOffset({x:0,y:0});
+    resetView(nw,nh,"1:1");
   };
 
   useEffect(()=>{
     if(!natural)return;
-    const nW=mode==="1:1"?MAXDIM:natural.w>=natural.h?MAXDIM:Math.round(MAXDIM*natural.w/natural.h);
-    const nH=mode==="1:1"?MAXDIM:natural.h>=natural.w?MAXDIM:Math.round(MAXDIM*natural.h/natural.w);
-    setScale(Math.max(nW/natural.w,nH/natural.h));
-    setOffset({x:0,y:0});
+    resetView(natural.w,natural.h,mode);
   },[mode]);
 
   const onPDown=(e)=>{
     e.currentTarget.setPointerCapture(e.pointerId);
     pointersRef.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pointersRef.current.size===1){
-      dragRef.current={sx:e.clientX-offset.x,sy:e.clientY-offset.y};
-      lastDistRef.current=null;
+      // Single finger: begin drag
+      dragRef.current={sx:e.clientX-offsetRef.current.x,sy:e.clientY-offsetRef.current.y};
+      pinchRef.current=null;
+    } else if(pointersRef.current.size===2){
+      // Second finger arrived: switch to pinch, freeze drag
+      dragRef.current=null;
+      const pts=[...pointersRef.current.values()];
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      pinchRef.current={
+        dist,
+        scale0:scaleRef.current,
+        offset0:{...offsetRef.current},
+        midX:(pts[0].x+pts[1].x)/2,
+        midY:(pts[0].y+pts[1].y)/2,
+      };
     }
   };
+
   const onPMove=(e)=>{
     pointersRef.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
     const pts=[...pointersRef.current.values()];
     if(pts.length===1&&dragRef.current){
       setOffset({x:e.clientX-dragRef.current.sx,y:e.clientY-dragRef.current.sy});
-    } else if(pts.length===2){
+    } else if(pts.length===2&&pinchRef.current){
       const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-      if(lastDistRef.current!==null) setScale(s=>Math.max(0.2,Math.min(10,s*(d/lastDistRef.current))));
-      lastDistRef.current=d;
+      const ratio=d/pinchRef.current.dist;
+      const newScale=Math.max(0.2,Math.min(10,pinchRef.current.scale0*ratio));
+
+      // Scale around the pinch midpoint so the content under your fingers stays fixed.
+      // Container is position:fixed;inset:0 so its centre in client coords is
+      // (window.innerWidth/2, window.innerHeight/2) — avoids any CSS-zoom/getBCR mismatch.
+      const z=parseFloat(getComputedStyle(document.documentElement).zoom)||1;
+      const cW=window.innerWidth/z, cH=window.innerHeight/z;
+      const localMx=pinchRef.current.midX-cW/2;
+      const localMy=pinchRef.current.midY-cH/2;
+      const sr=newScale/pinchRef.current.scale0;
+      setScale(newScale);
+      setOffset({
+        x:localMx*(1-sr)+pinchRef.current.offset0.x*sr,
+        y:localMy*(1-sr)+pinchRef.current.offset0.y*sr,
+      });
     }
   };
+
   const onPUp=(e)=>{
     pointersRef.current.delete(e.pointerId);
-    lastDistRef.current=null;
-    if(pointersRef.current.size===0) dragRef.current=null;
+    pinchRef.current=null;
+    if(pointersRef.current.size===0){
+      dragRef.current=null;
+    } else if(pointersRef.current.size===1){
+      // Pinch ended, one finger remaining: re-anchor drag to its current position
+      const[rem]=[...pointersRef.current.values()];
+      dragRef.current={sx:rem.x-offsetRef.current.x,sy:rem.y-offsetRef.current.y};
+    }
   };
+
   const onWheel=useCallback((e)=>{
     e.preventDefault();
     setScale(s=>Math.max(0.2,Math.min(10,s*(e.deltaY>0?0.9:1.1))));
@@ -6652,15 +6701,17 @@ function PhotoCropModal({src,onCrop,onClose}){
 
   const apply=()=>{
     if(!natural||!containerRef.current)return;
+    // Use refs for the latest values — state may lag by one render
+    const s=scaleRef.current, off=offsetRef.current;
     const canvas=document.createElement("canvas");
     canvas.width=cropW;canvas.height=cropH;
     const ctx=canvas.getContext("2d");
     const{clientWidth:cW,clientHeight:cH}=containerRef.current;
-    const imgL=cW/2-natural.w*scale/2+offset.x;
-    const imgT=cH/2-natural.h*scale/2+offset.y;
+    const imgL=cW/2-natural.w*s/2+off.x;
+    const imgT=cH/2-natural.h*s/2+off.y;
     const cL=cW/2-cropW/2,cT=cH/2-cropH/2;
-    const srcX=(cL-imgL)/scale,srcY=(cT-imgT)/scale;
-    const srcW=cropW/scale,srcH=cropH/scale;
+    const srcX=(cL-imgL)/s,srcY=(cT-imgT)/s;
+    const srcW=cropW/s,srcH=cropH/s;
     const img=new Image();
     img.onload=()=>{ctx.drawImage(img,srcX,srcY,srcW,srcH,0,0,cropW,cropH);onCrop(canvas.toDataURL("image/jpeg",0.85));};
     img.src=src;
