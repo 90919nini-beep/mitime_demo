@@ -3140,7 +3140,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       <div style={{background:"var(--bg-card)",borderBottom:"1px solid var(--border)",padding:"6px 10px",flexShrink:0,display:"flex",alignItems:"center",gap:4}}>
         {/* Brush size */}
         {[{s:1,label:"1×1"},{s:3,label:"3×3"}].map(({s,label})=>(
-          <button key={s} onClick={()=>setBrushSize(s)} style={{padding:"3px 8px",borderRadius:7,border:"none",background:brushSize===s?"#778EE3":"var(--bg-subtle)",color:brushSize===s?"white":"var(--text-secondary)",fontSize:11,cursor:"pointer",fontWeight:600}}>{label}</button>
+          <button key={s} onClick={()=>{setBrushSize(s);setSelMode(false);clearSel();}} style={{padding:"3px 8px",borderRadius:7,border:"none",background:!selMode&&brushSize===s?"#778EE3":"var(--bg-subtle)",color:!selMode&&brushSize===s?"white":"var(--text-secondary)",fontSize:11,cursor:"pointer",fontWeight:600}}>{label}</button>
         ))}
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         {/* Eraser */}
