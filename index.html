@@ -3174,7 +3174,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
         </div>
       </div>
       {/* ── Row 2: color palette ── */}
-      <div style={{background:"var(--bg-card)",borderBottom:"1px solid var(--border)",padding:"5px 10px",flexShrink:0,display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+      <div style={{background:"var(--bg-card)",borderBottom:"1px solid var(--border)",padding:"5px 10px",flexShrink:0,display:selMode?"none":"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
         {yarnColors?.length>0
           ?<>
             <span style={{fontSize:9,fontWeight:700,color:"var(--text-secondary)",letterSpacing:"0.05em",flexShrink:0}}>YARN</span>
