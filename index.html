@@ -2697,13 +2697,15 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
     const ML=24,MT=18,MR=8,MB=8,dpr=window.devicePixelRatio||1;
     const contW=cont.clientWidth,contH=cont.clientHeight;
     if(!contW||!contH)return;
-    const cellSize=Math.min((contW-ML-MR)/cols,(contH-MT-MB)/rows);
+    const rawCell=Math.min((contW-ML-MR)/cols,(contH-MT-MB)/rows);
+    const cellSize=Math.max(8,Math.floor(rawCell*dpr)/dpr);
     const gW=cols*cellSize,gH=rows*cellSize;
     const W=ML+gW+MR,H=MT+gH+MB;
     c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
     c.style.width=W+"px";c.style.height=H+"px";
     GM.current={cellSize,ML,MT};
     const ctx=c.getContext("2d");ctx.scale(dpr,dpr);
+    ctx.imageSmoothingEnabled=false;
     const g=gridRef.current;
     // Adaptive grid line colors based on background luminance
     const _h=canvasBg.replace("#","");
@@ -2721,14 +2723,17 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       if(g[y][x]){ctx.fillStyle=g[y][x];ctx.fillRect(ML+x*cellSize,MT+y*cellSize,cellSize,cellSize);}
     }
     // Grid lines with visual hierarchy — drawn after fills so they're always visible
+    const largeGrid=cols>80||rows>80;
     for(let x=0;x<=cols;x++){
       const maj10=x%10===0,maj5=x%5===0;
+      if(largeGrid&&!maj5)continue;
       ctx.strokeStyle=maj10?clrMaj:maj5?clrMed:clrMin;
       ctx.lineWidth=(maj10?1.5:maj5?1:0.5)*lw;
       ctx.beginPath();ctx.moveTo(ML+x*cellSize,MT);ctx.lineTo(ML+x*cellSize,MT+gH);ctx.stroke();
     }
     for(let y=0;y<=rows;y++){
       const maj10=y%10===0,maj5=y%5===0;
+      if(largeGrid&&!maj5)continue;
       ctx.strokeStyle=maj10?clrMaj:maj5?clrMed:clrMin;
       ctx.lineWidth=(maj10?1.5:maj5?1:0.5)*lw;
       ctx.beginPath();ctx.moveTo(ML,MT+y*cellSize);ctx.lineTo(ML+gW,MT+y*cellSize);ctx.stroke();
@@ -2791,8 +2796,10 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   const fitZoom=useCallback(()=>{
     const cont=containerRef.current;if(!cont)return;
     const W=cont.clientWidth||320,H=cont.clientHeight||280;
-    const cellSize=Math.min((W-32)/cols,(H-26)/rows);
-    const fit=Math.min(W/(cols*cellSize+32),H/(rows*cellSize+26));
+    const dpr=window.devicePixelRatio||1;
+    const rawFit=Math.min((W-32)/cols,(H-26)/rows);
+    const actualCell=Math.max(8,Math.floor(rawFit*dpr)/dpr);
+    const fit=Math.min(W/(24+cols*actualCell+8),H/(18+rows*actualCell+8));
     setKgZoom(Math.max(0.3,Math.min(4,parseFloat(fit.toFixed(2)))));
     setKgPan({x:0,y:0});
   },[cols,rows]);
@@ -2956,6 +2963,24 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       for(let dx=0;dx<flipped[dy].length;dx++)newG[r.y1+dy][r.x1+dx]=flipped[dy][dx];
     gridRef.current=newG;onGridChange&&onGridChange(newG.map(row=>[...row]));draw();
   };
+  const handleSelRotate90=()=>{
+    const r=selStateRef.current.rect;if(!r)return;
+    const cells=extractCells(r);
+    const h=cells.length,w=cells[0]?.length||0;
+    const rotated=Array.from({length:w},(_,nr)=>Array.from({length:h},(_,nc)=>cells[h-1-nc][nr]));
+    pushUndo();
+    const newG=gridRef.current.map(row=>[...row]);
+    for(let dy=0;dy<h;dy++)for(let dx=0;dx<w;dx++)
+      if(newG[r.y1+dy]?.[r.x1+dx]!==undefined)newG[r.y1+dy][r.x1+dx]=null;
+    for(let dy=0;dy<rotated.length;dy++)for(let dx=0;dx<rotated[0].length;dx++){
+      const v=rotated[dy][dx];if(v===null)continue;
+      const ty=r.y1+dy,tx=r.x1+dx;
+      if(ty>=0&&ty<newG.length&&tx>=0&&tx<(newG[ty]?.length||0))newG[ty][tx]=v;
+    }
+    gridRef.current=newG;onGridChange&&onGridChange(newG.map(row=>[...row]));
+    const newRect={x1:r.x1,y1:r.y1,x2:r.x1+rotated[0].length-1,y2:r.y1+rotated.length-1};
+    selStateRef.current.rect=newRect;setSelRect(newRect);draw();
+  };
   const handleSelDelete=()=>{
     const r=selStateRef.current.rect;if(!r)return;
     pushUndo();
@@ -3110,7 +3135,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   },[]);
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+    <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
       {/* ── Row 1: tool controls ── */}
       <div style={{background:"var(--bg-card)",borderBottom:"1px solid var(--border)",padding:"6px 10px",flexShrink:0,display:"flex",alignItems:"center",gap:4}}>
         {/* Brush size */}
@@ -3175,6 +3200,25 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
           </>
         }
       </div>
+      {/* ── Selection action bar ── */}
+      {selMode&&(
+        <div style={{flexShrink:0,background:"#EEF0FD",borderBottom:"1.5px solid #C7CFF5",padding:"7px 10px",display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
+          {selRect&&!placeMode&&<>
+            <button onClick={handleSelMove} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:12,fontWeight:700,cursor:"pointer"}}>Move</button>
+            <button onClick={handleSelDuplicate} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:12,fontWeight:700,cursor:"pointer"}}>Duplicate</button>
+            <button onClick={handleSelFlipH} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #8FA3E8",background:"white",color:"#4A5CA8",fontSize:12,fontWeight:700,cursor:"pointer"}}>Flip H</button>
+            <button onClick={handleSelFlipV} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #8FA3E8",background:"white",color:"#4A5CA8",fontSize:12,fontWeight:700,cursor:"pointer"}}>Flip V</button>
+            <button onClick={handleSelRotate90} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #8FA3E8",background:"white",color:"#4A5CA8",fontSize:12,fontWeight:700,cursor:"pointer"}}>Rotate 90°</button>
+            <button onClick={handleSelDelete} style={{padding:"5px 11px",borderRadius:10,border:"1.5px solid #EF4444",background:"rgba(239,68,68,0.08)",color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>Delete</button>
+            <button onClick={clearSel} style={{marginLeft:"auto",width:28,height:28,borderRadius:999,border:"1.5px solid #8FA3E8",background:"white",color:"#4A5CA8",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </>}
+          {selRect&&placeMode&&<>
+            <span style={{fontSize:12,fontWeight:600,color:"#4A5CA8"}}>Tap destination cell</span>
+            <button onClick={()=>{setPlaceMode(null);selStateRef.current.placeMode=null;selStateRef.current.clipboard=null;draw();}} style={{marginLeft:"auto",padding:"5px 11px",borderRadius:10,border:"1.5px solid #8FA3E8",background:"white",color:"#4A5CA8",fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button>
+          </>}
+          {!selRect&&<span style={{fontSize:11,color:"#6B7DBD",fontStyle:"italic"}}>Drag on the grid to select cells</span>}
+        </div>
+      )}
       {showImgTool&&<ImageToPatternModal initCols={cols} initRows={rows} initialState={imgState} yarnColors={yarnColors} onApply={handleImgApply} onClose={()=>setShowImgTool(false)}/>}
       <div style={{flex:1,minHeight:0,position:"relative",display:"flex",flexDirection:"column"}}>
         <div ref={containerRef} style={{flex:1,minHeight:0,background:canvasBg,display:"flex",justifyContent:"center",alignItems:"center",overflow:"hidden",touchAction:"none"}}>
@@ -3204,43 +3248,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
             onMouseUp={e=>{if(selModeRef.current){selStartRef.current=null;return;}painting.current=false;sync();}}
             onMouseLeave={e=>{if(selModeRef.current){selStartRef.current=null;setHoverCell(null);draw();return;}painting.current=false;setHoverCell(null);sync();}}/>
         </div>
-        {/* ── Selection floating action bar ── */}
-        {selMode&&selRect&&(
-          <div style={{position:"absolute",bottom:`calc(80px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:25,display:"flex",alignItems:"center",gap:5,background:"rgba(255,255,255,0.96)",borderRadius:18,padding:"7px 12px",boxShadow:"0 2px 16px rgba(0,0,0,0.16)",backdropFilter:"blur(8px)",flexWrap:"nowrap",whiteSpace:"nowrap"}}>
-            {!placeMode&&<>
-              <button onClick={handleSelMove} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer"}}>Move</button>
-              <button onClick={handleSelDuplicate} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer"}}>Duplicate</button>
-              <button onClick={handleSelFlipH} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Flip H</button>
-              <button onClick={handleSelFlipV} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Flip V</button>
-              <button onClick={handleSelDelete} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid #EF4444",background:"rgba(239,68,68,0.08)",color:"#EF4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>Delete</button>
-              <button onClick={clearSel} style={{width:26,height:26,borderRadius:999,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-            </>}
-            {placeMode&&<>
-              <span style={{fontSize:11,fontWeight:600,color:"var(--text-secondary)"}}>Tap destination cell</span>
-              <button onClick={()=>{setPlaceMode(null);selStateRef.current.placeMode=null;selStateRef.current.clipboard=null;draw();}} style={{padding:"4px 10px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:11,fontWeight:700,cursor:"pointer"}}>Cancel</button>
-            </>}
-          </div>
-        )}
-        <div style={{flexShrink:0,padding:"8px 16px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-page)"}}>
-        <div style={{display:"flex",gap:10,alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Cols</span>
-            <button onClick={()=>{onResizeStart();resizeCols(Math.max(5,cols-1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
-            <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",minWidth:30,textAlign:"center"}}>{cols}</span>
-            <button onClick={()=>{onResizeStart();resizeCols(Math.min(120,cols+1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,flexShrink:0}}>Rows</span>
-            <button onClick={()=>{onResizeStart();resizeRows(Math.max(5,rows-1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
-            <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",minWidth:30,textAlign:"center"}}>{rows}</span>
-            <button onClick={()=>{onResizeStart();resizeRows(Math.min(120,rows+1));onResizeCommit();}} style={{width:32,height:32,borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:20,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
-          </div>
-        </div>
-        <div style={{fontSize:10,color:"#9CA3AF",marginTop:4}}>
-          {cols*rows>4000?<span style={{color:"#D97706"}}>Large grid — may affect performance. </span>:null}
-          Max 120×120 · Total cells: {cols*rows} / 5,000
-        </div>
-        </div>
+        <div style={{flexShrink:0,paddingBottom:`${SAFE_BOTTOM}`}}/>
 
         {/* ── Settings side panel ── */}
         <div style={{position:"absolute",top:0,right:0,bottom:0,width:panelOpen?224:0,overflow:"hidden",transition:"width 0.22s cubic-bezier(.4,0,.2,1)",zIndex:20,display:"flex"}}>
@@ -3252,6 +3260,27 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
               </button>
             </div>
             <div style={{padding:"14px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto"}}>
+              <div>
+                <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>GRID SIZE</span>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:32,flexShrink:0}}>Cols</span>
+                    <button onClick={()=>{onResizeStart();resizeCols(Math.max(5,cols-1));onResizeCommit();}} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+                    <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",flex:1,textAlign:"center"}}>{cols}</span>
+                    <button onClick={()=>{onResizeStart();resizeCols(Math.min(120,cols+1));onResizeCommit();}} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:32,flexShrink:0}}>Rows</span>
+                    <button onClick={()=>{onResizeStart();resizeRows(Math.max(5,rows-1));onResizeCommit();}} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+                    <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",flex:1,textAlign:"center"}}>{rows}</span>
+                    <button onClick={()=>{onResizeStart();resizeRows(Math.min(120,rows+1));onResizeCommit();}} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+                  </div>
+                  <div style={{fontSize:10,color:"#9CA3AF"}}>
+                    {cols*rows>4000?<span style={{color:"#D97706"}}>Large grid. </span>:null}
+                    {cols}×{rows} · {cols*rows} cells
+                  </div>
+                </div>
+              </div>
               <div>
                 <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>ZOOM</span>
                 <div style={{display:"flex",gap:4,alignItems:"center"}}>
