@@ -7474,7 +7474,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
-  const isDirty=form.name.trim()!==""||((form.photos||[]).length>0);
+  const isDirty=!editing&&(form.name.trim()!==""||((form.photos||[]).length>0)||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!=="");
   const handleClose=()=>{if(isDirty){setShowCloseSheet(true);}else{onClose();}};
   if(openMaker==="rows") return(
     <PatternMaker
@@ -9071,7 +9071,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
       onClose={()=>setReadingRounds(null)}
       onUpdate={updated=>{update(updated);setReadingRounds(updated);}}
     />}
-    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;}} onSave={p=>{setPatterns(prev=>[...prev,p]);if(patternDraftModeRef.current==="form")setPatternFormDraft(null);if(patternDraftModeRef.current==="maker")setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
+    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");setPatternFormDraft(d);}catch{}}} onSave={p=>{setPatterns(prev=>[...prev,p]);if(patternDraftModeRef.current==="form")setPatternFormDraft(null);if(patternDraftModeRef.current==="maker")setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
     {editing&&<PatternFormModal onClose={()=>setEditing(null)} initial={editing} onSave={updated=>{update(updated);setEditing(null);setViewing(updated);}} yarnLib={yarnLib} patterns={patterns}/>}
     {viewing&&!viewing._fromProject&&<PatternDetailModal
       pat={patterns.find(p=>p.id===viewing.id)||viewing}
