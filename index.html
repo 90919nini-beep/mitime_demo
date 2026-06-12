@@ -2703,7 +2703,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
     const W=ML+gW+MR,H=MT+gH+MB;
     c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
     c.style.width=W+"px";c.style.height=H+"px";
-    GM.current={cellSize,ML,MT};
+    GM.current={cellSize,ML,MT,W,H};
     const ctx=c.getContext("2d");ctx.scale(dpr,dpr);
     ctx.imageSmoothingEnabled=false;
     const g=gridRef.current;
@@ -2808,11 +2808,14 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   useLayoutEffect(()=>{draw();},[cols,rows,draw]);
 
   const getCell=e=>{
-    const c=canvasRef.current;if(!c)return{x:-1,y:-1};
-    const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
-    const sx=(c.width/dpr)/r.width,sy=(c.height/dpr)/r.height;
-    const{cellSize,ML,MT}=GM.current;
-    return{x:Math.floor(((e.clientX-r.left)*sx-ML)/cellSize),y:Math.floor(((e.clientY-r.top)*sy-MT)/cellSize)};
+    const cont=containerRef.current;if(!cont)return{x:-1,y:-1};
+    const r=cont.getBoundingClientRect();
+    const{cellSize,ML,MT,W,H}=GM.current;
+    const cx=r.left+r.width/2+kgPan.x,cy=r.top+r.height/2+kgPan.y;
+    return{
+      x:Math.floor((W/2+(e.clientX-cx)/kgZoom-ML)/cellSize),
+      y:Math.floor((H/2+(e.clientY-cy)/kgZoom-MT)/cellSize)
+    };
   };
   const paintBlock=e=>{
     const{x,y}=getCell(e);
@@ -3026,12 +3029,13 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   useEffect(()=>{
     const cv=canvasRef.current;if(!cv)return;
     const paintBlockTouch=touch=>{
-      const c=canvasRef.current;if(!c)return;
-      const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
-      const sx=(c.width/dpr)/r.width,sy=(c.height/dpr)/r.height;
-      const{cellSize,ML,MT}=GM.current;
-      const x=Math.floor(((touch.clientX-r.left)*sx-ML)/cellSize);
-      const y=Math.floor(((touch.clientY-r.top)*sy-MT)/cellSize);
+      const cont=containerRef.current;if(!cont)return;
+      const r=cont.getBoundingClientRect();
+      const{cellSize,ML,MT,W,H}=GM.current;
+      const pan=kgPanLiveRef.current||{x:0,y:0},zoom=kgZoomRef.current||1;
+      const cx=r.left+r.width/2+pan.x,cy=r.top+r.height/2+pan.y;
+      const x=Math.floor((W/2+(touch.clientX-cx)/zoom-ML)/cellSize);
+      const y=Math.floor((H/2+(touch.clientY-cy)/zoom-MT)/cellSize);
       const g=gridRef.current;
       const half=Math.floor(brushSizeRef.current/2);
       const col=eraserRef.current?null:paintColorRef.current;
@@ -3044,11 +3048,12 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
       if(changed)drawRef.current&&drawRef.current();
     };
     const getCellT=t=>{
-      const c=canvasRef.current;if(!c)return{x:-1,y:-1};
-      const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
-      const sx=(c.width/dpr)/r.width,sy=(c.height/dpr)/r.height;
-      const{cellSize,ML,MT}=GM.current;
-      return{x:Math.floor(((t.clientX-r.left)*sx-ML)/cellSize),y:Math.floor(((t.clientY-r.top)*sy-MT)/cellSize)};
+      const cont=containerRef.current;if(!cont)return{x:-1,y:-1};
+      const r=cont.getBoundingClientRect();
+      const{cellSize,ML,MT,W,H}=GM.current;
+      const pan=kgPanLiveRef.current||{x:0,y:0},zoom=kgZoomRef.current||1;
+      const cx=r.left+r.width/2+pan.x,cy=r.top+r.height/2+pan.y;
+      return{x:Math.floor((W/2+(t.clientX-cx)/zoom-ML)/cellSize),y:Math.floor((H/2+(t.clientY-cy)/zoom-MT)/cellSize)};
     };
     const onTS=e=>{
       if(e.touches.length>=2){
