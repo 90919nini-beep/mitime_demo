@@ -4370,7 +4370,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     });
     if(!cands.length)return null;
     const lower=cands.filter(c=>Math.round(c.cpGridY)>hoverGridY);
-    if(!lower.length){const r=cands.reduce((b,c)=>c.d<b.d?c:b).s;console.log("[anchor target]",{via:"nearest",key:r.key,id:r.id});return r;}
+    if(!lower.length){return null;}
     const sameRow=lower.filter(c=>Math.round(c.cpGridY)===hoverGridY+1);
     const pool=sameRow.length?sameRow:lower;
     const r=pool.reduce((b,c)=>c.d<b.d?c:b).s;
@@ -5525,7 +5525,8 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
       </div>
       {showCloseSheet&&(
         <ClosingActionSheet
-          message="You have unsaved changes."
+          message="Keep your in-progress work as a draft?"
+          saveDraftLabel="Keep Draft"
           onSaveDraft={()=>{setShowCloseSheet(false);(onBack||onClose)();}}
           onDiscard={()=>{dismissDraft();setShowCloseSheet(false);(onBack||onClose)();}}
           onCancel={()=>setShowCloseSheet(false)}
@@ -5907,7 +5908,7 @@ function ReadModeBottomSheet({title,open,onClose,children}){
   );
 }
 
-function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel}){
+function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLabel="Save Draft"}){
   return createPortal(
     <div onClick={onCancel} style={{position:"fixed",inset:0,zIndex:300000,display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.4)"}}>
       <div className="modal-in" onClick={e=>e.stopPropagation()}
@@ -5916,7 +5917,7 @@ function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel}){
           <div style={{width:36,height:4,borderRadius:999,background:"#E5E7EB"}}/>
         </div>
         <div style={{padding:"0 20px 12px",fontSize:14,fontWeight:700,color:"var(--text-primary)"}}>{message}</div>
-        <button type="button" onClick={onSaveDraft} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#778EE3",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Save Draft</button>
+        <button type="button" onClick={onSaveDraft} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#778EE3",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>{saveDraftLabel}</button>
         <button type="button" onClick={onDiscard} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#EF4444",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Discard Changes</button>
         <button type="button" onClick={onCancel} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"var(--text-secondary)",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Cancel</button>
       </div>
@@ -7453,7 +7454,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
       const lines=form.importText.split(/\n|!/).map(l=>l.trim()).filter(Boolean);
       if(lines.length) designData={type:'imported',steps:lines.map((text,i)=>({id:`s${i}`,text}))};
     }
-    if(!editing&&initialDraft){try{localStorage.removeItem("sc_draft_pattern_form");}catch{}}
+    if(!editing){try{localStorage.removeItem("sc_draft_pattern_form");localStorage.removeItem("sc_draft_pattern");}catch{}}
     onSave({...form,designData,id:editing?initial.id:uid(),
       tags:typeof form.tags==="string"?form.tags.split(",").map(x=>x.trim()).filter(Boolean):form.tags,
       photos,
@@ -7474,7 +7475,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
-  const isDirty=!editing&&(form.name.trim()!==""||((form.photos||[]).length>0)||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!=="");
+  const isDirty=!editing&&form.name.trim()!==""&&((form.photos||[]).length>0||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!=="");
   const handleClose=()=>{if(isDirty){setShowCloseSheet(true);}else{onClose();}};
   if(openMaker==="rows") return(
     <PatternMaker
@@ -9071,7 +9072,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
       onClose={()=>setReadingRounds(null)}
       onUpdate={updated=>{update(updated);setReadingRounds(updated);}}
     />}
-    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");setPatternFormDraft(d);}catch{}}} onSave={p=>{setPatterns(prev=>[...prev,p]);if(patternDraftModeRef.current==="form")setPatternFormDraft(null);if(patternDraftModeRef.current==="maker")setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
+    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");setPatternFormDraft(d);}catch{}try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern")||"null");setPatternMakerDraft(d);}catch{}}} onSave={p=>{setPatterns(prev=>[...prev,p]);setPatternFormDraft(null);setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
     {editing&&<PatternFormModal onClose={()=>setEditing(null)} initial={editing} onSave={updated=>{update(updated);setEditing(null);setViewing(updated);}} yarnLib={yarnLib} patterns={patterns}/>}
     {viewing&&!viewing._fromProject&&<PatternDetailModal
       pat={patterns.find(p=>p.id===viewing.id)||viewing}
