@@ -5909,7 +5909,7 @@ function ReadModeBottomSheet({title,open,onClose,children}){
   );
 }
 
-function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLabel="Save Draft"}){
+function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLabel="Save Draft",discardLabel="Discard Changes"}){
   useBodyScrollLock();
   return createPortal(
     <div onClick={onCancel} style={{position:"fixed",inset:0,zIndex:300000,display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.4)"}}>
@@ -5920,7 +5920,7 @@ function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLab
         </div>
         <div style={{padding:"0 20px 12px",fontSize:14,fontWeight:700,color:"var(--text-primary)"}}>{message}</div>
         <button type="button" onClick={onSaveDraft} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#778EE3",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>{saveDraftLabel}</button>
-        <button type="button" onClick={onDiscard} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#EF4444",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Discard Changes</button>
+        <button type="button" onClick={onDiscard} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"#EF4444",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>{discardLabel}</button>
         <button type="button" onClick={onCancel} style={{width:"100%",padding:"14px 20px",background:"none",border:"none",borderTop:"1px solid var(--border-soft)",color:"var(--text-secondary)",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>Cancel</button>
       </div>
     </div>,
@@ -7474,11 +7474,18 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   };
   const openDesign=()=>setOpenMaker(form.craft==="Crochet"&&layout==="rounds"?"rounds":"rows");
   const[showCloseSheet,setShowCloseSheet]=useState(false);
+  const[showNameReminder,setShowNameReminder]=useState(false);
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
+  const nameInputRef=useRef(null);
   const FORM_DRAFT_KEY="sc_draft_pattern_form";
   const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
   const isDirty=!editing&&form.name.trim()!==""&&((form.photos||[]).length>0||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!=="");
-  const handleClose=()=>{if(isDirty){setShowCloseSheet(true);}else{onClose();}};
+  const hasUnnamedContent=!editing&&!form.name.trim()&&(form.designData!=null||(form.photos||[]).length>0||form.notes?.trim()!==""||form.importText?.trim()!=="");
+  const handleClose=()=>{
+    if(isDirty){setShowCloseSheet(true);}
+    else if(hasUnnamedContent){setShowNameReminder(true);}
+    else{onClose();}
+  };
   if(openMaker==="rows") return(
     <PatternMaker
       pattern={form.designData?.type!=="rounds"?form.designData:null}
@@ -7684,7 +7691,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           {generatedCount>0&&<div style={{fontSize:12,color:"#16A34A",fontWeight:600,textAlign:"center",marginBottom:12}}>✓ {generatedCount} step{generatedCount!==1?"s":""} generated</div>}
           </>)}
 
-          <FormField label={t.patternName2}><input style={iS} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="e.g. Hitchhiker Shawl"/></FormField>
+          <FormField label={t.patternName2}><input ref={nameInputRef} style={iS} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="e.g. Hitchhiker Shawl"/></FormField>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <FormField label={t.patternCategory}><select style={{...iS,appearance:"none"}} value={form.category} onChange={e=>s("category",e.target.value)}>{PATTERN_CATEGORIES.map(x=><option key={x} value={x}>{t.cats?.[x]||x}</option>)}</select></FormField>
             <FormField label={t.patternCraft}>{creationMethod==='import'?<select style={{...iS,appearance:"none"}} value={form.craft} onChange={e=>s("craft",e.target.value)}><option value="Crochet">{t.crafts?.Crochet||"Crochet"}</option><option value="Knitting">{t.crafts?.Knitting||"Knitting"}</option></select>:<div style={{...iS,background:"var(--bg-subtle)",color:"var(--text-muted)",fontWeight:600,display:"flex",alignItems:"center",cursor:"default"}}>{t.crafts?.[form.craft]||form.craft}</div>}</FormField>
@@ -7711,6 +7718,16 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           onSaveDraft={()=>{saveFormDraft();setShowCloseSheet(false);onClose();}}
           onDiscard={()=>{try{localStorage.removeItem(FORM_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
           onCancel={()=>setShowCloseSheet(false)}
+        />
+      )}
+      {showNameReminder&&(
+        <ClosingActionSheet
+          message="Your pattern design has no name yet. Give it a name to save it."
+          saveDraftLabel="Name it now"
+          discardLabel="Discard design"
+          onSaveDraft={()=>{setShowNameReminder(false);setTimeout(()=>{nameInputRef.current?.scrollIntoView({behavior:"smooth",block:"center"});nameInputRef.current?.focus();},100);}}
+          onDiscard={()=>{try{localStorage.removeItem(FORM_DRAFT_KEY);}catch{}setShowNameReminder(false);onClose();}}
+          onCancel={()=>setShowNameReminder(false)}
         />
       )}
     </div>
