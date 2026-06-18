@@ -8345,12 +8345,19 @@ function generatePatternText(designData){
   const abC=id=>ABR_C[id]||id;
 
   if(type==="crochet"){
-    const byRow={};
-    crochetStitches.forEach(s=>{(byRow[s.y]=byRow[s.y]||[]).push(s);});
-    const rowKeys=Object.keys(byRow).map(Number).sort((a,b)=>b-a);
+    // y coords are floats — cluster values within 0.4 of each other into the same row
+    const allYs=[...new Set(crochetStitches.map(s=>s.y))].sort((a,b)=>b-a); // desc: 0 (foundation) first
+    const clusters=[];
+    allYs.forEach(y=>{
+      const last=clusters[clusters.length-1];
+      if(last&&Math.abs(y-last[last.length-1])<0.4){last.push(y);}
+      else{clusters.push([y]);}
+    });
     const steps=[];
-    rowKeys.forEach((y,rowIdx)=>{
-      const stitches=byRow[y].slice().sort((a,b)=>a.x-b.x);
+    clusters.forEach((cluster,rowIdx)=>{
+      const ySet=new Set(cluster);
+      const stitches=crochetStitches.filter(s=>ySet.has(s.y)).slice().sort((a,b)=>a.x-b.x);
+      const isFoundation=cluster[0]>=0;
       const parentCount={};
       stitches.forEach(s=>{const pid=s.parentIds?.[0];if(pid)parentCount[pid]=(parentCount[pid]||0)+1;});
       const usedIdx=new Set();
@@ -8381,7 +8388,7 @@ function generatePatternText(designData){
         }
       }
       const total=stitches.filter(s=>s.id!=='ch').length;
-      const label=y===0?'Foundation':`Row ${Math.abs(y)}`;
+      const label=isFoundation?'Foundation':`Row ${rowIdx}`;
       steps.push({id:`s${rowIdx}`,text:`${label}: ${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`});
     });
     return steps;
@@ -8583,7 +8590,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                 <span style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)"}}>
                   {pat.designData.type==="knit"?"Color Grid":pat.designData.type==="rounds"?"Rounds Chart":"Crochet Pattern"}
                 </span>
-                <div style={{display:"flex",gap:6}}>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
                   {isCrochetDesign&&(
                     <button onClick={()=>setShowChartView(true)} style={{fontSize:11,fontWeight:700,color:"#92400e",background:"rgba(245,158,11,0.12)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                       <Ico n="basil:book-open-outline" sz={11}/>Read Chart
@@ -8607,6 +8614,16 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                       <Ico n="basil:edit-outline" sz={11}/>Edit Design
                     </button>
                   </>)}
+                  <button onClick={()=>{
+                    if(pat.designData?.generatedSteps){setShowGeneratedRead(true);}
+                    else{const steps=generatePatternText(pat.designData);onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});setShowGeneratedRead(true);}
+                  }} style={{fontSize:11,fontWeight:700,color:"#778EE3",background:"var(--accent-soft)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
+                    <Ico n="basil:clipboard-outline" sz={11}/>{pat.designData?.generatedSteps?"Read Text":"Generate Text"}
+                  </button>
+                  {pat.designData?.generatedSteps&&(
+                    <button onClick={()=>{const steps=generatePatternText(pat.designData);onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});}}
+                      style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",background:"var(--bg-subtle)",border:"none",borderRadius:8,padding:"4px 8px",cursor:"pointer"}}>↺</button>
+                  )}
                 </div>
               </div>
               {isRoundsDesign?(
@@ -8621,23 +8638,6 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
               <p style={{fontSize:10,color:"var(--text-secondary)",marginTop:6,textAlign:"center"}}>
                 {isRoundsDesign?"Tap \"Edit Rounds\" to modify":"Tap \"Edit Design\" to modify"} · changes only save when you press Save Pattern
               </p>
-              <div style={{display:"flex",gap:6,marginTop:10}}>
-                <button onClick={()=>{
-                  if(pat.designData?.generatedSteps){setShowGeneratedRead(true);}
-                  else{const steps=generatePatternText(pat.designData);onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});setShowGeneratedRead(true);}
-                }} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                  {pat.designData?.generatedSteps?"Read Text":"Generate Text"}
-                </button>
-                {pat.designData?.generatedSteps&&(
-                  <button onClick={()=>{
-                    const steps=generatePatternText(pat.designData);
-                    onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});
-                  }} style={{padding:"10px 14px",borderRadius:10,border:"1.5px solid var(--border)",background:"none",color:"var(--text-secondary)",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                    ↺ Regenerate
-                  </button>
-                )}
-              </div>
             </div>
           )}
 
