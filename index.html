@@ -6608,7 +6608,10 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
   const[pattern,setPattern]=useState(editMode?initialProject?.pattern||null:null);
   const[linkedPattern,setLinkedPattern]=useState(editMode?{id:initialProject?.linkedPatternId,name:initialProject?.linkedPatternName}:null);
   const[showPatternPicker,setShowPatternPicker]=useState(false);
+  const[showCloseSheet,setShowCloseSheet]=useState(false);
   const sf=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const isDirty=!editMode&&(form.title.trim()!==""||form.notes.trim()!==""||form.yarns.length>0||pattern!=null||form.refs.length>0||form.checklist.trim()!==""||form.tags.trim()!=="");
+  const handleClose=()=>{if(isDirty){setShowCloseSheet(true);}else{onClose();}};
   const photoRef=useRef(null);
 
   const submit=()=>{
@@ -6642,14 +6645,14 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
 
   return(
     <>
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)handleClose();}}>
       <div className="modal-in" style={{background:"var(--bg-card)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:480,maxHeight:"min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"20px 20px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
           <div>
             <div style={{fontSize:20,fontWeight:800,color:"var(--text-primary)"}}>{editMode?t.editProject:t.addProject}</div>
             <div style={{fontSize:12,color:"var(--text-secondary)",marginTop:2}}>{editMode?t.editSubtitle:t.addSubtitle}</div>
           </div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <button onClick={handleClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -6759,6 +6762,16 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
     {showPicker&&<PatternTypePicker onSelect={onPickerSelect} onClose={()=>setShowPicker(false)}/>}
     {showPattern&&<PatternMaker pattern={pattern} forcedType={pattern?.type==="knit"?"knit":pattern?.type==="crochet"?"crochet":makerForced?.forcedType} forcedKnitMode={pattern?.knitStitches?.length?"symbols":makerForced?.forcedKnitMode} onSave={p=>{setPattern(p);setMakerForced(null);}} onClose={()=>{setShowPattern(false);setMakerForced(null);}} patterns={patterns}/>}
     {showRounds&&(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}><CircularPatternMaker initialPattern={pattern?.type==="rounds"?pattern:null} onSave={design=>{setPattern({...design,type:"rounds"});setShowRounds(false);}} onClose={()=>setShowRounds(false)}/></div>)}
+    {showCloseSheet&&(
+      <ClosingActionSheet
+        message="Save this project before closing?"
+        saveDraftLabel="Save project"
+        discardLabel="Discard"
+        onSaveDraft={()=>{if(!form.title.trim()){setShowCloseSheet(false);setError(t.errName);}else{submit();}}}
+        onDiscard={()=>{setShowCloseSheet(false);onClose();}}
+        onCancel={()=>setShowCloseSheet(false)}
+      />
+    )}
     </>
   );
 }
