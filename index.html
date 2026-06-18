@@ -16,7 +16,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@iconify/iconify@3/dist/iconify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -5422,51 +5422,20 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
   },[]);
   const headerLabel=forcedKnitMode==="symbols"?"Knit Chart":forcedType==="knit"?"Color Grid":forcedType==="crochet"?"Rows":t.patternMaker;
 
-  // ── Draft auto-save ────────────────────────────────────────────────────────
-  const DRAFT_KEY="sc_draft_pattern";
-  const draftTimer=useRef(null);
-  const[hasDraft,setHasDraft]=useState(()=>{try{return!!localStorage.getItem(DRAFT_KEY);}catch{return false;}});
   const[saveFlash,setSaveFlash]=useState(false);
-
   const isDirtyRef=useRef(false);
+  const didMount=useRef(false);
   const[showCloseSheet,setShowCloseSheet]=useState(false);
-  const writeDraft=useRef(null);
-  const draftMounted=useRef(false);
-  writeDraft.current=()=>{
-    isDirtyRef.current=true;
-    try{localStorage.setItem(DRAFT_KEY,JSON.stringify({type,crochetStitches,crochetLayout,knitGrid:knitRef.current,knitStitches:knitStRef.current,savedAt:Date.now()}));}catch{}
-  };
   useEffect(()=>{
-    if(!draftMounted.current){draftMounted.current=true;return;}
-    clearTimeout(draftTimer.current);
-    draftTimer.current=setTimeout(()=>writeDraft.current(),800);
-    return()=>clearTimeout(draftTimer.current);
+    if(!didMount.current){didMount.current=true;return;}
+    isDirtyRef.current=true;
   },[crochetStitches,crochetLayout,type]);
-
-  const restoreDraft=()=>{
-    clearTimeout(draftTimer.current); // cancel any pending draft write before restoring
-    try{
-      const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null");
-      if(d){
-        draftMounted.current=false; // suppress the draft write triggered by these state changes
-        if(d.type)setType(d.type);
-        if(d.crochetStitches)setCrochetStitches(d.crochetStitches);
-        if(d.crochetLayout)setCrochetLayout(d.crochetLayout);
-        if(d.knitGrid){knitRef.current=d.knitGrid;setKnitKey(k=>k+1);}
-        if(d.knitStitches){knitStRef.current=d.knitStitches;setKnitKey(k=>k+1);}
-      }
-    }catch{}
-    localStorage.removeItem(DRAFT_KEY);
-    setHasDraft(false);
-  };
-  const dismissDraft=()=>{localStorage.removeItem(DRAFT_KEY);setHasDraft(false);};
 
   // ── Save (no auto-close) ──────────────────────────────────────────────────
   const handleSave=()=>{
     const u=underlayRef.current;
     const underlayToSave=u?{patternId:u.patternId,opacity:u.opacity,visible:u.visible,fitMode:u.fitMode??"preserve"}:null;
     onSave({type,grid:knitRef.current,knitStitches:knitStRef.current,crochetStitches,crochetLayout,crochetRoundsData:crochetRoundsRef.current,underlay:underlayToSave});
-    localStorage.removeItem(DRAFT_KEY);
     isDirtyRef.current=false;
     setSaveFlash(true);
     setTimeout(()=>setSaveFlash(false),2000);
@@ -5480,7 +5449,6 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
         onSave={design=>{
           crochetRoundsRef.current=design;
           onSave({...design,type:"rounds"});
-          localStorage.removeItem(DRAFT_KEY);
         }}
         onClose={()=>setCrochetLayout(null)}
       />
@@ -5507,29 +5475,22 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
           )}
         </div>
       </div>
-      {/* Restore draft banner */}
-      {hasDraft&&(
-        <div style={{background:"#DDE3F8",borderBottom:"1px solid #BBC8F0",padding:"8px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-          <span style={{fontSize:12,color:"#3B4EA6",flex:1,fontWeight:600}}>Unsaved work found — restore it?</span>
-          <button onClick={restoreDraft} style={{fontSize:12,fontWeight:700,color:"#fff",background:"#778EE3",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 10px"}}>Restore</button>
-          <button onClick={dismissDraft} style={{fontSize:12,color:"#5B6BAF",background:"none",border:"none",cursor:"pointer",padding:"2px 6px"}}>Dismiss</button>
-        </div>
-      )}
       {/* Content */}
       <div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
         {type==="knit"&&knitMode==="grid"
-          ?<ColorGrid key={knitKey} initialGrid={knitRef.current} onGridChange={g=>{knitRef.current=g;clearTimeout(draftTimer.current);draftTimer.current=setTimeout(()=>writeDraft.current(),800);}} yarnColors={yarnColors} onSave={handleSave}/>
+          ?<ColorGrid key={knitKey} initialGrid={knitRef.current} onGridChange={g=>{knitRef.current=g;isDirtyRef.current=true;}} yarnColors={yarnColors} onSave={handleSave}/>
           :type==="knit"&&knitMode==="symbols"
-          ?<KnitPatternMaker key={knitKey} initialStitches={knitStRef.current} onStitchesChange={s=>{knitStRef.current=s;clearTimeout(draftTimer.current);draftTimer.current=setTimeout(()=>writeDraft.current(),800);}} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
+          ?<KnitPatternMaker key={knitKey} initialStitches={knitStRef.current} onStitchesChange={s=>{knitStRef.current=s;isDirtyRef.current=true;}} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
           :<CrochetBuilder stitches={crochetStitches} setStitches={setCrochetStitches} layout={crochetLayout} setLayout={setCrochetLayout} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
         }
       </div>
       {showCloseSheet&&(
         <ClosingActionSheet
-          message="Keep your in-progress work as a draft?"
-          saveDraftLabel="Keep Draft"
-          onSaveDraft={()=>{setShowCloseSheet(false);(onBack||onClose)();}}
-          onDiscard={()=>{dismissDraft();setShowCloseSheet(false);(onBack||onClose)();}}
+          message="Save this design to your pattern?"
+          saveDraftLabel="Save design"
+          discardLabel="Discard design"
+          onSaveDraft={()=>{handleSave();setShowCloseSheet(false);(onBack||onClose)();}}
+          onDiscard={()=>{setShowCloseSheet(false);(onBack||onClose)();}}
           onCancel={()=>setShowCloseSheet(false)}
         />
       )}
@@ -5928,24 +5889,6 @@ function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLab
   );
 }
 
-function DraftCard({icon,title,subtitle,onContinue,onDiscard}){
-  return(
-    <div style={{marginBottom:12,padding:"11px 14px",borderRadius:14,background:"var(--accent-soft)",border:"1.5px solid #BBC8F0",display:"flex",alignItems:"center",gap:10}}>
-      <div style={{width:34,height:34,borderRadius:10,background:"#778EE322",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-        {icon||<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#778EE3" strokeWidth="2.2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>}
-      </div>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:1}}>Draft</div>
-        <div style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
-        {subtitle&&<div style={{fontSize:11,color:"var(--text-secondary)",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{subtitle}</div>}
-      </div>
-      <div style={{display:"flex",gap:6,flexShrink:0}}>
-        <button type="button" onClick={onContinue} style={{padding:"5px 12px",borderRadius:8,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Continue</button>
-        <button type="button" onClick={onDiscard} style={{padding:"5px 10px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:12,fontWeight:600,cursor:"pointer"}}>✕</button>
-      </div>
-    </div>
-  );
-}
 
 function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress,currentCell,onSaveCurrentCell}){
   useBodyScrollLock();
@@ -6827,7 +6770,7 @@ function FormField({label,req,children}){
 
 /* ─── Add Yarn to Library Modal ────────────────────────────────────────────── */
 
-function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
+function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
   useBodyScrollLock();
   const editing=!!initialYarn;
   const{t}=useLang();
@@ -6840,10 +6783,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
     composition:initialYarn.composition&&initialYarn.composition.length>0
       ?initialYarn.composition
       :[{fibre:initialYarn.fibre||"Merino Wool",pct:100}],
-  }:initialDraft?{
-    brand:"",name:"",colorway:"",color:SWATCHES[0],photo:null,composition:[{fibre:"Merino Wool",pct:100}],weight:"Worsted",ballsOwned:1,yarnUnit:"ball",physWeight:"",physWeightUnit:"oz",yarnLength:"",yarnLengthUnit:"yd",price:"",currency:yarnCurrency,
-    ...initialDraft,
-    savedAt:undefined,
   }:{brand:"",name:"",colorway:"",color:SWATCHES[0],photo:null,composition:[{fibre:"Merino Wool",pct:100}],weight:"Worsted",ballsOwned:1,yarnUnit:"ball",physWeight:"",physWeightUnit:"oz",yarnLength:"",yarnLengthUnit:"yd",price:"",currency:yarnCurrency});
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const iS={width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,color:"var(--text-primary)",background:"var(--bg-subtle)"};
@@ -6854,7 +6793,6 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
   const removeRow=i=>s("composition",form.composition.filter((_,idx)=>idx!==i));
   const[showCloseSheet,setShowCloseSheet]=useState(false);
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initialYarn?.colorway||Number(initialYarn?.price)>0)));
-  const YARN_DRAFT_KEY="sc_draft_add_yarn";
   const yarnIsDirty=form.brand.trim()!==""||form.name.trim()!==""||form.colorway.trim()!==""||!!form.photo;
   const handleClose=()=>{if(yarnIsDirty){setShowCloseSheet(true);}else{onClose();}};
 
@@ -6982,14 +6920,16 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit,initialDraft}){
           )}
         </div>
         <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
-          <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};if(editing){onEdit(data);}else{if(initialDraft){try{localStorage.removeItem("sc_draft_add_yarn");}catch{}}onAdd({...data,id:uid()});}onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
+          <button onClick={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};if(editing){onEdit(data);}else{onAdd({...data,id:uid()});}onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{editing?t.saveChanges:t.addYarnBtn}</button>
         </div>
       </div>
       {showCloseSheet&&(
         <ClosingActionSheet
-          message="You have unsaved changes."
-          onSaveDraft={()=>{try{localStorage.setItem(YARN_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}setShowCloseSheet(false);onClose();}}
-          onDiscard={()=>{try{localStorage.removeItem(YARN_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          message="Save this yarn before closing?"
+          saveDraftLabel="Save yarn"
+          discardLabel="Discard"
+          onSaveDraft={()=>{const data={...form,ballsOwned:Number(form.ballsOwned)};onAdd({...data,id:uid()});onClose();}}
+          onDiscard={()=>{setShowCloseSheet(false);onClose();}}
           onCancel={()=>setShowCloseSheet(false)}
         />
       )}
@@ -7083,9 +7023,6 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
   const[editingBalls,setEditingBalls]=useState(null);
   const[editingYarn,setEditingYarn]=useState(null);
   const[confirmDelete,setConfirmDelete]=useState(null);
-  const[yarnDraft,setYarnDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_add_yarn")||"null");}catch{return null;}});
-  const yarnDraftRef=useRef(null);
-
   const usedMap={};
   projects.forEach(p=>(p.yarns||[]).forEach(y=>{if(y.libId)usedMap[y.libId]=(usedMap[y.libId]||0)+(Number(y.balls)||0);}));
 
@@ -7107,16 +7044,6 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
-
-      {/* Yarn draft card */}
-      {yarnDraft&&(
-        <DraftCard
-          title={[yarnDraft.brand,yarnDraft.name].filter(Boolean).join(" — ")||"Yarn draft"}
-          subtitle={yarnDraft.colorway||yarnDraft.weight||null}
-          onContinue={()=>{yarnDraftRef.current=yarnDraft;setShowAdd(true);}}
-          onDiscard={()=>{try{localStorage.removeItem("sc_draft_add_yarn");}catch{}setYarnDraft(null);}}
-        />
-      )}
 
       {/* Filters */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
@@ -7241,7 +7168,7 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
           );
         })}
       </div>
-      {showAdd&&<AddYarnModal onClose={()=>{setShowAdd(false);yarnDraftRef.current=null;}} onAdd={y=>{setYarnLib(p=>[...p,y]);setYarnDraft(null);yarnDraftRef.current=null;}} initialDraft={yarnDraftRef.current||undefined}/>}
+      {showAdd&&<AddYarnModal onClose={()=>setShowAdd(false)} onAdd={y=>{setYarnLib(p=>[...p,y]);setShowAdd(false);}}/>}
       {editingYarn&&<AddYarnModal onClose={()=>setEditingYarn(null)} initialYarn={editingYarn} onEdit={updated=>setYarnLib(p=>p.map(y=>y.id===updated.id?updated:y))}/>}
       {editingBalls&&<BallsNumpad value={editingBalls.value}
         onChange={v=>setEditingBalls(b=>({...b,value:v}))}
@@ -7251,15 +7178,14 @@ function YarnLibPage({yarnLib,setYarnLib,projects}){
 }
 
 /* ─── Tools Library ─────────────────────────────────────────────────────────── */
-function AddToolModal({onClose,onAdd,editing,onEdit,initialDraft}){
+function AddToolModal({onClose,onAdd,editing,onEdit}){
   useBodyScrollLock();
   const{t}=useLang();
-  const[form,setForm]=useState(editing||initialDraft?{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:"",...(editing||initialDraft),savedAt:undefined}:{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:""});
+  const[form,setForm]=useState(editing?{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:"",...editing,savedAt:undefined}:{type:"Crochet Hook",size:"5.0mm",material:"Aluminum",brand:"",qty:1,condition:"Good",notes:""});
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const iS={width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,color:"var(--text-primary)",background:"var(--bg-subtle)"};
   const isEdit=!!editing;
   const[showCloseSheet,setShowCloseSheet]=useState(false);
-  const TOOL_DRAFT_KEY="sc_draft_add_tool";
   const toolIsDirty=form.brand.trim()!==""||form.notes.trim()!=="";
   const handleClose=()=>{if(toolIsDirty){setShowCloseSheet(true);}else{onClose();}};
   return(
@@ -7285,15 +7211,17 @@ function AddToolModal({onClose,onAdd,editing,onEdit,initialDraft}){
         <div style={{padding:"12px 20px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,flexShrink:0,borderTop:"1px solid var(--border-soft)"}}>
           {isEdit
             ?<button onClick={()=>{onEdit({...editing,...form,qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#3B6FD4,#6366F1)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>Save Changes</button>
-            :<button onClick={()=>{if(initialDraft){try{localStorage.removeItem("sc_draft_add_tool");}catch{}}onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.addToolBtn}</button>
+            :<button onClick={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}} style={{width:"100%",padding:"14px",borderRadius:14,background:"linear-gradient(135deg,#778EE3,#6183FF)",color:"#fff",fontSize:16,fontWeight:700,border:"none",cursor:"pointer"}}>{t.addToolBtn}</button>
           }
         </div>
       </div>
       {showCloseSheet&&(
         <ClosingActionSheet
-          message="You have unsaved changes."
-          onSaveDraft={()=>{try{localStorage.setItem(TOOL_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}setShowCloseSheet(false);onClose();}}
-          onDiscard={()=>{try{localStorage.removeItem(TOOL_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          message="Save this tool before closing?"
+          saveDraftLabel="Save tool"
+          discardLabel="Discard"
+          onSaveDraft={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}}
+          onDiscard={()=>{setShowCloseSheet(false);onClose();}}
           onCancel={()=>setShowCloseSheet(false)}
         />
       )}
@@ -7306,8 +7234,6 @@ function ToolsLibPage({tools,setTools}){
   const[showAdd,setShowAdd]=useState(false);
   const[editingTool,setEditingTool]=useState(null);
   const[filterType,setFilterType]=useState("All");
-  const[toolDraft,setToolDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_add_tool")||"null");}catch{return null;}});
-  const toolDraftRef=useRef(null);
   const COND_COLOR={New:"#059669",Good:"#3B6FD4",Fair:"#E3C277",Worn:"#EF4444"};
   const TOOL_ICON={"Crochet Hook":"basil:scissors-outline","Knitting Needle":"basil:needle-outline","Circular Needle":"basil:loop-outline","Double Pointed Needle":"basil:arrows-out-outline","Tunisian Hook":"basil:scissors-outline","Other":"basil:tool-outline"};
   const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none",width:120};
@@ -7321,16 +7247,6 @@ function ToolsLibPage({tools,setTools}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
-
-      {/* Tool draft card */}
-      {toolDraft&&(
-        <DraftCard
-          title={[toolDraft.type,toolDraft.size].filter(Boolean).join(" — ")||"Tool draft"}
-          subtitle={toolDraft.brand||toolDraft.material||null}
-          onContinue={()=>{toolDraftRef.current=toolDraft;setShowAdd(true);}}
-          onDiscard={()=>{try{localStorage.removeItem("sc_draft_add_tool");}catch{}setToolDraft(null);}}
-        />
-      )}
 
       {/* Filter */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
@@ -7384,7 +7300,7 @@ function ToolsLibPage({tools,setTools}){
           </div>
         ))}
       </div>
-      {showAdd&&<AddToolModal onClose={()=>{setShowAdd(false);toolDraftRef.current=null;}} onAdd={tool=>{setTools(p=>[...p,tool]);setToolDraft(null);toolDraftRef.current=null;}} initialDraft={toolDraftRef.current||undefined}/>}
+      {showAdd&&<AddToolModal onClose={()=>setShowAdd(false)} onAdd={tool=>{setTools(p=>[...p,tool]);setShowAdd(false);}}/>}
       {editingTool&&<AddToolModal editing={editingTool} onEdit={updated=>setTools(p=>p.map(x=>x.id===updated.id?updated:x))} onClose={()=>setEditingTool(null)}/>}
     </div>
   );
@@ -7432,13 +7348,13 @@ function imgPick(cb){
 }
 
 /* ── Pattern Form (Add + Edit) ── */
-function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patterns=[],initialDraft,autoOpenMaker}){
+function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patterns=[]}){
   useBodyScrollLock();
   const editing=!!initial;
   const{t}=useLang();
   const blank={name:"",category:"Shawl",craft:"Crochet",difficulty:"Beginner",source:"",notes:"",tags:"",image:null,photos:[],designData:null,importText:"",importImage:null,importPdf:null};
-  const[form,setForm]=useState(editing?{...blank,...initial,tags:Array.isArray(initial.tags)?initial.tags.join(", "):initial.tags||""}:initialDraft?{...blank,...initialDraft,tags:Array.isArray(initialDraft.tags)?initialDraft.tags.join(", "):initialDraft.tags||"",savedAt:undefined}:blank);
-  const[openMaker,setOpenMaker]=useState(autoOpenMaker?"rows":null); // null | "rows" | "rounds"
+  const[form,setForm]=useState(editing?{...blank,...initial,tags:Array.isArray(initial.tags)?initial.tags.join(", "):initial.tags||""}:blank);
+  const[openMaker,setOpenMaker]=useState(null); // null | "rows" | "rounds"
   // derive layout from existing designData, or default to "rows"
   const[layout,setLayout]=useState(editing&&initial?.designData?.type==="rounds"?"rounds":editing&&initial?.designData?.knitStitches?.length?"knitSymbol":"rows");
   const[creationMethod,setCreationMethod]=useState(initialMethod||(editing&&initial?.designData?.type==="imported"?"import":"design"));
@@ -7456,7 +7372,6 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
       const lines=form.importText.split(/\n|!/).map(l=>l.trim()).filter(Boolean);
       if(lines.length) designData={type:'imported',steps:lines.map((text,i)=>({id:`s${i}`,text}))};
     }
-    if(!editing){try{localStorage.removeItem("sc_draft_pattern_form");localStorage.removeItem("sc_draft_pattern");}catch{}}
     onSave({...form,designData,id:editing?initial.id:uid(),
       tags:typeof form.tags==="string"?form.tags.split(",").map(x=>x.trim()).filter(Boolean):form.tags,
       photos,
@@ -7477,12 +7392,10 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   const[showNameReminder,setShowNameReminder]=useState(false);
   const[showExtra,setShowExtra]=useState(()=>!!(editing&&(initial?.source||(initial?.tags?.length??0)>0)));
   const nameInputRef=useRef(null);
-  const FORM_DRAFT_KEY="sc_draft_pattern_form";
-  const saveFormDraft=()=>{try{localStorage.setItem(FORM_DRAFT_KEY,JSON.stringify({...form,savedAt:Date.now()}));}catch{}};
-  const isDirty=!editing&&form.name.trim()!==""&&((form.photos||[]).length>0||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!=="");
+  const isDirty=!editing&&(form.name.trim()!==""||((form.photos||[]).length>0||form.notes?.trim()!==""||form.source?.trim()!==""||form.designData!=null||form.importText?.trim()!==""));
   const hasUnnamedContent=!editing&&!form.name.trim()&&(form.designData!=null||(form.photos||[]).length>0||form.notes?.trim()!==""||form.importText?.trim()!=="");
   const handleClose=()=>{
-    if(isDirty){setShowCloseSheet(true);}
+    if(isDirty&&form.name.trim()){setShowCloseSheet(true);}
     else if(hasUnnamedContent){setShowNameReminder(true);}
     else{onClose();}
   };
@@ -7714,9 +7627,11 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
       </div>
       {showCloseSheet&&(
         <ClosingActionSheet
-          message="You have unsaved changes."
-          onSaveDraft={()=>{saveFormDraft();setShowCloseSheet(false);onClose();}}
-          onDiscard={()=>{try{localStorage.removeItem(FORM_DRAFT_KEY);}catch{}setShowCloseSheet(false);onClose();}}
+          message="Save this pattern before closing?"
+          saveDraftLabel="Save pattern"
+          discardLabel="Discard"
+          onSaveDraft={()=>{save();}}
+          onDiscard={()=>{setShowCloseSheet(false);onClose();}}
           onCancel={()=>setShowCloseSheet(false)}
         />
       )}
@@ -7726,7 +7641,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
           saveDraftLabel="Name it now"
           discardLabel="Discard design"
           onSaveDraft={()=>{setShowNameReminder(false);setTimeout(()=>{nameInputRef.current?.scrollIntoView({behavior:"smooth",block:"center"});nameInputRef.current?.focus();},100);}}
-          onDiscard={()=>{try{localStorage.removeItem(FORM_DRAFT_KEY);}catch{}setShowNameReminder(false);onClose();}}
+          onDiscard={()=>{setShowNameReminder(false);onClose();}}
           onCancel={()=>setShowNameReminder(false)}
         />
       )}
@@ -8973,9 +8888,6 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
   const[editing,setEditing]=useState(null);
   const[filterCraft,setFilterCraft]=useState("All");
   const[filterDiff,setFilterDiff]=useState("All");
-  const[patternFormDraft,setPatternFormDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");}catch{return null;}});
-  const[patternMakerDraft,setPatternMakerDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem("sc_draft_pattern")||"null");}catch{return null;}});
-  const patternDraftModeRef=useRef(null); // null | "form" | "maker"
   const[patternView,setPatternView]=useState(null); // for PatternViewModal (grid/crochet fullscreen)
   const[readingRounds,setReadingRounds]=useState(null); // for CPM_ReadModal
   const selStyle={padding:"6px 10px",borderRadius:9,border:"1.5px solid var(--border)",background:"var(--bg-card)",fontSize:12,fontWeight:600,color:"var(--text-muted)",cursor:"pointer",appearance:"none",width:120};
@@ -9010,24 +8922,6 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
         </button>
       </div>
-      {/* Pattern draft cards */}
-      {patternFormDraft&&(
-        <DraftCard
-          title={patternFormDraft.name||"Unnamed pattern"}
-          subtitle={[patternFormDraft.craft,patternFormDraft.category].filter(Boolean).join(" · ")||null}
-          onContinue={()=>{patternDraftModeRef.current="form";setShowAdd(true);}}
-          onDiscard={()=>{try{localStorage.removeItem("sc_draft_pattern_form");}catch{}setPatternFormDraft(null);}}
-        />
-      )}
-      {patternMakerDraft&&(
-        <DraftCard
-          title={"Pattern design"+(patternMakerDraft.type?" ("+patternMakerDraft.type+")":"")}
-          subtitle={"Visual pattern maker draft"}
-          onContinue={()=>{patternDraftModeRef.current="maker";setShowAdd(true);}}
-          onDiscard={()=>{try{localStorage.removeItem("sc_draft_pattern");}catch{}setPatternMakerDraft(null);}}
-        />
-      )}
-
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
         <select value={filterCraft} onChange={e=>setFilterCraft(e.target.value)} style={selStyle}>
           <option value="All">{t.filterAll} craft</option>
@@ -9091,7 +8985,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
       onClose={()=>setReadingRounds(null)}
       onUpdate={updated=>{update(updated);setReadingRounds(updated);}}
     />}
-    {showAdd&&<PatternFormModal onClose={()=>{setShowAdd(false);patternDraftModeRef.current=null;try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern_form")||"null");setPatternFormDraft(d);}catch{}try{const d=JSON.parse(localStorage.getItem("sc_draft_pattern")||"null");setPatternMakerDraft(d);}catch{}}} onSave={p=>{setPatterns(prev=>[...prev,p]);setPatternFormDraft(null);setPatternMakerDraft(null);patternDraftModeRef.current=null;}} yarnLib={yarnLib} patterns={patterns} initialDraft={patternDraftModeRef.current==="form"?patternFormDraft:undefined} autoOpenMaker={patternDraftModeRef.current==="maker"}/>}
+    {showAdd&&<PatternFormModal onClose={()=>setShowAdd(false)} onSave={p=>setPatterns(prev=>[...prev,p])} yarnLib={yarnLib} patterns={patterns}/>}
     {editing&&<PatternFormModal onClose={()=>setEditing(null)} initial={editing} onSave={updated=>{update(updated);setEditing(null);setViewing(updated);}} yarnLib={yarnLib} patterns={patterns}/>}
     {viewing&&!viewing._fromProject&&<PatternDetailModal
       pat={patterns.find(p=>p.id===viewing.id)||viewing}
