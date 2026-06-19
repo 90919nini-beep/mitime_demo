@@ -9267,7 +9267,7 @@ function ReadOnlyColorGrid({grid,preview=false}){
   if(!grid?.length)return null;
   return(
     <div style={{overflowX:"auto",overflowY:"auto",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg-subtle)"}}>
-      <canvas ref={canvasRef} onClick={preview?undefined:handleClick} style={{display:"block",cursor:preview?"default":"pointer",touchAction:preview?"pan-y":"none"}}/>
+      <canvas ref={canvasRef} onClick={preview?undefined:handleClick} style={{display:"block",cursor:preview?"default":"pointer",touchAction:preview?"pan-x pan-y":"none"}}/>
       {!preview&&selRow!==null&&(
         <p style={{textAlign:"center",fontSize:10,color:"#778EE3",margin:"4px 0 2px",fontWeight:700}}>
           Row {selRow+1} highlighted · tap row again to clear
