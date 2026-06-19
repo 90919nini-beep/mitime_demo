@@ -5989,7 +5989,7 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
           </div>
 
           {/* Bottom navigation panel */}
-          <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+          <div className="modal-in" style={{padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
             {/* Active row info + prev/next */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
               <div style={{minWidth:0}}>
@@ -7918,7 +7918,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
         </div>
       </div>
       {/* Bottom navigation panel */}
-      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{displayRow!==null?`Row ${displayRow}`:"— —"}</div>
@@ -8726,7 +8726,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
         </div>
 
         {/* Action bar */}
-        <div style={{borderTop:"1px solid var(--border-soft)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",flexShrink:0,paddingBottom:`calc(16px + ${SAFE_BOTTOM})`}}>
+        <div style={{borderTop:"1px solid var(--border-soft)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",flexShrink:0,padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`}}>
           {[
             {label:t.edit,icon:"M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",action:onEdit},
             {label:t.share,icon:"M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z",action:share},
@@ -13688,7 +13688,7 @@ function CPM_Preview({pattern,onBack,themeColor="#111111",notes}){
       </div>
 
       {/* Round navigation panel */}
-      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         {/* Active round info + prev/next */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
@@ -13879,7 +13879,7 @@ function CPM_RoundsReader({pattern,themeColor,onBack,notes,onSaveProgress,rowNot
         </svg>
       </div>
       {/* Navigation panel */}
-      <div className="modal-in" style={{padding:"12px 14px",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
+      <div className="modal-in" style={{padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>R{active.roundIndex}</div>
