@@ -8535,7 +8535,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   return createPortal(
     <>
     <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)"}}>
-      <div className="modal-in" style={{position:"absolute",top:44,left:0,right:0,height:"calc(100dvh - 44px)",background:"var(--bg-card)",borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div className="modal-in" style={{position:"absolute",top:44,left:0,right:0,bottom:0,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden"}}>
 
         {/* Header */}
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
