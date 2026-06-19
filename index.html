@@ -8010,6 +8010,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   });
   const[savedMarker,setSavedMarker]=useState(progressMarker);
   const[pinToast,setPinToast]=useState(null);
+  useEffect(()=>{const n=document.getElementById("app-bottom-nav");if(n)n.style.visibility="hidden";return()=>{if(n)n.style.visibility="";};},[]);
   const pinToastTimer=useRef(null);
   const showPinToast=msg=>{clearTimeout(pinToastTimer.current);setPinToast(msg);pinToastTimer.current=setTimeout(()=>setPinToast(null),2000);};
   const[counts,setCounts]=useState({});
@@ -8456,6 +8457,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   const[showStepRead,setShowStepRead]=useState(false);
   const[showGeneratedRead,setShowGeneratedRead]=useState(false);
   const[editNotes,setEditNotes]=useState(false);
+  useEffect(()=>{const n=document.getElementById("app-bottom-nav");if(n)n.style.visibility="hidden";return()=>{if(n)n.style.visibility="";};},[]);
   const[notesVal,setNotesVal]=useState(pat.notes||"");
   const[showPatMore,setShowPatMore]=useState(false);
   const accentColor=CRAFT_COLOR[pat.craft]||"#778EE3";
@@ -11400,7 +11402,7 @@ function BottomNav({page,setPage,t,onAdd}){
   const right=tabs.slice(2);
 
   return(
-    <div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--nav-bg)",backdropFilter:"blur(14px)",borderTop:"1px solid var(--nav-border)",zIndex:40}}>
+    <div id="app-bottom-nav" style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--nav-bg)",backdropFilter:"blur(14px)",borderTop:"1px solid var(--nav-border)",zIndex:40}}>
       <div style={{height:`calc(55px + ${SAFE_BOTTOM})`,paddingBottom:`calc(6px + ${SAFE_BOTTOM})`}}>
         <div style={{height:40,display:"flex",alignItems:"flex-start",paddingTop:0}}>
           {left.map(tab=><NavBtn key={tab.id} tab={tab}/>)}
