@@ -7993,7 +7993,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
 }
 
 /* ── Step checklist reader for imported text patterns ── */
-function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgress}){
+function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgress,stitchColors={}}){
   const items=useMemo(()=>steps.map(s=>{
     const t=s.text.trim();
     const isSection=t.endsWith(":")&&!t.includes("(")&&t.length<=60;
@@ -8075,7 +8075,8 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
     while((m=STITCH_RE.exec(text))!==null){
       if(m.index>last) pushPlain(text.slice(last,m.index),`${stepId}_${ti}`);
       const key=`${stepId}_${ti++}`;
-      const col=tokenColors[key];
+      const chartCol=stitchColors[m[0].toLowerCase().replace(/\s+/g,'')];
+      const col=tokenColors[key]??chartCol;
       out.push(
         <span key={key} onClick={e=>{e.stopPropagation();setColorPickerFor(key);}}
           style={{color:col||"inherit",fontWeight:700,cursor:"pointer",
@@ -8471,6 +8472,11 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   const[notesVal,setNotesVal]=useState(pat.notes||"");
   const[showPatMore,setShowPatMore]=useState(false);
   const accentColor=CRAFT_COLOR[pat.craft]||"#778EE3";
+  const stitchColorMap=useMemo(()=>{
+    const m={};
+    (pat.designData?.crochetStitches||[]).forEach(s=>{if(s.color&&s.id&&!m[s.id])m[s.id]=s.color;});
+    return m;
+  },[pat.designData?.crochetStitches]);
 
   function share(){
     const txt=`${pat.name}\n${pat.craft} · ${pat.category} · ${pat.difficulty}${pat.source?"\n"+pat.source:""}${pat.notes?"\nNotes: "+pat.notes:""}`;
@@ -8539,6 +8545,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       onBack={()=>setShowGeneratedRead(false)}
       progressMarker={pat.designData?.generatedProgressMarker??null}
       onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,generatedProgressMarker:idx}})}
+      stitchColors={stitchColorMap}
     />
   );
 
