@@ -8545,7 +8545,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   return createPortal(
     <>
     <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)"}}>
-      <div style={{position:"absolute",top:44,left:0,right:0,bottom:0,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden",animation:"fadeIn .2s cubic-bezier(.4,0,.2,1)",willChange:"transform"}}>
+      <div style={{position:"absolute",top:`max(44px, ${SAFE_TOP})`,left:0,right:0,bottom:0,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden",animation:"fadeIn .2s cubic-bezier(.4,0,.2,1)",willChange:"transform"}}>
 
         {/* Header */}
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
@@ -8639,7 +8639,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
               ):pat.designData.type==="knit"&&pat.designData.knitStitches?.length?(
                 <PatternCardPreview patData={pat.designData} height={200}/>
               ):pat.designData.type==="knit"?(
-                <ReadOnlyColorGrid grid={pat.designData.grid}/>
+                <ReadOnlyColorGrid grid={pat.designData.grid} preview/>
               ):(
                 <ReadOnlyCrochetView crochetStitches={pat.designData.crochetStitches} crochetRows={pat.designData.crochetRows}/>
               )}
@@ -9192,7 +9192,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
 }
 
 /* ─── Read-only Pattern Previews ───────────────────────────────────────────── */
-function ReadOnlyColorGrid({grid}){
+function ReadOnlyColorGrid({grid,preview=false}){
   const canvasRef=useRef(null);
   const[selRow,setSelRow]=useState(null);
   const CELL=16,ML=24,MT=18,MR=8,MB=8;
@@ -9267,8 +9267,8 @@ function ReadOnlyColorGrid({grid}){
   if(!grid?.length)return null;
   return(
     <div style={{overflowX:"auto",overflowY:"auto",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg-subtle)"}}>
-      <canvas ref={canvasRef} onClick={handleClick} style={{display:"block",cursor:"pointer"}}/>
-      {selRow!==null&&(
+      <canvas ref={canvasRef} onClick={preview?undefined:handleClick} style={{display:"block",cursor:preview?"default":"pointer",touchAction:preview?"pan-y":"none"}}/>
+      {!preview&&selRow!==null&&(
         <p style={{textAlign:"center",fontSize:10,color:"#778EE3",margin:"4px 0 2px",fontWeight:700}}>
           Row {selRow+1} highlighted · tap row again to clear
         </p>
