@@ -5097,9 +5097,9 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
               </div>
             )}
             {/* Bottom action bar */}
-            <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:25,
+            <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,
               background:"rgba(255,255,255,0.96)",backdropFilter:"blur(12px)",
-              borderTop:"1px solid #EAECF5",padding:"10px 8px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,
+              borderTop:"1px solid #EAECF5",padding:"10px 8px 0",paddingBottom:`calc(10px + ${SAFE_BOTTOM})`,
               display:"flex",alignItems:"flex-start",justifyContent:"space-around"}}>
               {/* Selection count chip */}
               <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",
@@ -13307,9 +13307,9 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
               </div>
             )}
             {/* Bottom action bar */}
-            <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:25,
+            <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,
               background:"rgba(255,255,255,0.96)",backdropFilter:"blur(12px)",
-              borderTop:"1px solid #EAECF5",padding:"10px 8px 0",paddingBottom:`calc(16px + ${SAFE_BOTTOM})`,
+              borderTop:"1px solid #EAECF5",padding:"10px 8px 0",paddingBottom:`calc(10px + ${SAFE_BOTTOM})`,
               display:"flex",alignItems:"flex-start",justifyContent:"space-around"}}>
               {[
                 {icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>,label:"Delete",bg:"#FDE8ED",active:false,disabled:selCount===0,fn:()=>{commitPattern(p=>({...p,rounds:p.rounds.map(r=>({...r,stitches:r.stitches.filter(st=>!cpmBatchKeys.has(st.id))})).filter((r,i)=>i===0||r.stitches.length>0).map((r,i)=>({...r,roundIndex:i+1}))}));setCpmBatchKeys(new Set());}},
