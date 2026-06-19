@@ -8532,8 +8532,8 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
 
   return createPortal(
     <>
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:500,display:"flex",flexDirection:"column"}}>
-      <div className="modal-in" style={{flex:1,background:"var(--bg-card)",marginTop:44,borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:500}}>
+      <div className="modal-in" style={{position:"absolute",top:44,left:0,right:0,bottom:0,background:"var(--bg-card)",borderRadius:"24px 24px 0 0",display:"flex",flexDirection:"column",overflow:"hidden"}}>
 
         {/* Header */}
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border-soft)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
@@ -8620,10 +8620,6 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                   }} style={{fontSize:11,fontWeight:700,color:"#778EE3",background:"var(--accent-soft)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                     <Ico n="basil:clipboard-outline" sz={11}/>{pat.designData?.generatedSteps?"Read Text":"Generate Text"}
                   </button>
-                  {pat.designData?.generatedSteps&&(
-                    <button onClick={()=>{const steps=generatePatternText(pat.designData);onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});}}
-                      style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",background:"var(--bg-subtle)",border:"none",borderRadius:8,padding:"4px 8px",cursor:"pointer"}}>↺</button>
-                  )}
                 </div>
               </div>
               {isRoundsDesign?(
