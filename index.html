@@ -4462,7 +4462,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   const clearAll=()=>commit([]);
   const savePNG=()=>{const c=canvasRef.current;if(!c)return;const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="crochet-pattern.png";a.click();};
   const usedSymIds=[...new Set(stitches.map(s=>s.id))];
-  const getXY=e=>{const c=canvasRef.current,rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,sx=c.width/(dpr*rect.width),sy=c.height/(dpr*rect.height),src=e.touches?.length?e.touches[0]:e.changedTouches?.length?e.changedTouches[0]:e;const rawMx=(src.clientX-rect.left)*sx,rawMy=(src.clientY-rect.top)*sy;const s=autoScaleRef.current,cW=c.width/dpr,cH=c.height/dpr;return{mx:cW/2+(rawMx-cW/2)/s,my:cH/2+(rawMy-cH/2)/s,rawMx,rawMy,cW,cH};};
+  const getXY=e=>{const c=canvasRef.current,rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,sx=c.width/(dpr*rect.width),sy=c.height/(dpr*rect.height),src=e.touches?.length?e.touches[0]:e.changedTouches?.length?e.changedTouches[0]:e;const cssZoom=parseFloat(window.getComputedStyle(document.documentElement).zoom)||1;const cssMx=(src.clientX-rect.left)/cssZoom,csMy=(src.clientY-rect.top)/cssZoom;const rawMx=cssMx*sx,rawMy=csMy*sy;const s=autoScaleRef.current,cW=c.width/dpr,cH=c.height/dpr;return{mx:cW/2+(rawMx-cW/2)/s,my:cH/2+(rawMy-cH/2)/s,rawMx:cssMx,rawMy:csMy,cW,cH};};
   // Convert canvas coords to approximate grid coords (for placement only, not hit-detection)
   const toCont=(mx,my,p)=>({gx:(mx-p.x)/CELL,gy:(my-p.y)/CELL_H});
   // Accurate grid-Y: inverts rowPxOff by finding the row whose pixel offset is closest to my
@@ -5051,9 +5051,9 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
             )}
             {/* Color picker popup */}
             {batchColorOpen&&(
-              <div style={{position:"absolute",inset:0,zIndex:40,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.18)"}}
+              <div style={{position:"fixed",inset:0,zIndex:510,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.18)"}}
                 onClick={e=>{if(e.target===e.currentTarget)setBatchColorOpen(false);}}>
-                <div style={{background:"var(--bg-card)",borderRadius:"18px 18px 0 0",padding:"18px 20px 28px",width:"100%",maxWidth:420,boxShadow:"0 -4px 24px rgba(0,0,0,0.14)"}}>
+                <div style={{background:"var(--bg-card)",borderRadius:"18px 18px 0 0",padding:"18px 20px",paddingBottom:`calc(28px + ${SAFE_BOTTOM})`,width:"100%",maxWidth:420,boxShadow:"0 -4px 24px rgba(0,0,0,0.14)"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                     <span style={{fontSize:13,fontWeight:800,color:"var(--text-muted)"}}>Change Color</span>
                     <button type="button" onClick={()=>setBatchColorOpen(false)}
@@ -5073,7 +5073,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
             )}
             {/* Align — floating card above action bar */}
             {batchAlignOpen&&(
-              <div style={{position:"absolute",bottom:86,left:"50%",transform:"translateX(-50%)",zIndex:35,
+              <div style={{position:"fixed",bottom:`calc(90px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:510,
                 background:"var(--bg-card)",borderRadius:16,border:"1px solid #EAECF5",
                 boxShadow:"0 4px 24px rgba(119,142,227,0.18)",width:220,padding:"10px 12px 12px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -8063,7 +8063,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
 
   /* Render step text: stitch abbreviations → tappable colored spans; (count) → bold purple */
   const STITCH_RE=/\b(sl\s*st|sc[2-9]tog|dc[2-9]tog|hdc[2-9]tog|hdc|dtr|dc|sc|tr|ch|sk(?:ip)?|sp|yo|sts?|inc|dec)\b/gi;
-  const renderText=(text,stepId)=>{
+  const renderText=(text,stepId,rowColor)=>{
     const out=[];let last=0;let ti=0;let m;
     STITCH_RE.lastIndex=0;
     const pushPlain=(chunk,prefix)=>{
@@ -8075,7 +8075,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
     while((m=STITCH_RE.exec(text))!==null){
       if(m.index>last) pushPlain(text.slice(last,m.index),`${stepId}_${ti}`);
       const key=`${stepId}_${ti++}`;
-      const chartCol=stitchColors[m[0].toLowerCase().replace(/\s+/g,'')];
+      const chartCol=rowColor??stitchColors[m[0].toLowerCase().replace(/\s+/g,'')];
       const col=tokenColors[key]??chartCol;
       out.push(
         <span key={key} onClick={e=>{e.stopPropagation();setColorPickerFor(key);}}
@@ -8215,7 +8215,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
                   WebkitBoxOrient:isDone?"vertical":undefined,
                   transition:"font-size .2s",
                 }}>
-                  {isDone?item.text:renderText(item.text,item.id)}
+                  {isDone?item.text:renderText(item.text,item.id,item.rowColor)}
                 </p>
 
                 {/* Repeat counter */}
@@ -8401,7 +8401,9 @@ function generatePatternText(designData){
       }
       const total=stitches.filter(s=>s.id!=='ch').length;
       const label=isFoundation?'Foundation':`Row ${rowIdx}`;
-      steps.push({id:`s${rowIdx}`,text:`${label}: ${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`});
+      const colorFreq={};stitches.forEach(s=>{if(s.color)colorFreq[s.color]=(colorFreq[s.color]||0)+1;});
+      const rowColor=Object.entries(colorFreq).sort((a,b)=>b[1]-a[1])[0]?.[0]||undefined;
+      steps.push({id:`s${rowIdx}`,text:`${label}: ${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`,rowColor});
     });
     return steps;
   }
@@ -8448,7 +8450,9 @@ function generatePatternText(designData){
         tokens.push(run>1?`${run} ${abR(t)}`:abR(t));i+=run;}
       const total=sts.filter(s=>s.type!=='ch').length;
       const prefix=ri===0?'Rnd 1: Magic ring, ':`Rnd ${rnd.roundIndex}: `;
-      return{id:`s${ri}`,text:`${prefix}${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`};
+      const rndColorFreq={};sts.forEach(s=>{if(s.color)rndColorFreq[s.color]=(rndColorFreq[s.color]||0)+1;});
+      const rowColor=Object.entries(rndColorFreq).sort((a,b)=>b[1]-a[1])[0]?.[0]||undefined;
+      return{id:`s${ri}`,text:`${prefix}${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`,rowColor};
     });
   }
 
@@ -8467,6 +8471,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   const[showKnitRead,setShowKnitRead]=useState(false);
   const[showStepRead,setShowStepRead]=useState(false);
   const[showGeneratedRead,setShowGeneratedRead]=useState(false);
+  const[localGeneratedSteps,setLocalGeneratedSteps]=useState(null);
   const[editNotes,setEditNotes]=useState(false);
   useEffect(()=>{const n=document.getElementById("app-bottom-nav");if(n)n.style.visibility="hidden";return()=>{if(n)n.style.visibility="";};},[]);
   const[notesVal,setNotesVal]=useState(pat.notes||"");
@@ -8540,9 +8545,9 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   );
   if(showGeneratedRead) return(
     <StepReader
-      steps={pat.designData?.generatedSteps||[]}
+      steps={localGeneratedSteps||pat.designData?.generatedSteps||[]}
       patName={pat.name}
-      onBack={()=>setShowGeneratedRead(false)}
+      onBack={()=>{setShowGeneratedRead(false);setLocalGeneratedSteps(null);}}
       progressMarker={pat.designData?.generatedProgressMarker??null}
       onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,generatedProgressMarker:idx}})}
       stitchColors={stitchColorMap}
@@ -8634,8 +8639,10 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                     </button>
                   </>)}
                   <button onClick={()=>{
-                    if(pat.designData?.generatedSteps){setShowGeneratedRead(true);}
-                    else{const steps=generatePatternText(pat.designData);onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps,generatedProgressMarker:null}});setShowGeneratedRead(true);}
+                    const steps=generatePatternText(pat.designData);
+                    setLocalGeneratedSteps(steps);
+                    onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps}});
+                    setShowGeneratedRead(true);
                   }} style={{fontSize:11,fontWeight:700,color:"#778EE3",background:"var(--accent-soft)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                     <Ico n="basil:clipboard-outline" sz={11}/>{pat.designData?.generatedSteps?"Read Text":"Generate Text"}
                   </button>
@@ -13286,9 +13293,9 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
             )}
             {/* Color modal */}
             {cpmBatchColorOpen&&(
-              <div style={{position:"absolute",inset:0,zIndex:40,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.18)"}}
+              <div style={{position:"fixed",inset:0,zIndex:510,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.18)"}}
                 onClick={e=>{if(e.target===e.currentTarget)setCpmBatchColorOpen(false);}}>
-                <div style={{background:"var(--bg-card)",borderRadius:"18px 18px 0 0",padding:"18px 20px 28px",width:"100%",maxWidth:420,boxShadow:"0 -4px 24px rgba(0,0,0,0.14)"}}>
+                <div style={{background:"var(--bg-card)",borderRadius:"18px 18px 0 0",padding:"18px 20px",paddingBottom:`calc(28px + ${SAFE_BOTTOM})`,width:"100%",maxWidth:420,boxShadow:"0 -4px 24px rgba(0,0,0,0.14)"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                     <span style={{fontSize:13,fontWeight:800,color:"var(--text-muted)"}}>Change Color</span>
                     <button type="button" onClick={()=>setCpmBatchColorOpen(false)}
