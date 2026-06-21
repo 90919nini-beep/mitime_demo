@@ -4304,10 +4304,17 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   // Core algorithm: returns [{x, y, fanAngle}, …] for N children of `anc`.
   // fanAngle is the tilt from vertical (radians). 0 = upright, +ve = right, -ve = left.
   // Fan stitches share a visual base at the anchor; drawSymOnCanvas rotates each around its foot.
-  const computeChildPositions=(anc,N,cfg)=>{
+  const computeChildPositions=(anc,N,cfg,st)=>{
     const{mode,arcDeg,radius,spacing}={...DEFAULT_ANCHOR_CFG,...cfg};
     const cp=getStitchConnectionPoint(anc);
     console.log("[fan base point]",{ancKey:anc.key,ancId:anc.id,cp,N});
+    // Edge detection: is anchor the leftmost or rightmost stitch in its row?
+    const rowXs=st?st.filter(s=>Math.round(s.y)===Math.round(anc.y)).map(s=>s.x):[];
+    const minX=rowXs.length?Math.min(...rowXs):anc.x;
+    const maxX=rowXs.length?Math.max(...rowXs):anc.x;
+    const hasNeighbors=maxX>minX+0.1;
+    const isLeftEdge=hasNeighbors&&Math.abs(anc.x-minX)<0.5;
+    const isRightEdge=hasNeighbors&&Math.abs(anc.x-maxX)<0.5;
     return Array.from({length:N},(_,i)=>{
       if(mode==="stack"){
         return{x:cp.x,y:anc.y-(i+1)*spacing,fanAngle:0};
@@ -4320,8 +4327,21 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
         // x position when a second sibling is added (fan-of-fan stability fix).
         const maxSpread=(cpmFanArcDeg(N)/180)*Math.PI;
         const spread=N===1?0:maxSpread;
-        const tilt=N===1?0:(i-(N-1)/2)*spread/(N-1);
-        const xOff=N===1?0:(i-(N-1)/2)*0.15;
+        let tilt,xOff;
+        if(N===1){tilt=0;xOff=0;}
+        else if(isLeftEdge){
+          // Outer child (i=0) leans fully left; inner child (i=N-1) stays vertical.
+          tilt=-spread*(N-1-i)/(N-1);
+          xOff=-0.15*(N-1-i)/(N-1);
+        }else if(isRightEdge){
+          // Inner child (i=0) stays vertical; outer child (i=N-1) leans fully right.
+          tilt=+spread*i/(N-1);
+          xOff=+0.15*i/(N-1);
+        }else{
+          // Middle: symmetric V spread (unchanged).
+          tilt=(i-(N-1)/2)*spread/(N-1);
+          xOff=(i-(N-1)/2)*0.15;
+        }
         return{x:cp.x+xOff,y:cp.y-1,fanAngle:tilt};
       }
     });
@@ -4331,7 +4351,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     const anc=st.find(s=>s.key===ancKey);if(!anc)return st;
     const kids=childrenOf(ancKey,st);const N=kids.length;if(!N)return st;
     console.log("[refan children]",{anchor:ancKey,children:kids.map(k=>k.key)});
-    const positions=computeChildPositions(anc,N,getAnchorCfg(anc));
+    const positions=computeChildPositions(anc,N,getAnchorCfg(anc),st);
     return st.map(s=>{
       const idx=kids.findIndex(k=>k.key===s.key);if(idx===-1)return s;
       return{...s,...positions[idx]};
@@ -4381,7 +4401,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   const previewFanPos=(ancKey,st)=>{
     const anc=st.find(s=>s.key===ancKey);if(!anc)return null;
     const kids=childrenOf(ancKey,st);const N=kids.length+1;
-    const positions=computeChildPositions(anc,N,getAnchorCfg(anc));
+    const positions=computeChildPositions(anc,N,getAnchorCfg(anc),st);
     return positions[N-1];
   };
   // Patch the anchorConfig of an anchor and immediately re-apply layout.
@@ -4569,7 +4589,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
         // Fan spread rays — drawn first, behind stitches and connector
         if(hasFan&&ancSt2){
           const N=g.childCount+1;
-          const prevPositions=computeChildPositions(ancSt2,N,getAnchorCfg(ancSt2));
+          const prevPositions=computeChildPositions(ancSt2,N,getAnchorCfg(ancSt2),stitches);
           ctx.strokeStyle="rgba(245,158,11,0.18)";ctx.lineWidth=1;ctx.setLineDash([3,3]);
           prevPositions.forEach(pos=>{const rx=p.x+pos.x*CELL,ry=p.y+rowPxOff(pos.y);ctx.beginPath();ctx.moveTo(acx,acy);ctx.lineTo(rx,ry);ctx.stroke();});
           ctx.setLineDash([]);
@@ -4603,9 +4623,9 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
       return mxH>chH*1.5?mxH-chH/2:0;
     };
     // Hover hint (continuous coords)
-    if(hoverCell&&!ir.current.isPanning&&activeTool==="place"){
+    if(hoverCell&&!ir.current.isPanning&&(activeTool==="place"||activeTool==="select"||activeTool==="eraser")){
       const hcx=p.x+hoverCell.gx*CELL;
-      const hcy=p.y+rowPxOff(hoverCell.gy)-_chFloat(activeSym,hoverCell.gy);
+      const hcy=(activeTool==="select"||activeTool==="eraser")?p.y+rowPxOff(hoverCell.gy)+CELL/2:p.y+rowPxOff(hoverCell.gy)-_chFloat(activeSym,hoverCell.gy);
       const isFanMode=hoverCell.mode==="fan";
       const isSnapMode=!!hoverCell.snapTo;
       // Connector line — solid 2-layer from anchor's connection point to landing dot
@@ -4630,7 +4650,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
         ctx.beginPath();ctx.arc(hcx,hcy,9,0,Math.PI*2);ctx.stroke();
         ctx.fillStyle="rgba(245,158,11,0.75)";
         ctx.beginPath();ctx.arc(hcx,hcy,4,0,Math.PI*2);ctx.fill();
-      }else{
+      }else if(!snapEnabled||activeTool!=="place"){
         ctx.strokeStyle="rgba(124,58,237,0.35)";ctx.lineWidth=1;
         const cr=7;
         ctx.beginPath();ctx.moveTo(hcx-cr,hcy);ctx.lineTo(hcx+cr,hcy);ctx.stroke();
@@ -4675,7 +4695,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
           const siblings=childrenOf(anc.key,stitches.filter(s=>s.key!==ds.key));
           const N=siblings.length+1;
           const ancNode=stitches.find(s=>s.key===anc.key);
-          const prevPositions=computeChildPositions(anc,N,getAnchorCfg(ancNode||anc));
+          const prevPositions=computeChildPositions(anc,N,getAnchorCfg(ancNode||anc),stitches.filter(s=>s.key!==ds.key));
           siblings.forEach((sib,i)=>{
             const{x:fx,y:fy,fanAngle:fa}=prevPositions[i];
             ctx.globalAlpha=0.25;drawSymOnCanvas(ctx,sib.id,p.x+fx*CELL,p.y+rowPxOff(fy)-_chFloat(sib.id,fy),CELL,sib.color,fa||0);ctx.globalAlpha=1;
@@ -4719,7 +4739,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
       else{ir.current={isPanning:true,startMX:mx,startMY:my,origPan:{...pan},moved:false};}
       return;
     }
-    if(hit){const canDrag=activeTool==="select"||hit.key===latestPlacedKey;console.log("[latest placed drag]",{activeTool,stitchKey:hit.key,latestPlacedKey,canDrag});if(canDrag){ir.current={isDragging:true,key:hit.key,startMX:mx,startMY:my,moved:false};setDragSt({key:hit.key,mx,my});}else{if(activeTool==="place"){const anc=nearestAnch(mx,my,null);if(anc){const pos=previewFanPos(anc.key,stitches)||{x:anc.x,y:anc.y-1};const mode=childrenOf(anc.key).length>0?"fan":"newrow";setHoverCell({gx:pos.x,gy:pos.y,snapTo:anc.key,mode});setGuides([{axis:"anchor",x:anc.x,y:anc.y,childCount:childrenOf(anc.key).length,ancKey:anc.key}]);lockedAnchorKeyRef.current=anc.key;}else{const{gx}=toCont(mx,my,pan);setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);}}ir.current={isPanning:true,startMX:mx,startMY:my,origPan:{...pan},moved:false};}}
+    if(hit){const canDrag=activeTool==="select"||activeTool==="eraser"||hit.key===latestPlacedKey;console.log("[latest placed drag]",{activeTool,stitchKey:hit.key,latestPlacedKey,canDrag});if(canDrag){ir.current={isDragging:true,key:hit.key,startMX:mx,startMY:my,moved:false};setDragSt({key:hit.key,mx,my});}else{if(activeTool==="place"){const anc=nearestAnch(mx,my,null);if(anc){const pos=previewFanPos(anc.key,stitches)||{x:anc.x,y:anc.y-1};const mode=childrenOf(anc.key).length>0?"fan":"newrow";setHoverCell({gx:pos.x,gy:pos.y,snapTo:anc.key,mode});setGuides([{axis:"anchor",x:anc.x,y:anc.y,childCount:childrenOf(anc.key).length,ancKey:anc.key}]);lockedAnchorKeyRef.current=anc.key;}else{const{gx}=toCont(mx,my,pan);setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);}}ir.current={isPanning:true,startMX:mx,startMY:my,origPan:{...pan},moved:false};}}
     else{if(activeTool==="place"){const anc=nearestAnch(mx,my,null);if(anc){const pos=previewFanPos(anc.key,stitches)||{x:anc.x,y:anc.y-1};const mode=childrenOf(anc.key).length>0?"fan":"newrow";setHoverCell({gx:pos.x,gy:pos.y,snapTo:anc.key,mode});setGuides([{axis:"anchor",x:anc.x,y:anc.y,childCount:childrenOf(anc.key).length,ancKey:anc.key}]);lockedAnchorKeyRef.current=anc.key;}else{const{gx}=toCont(mx,my,pan);setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);}}ir.current={isPanning:true,startMX:mx,startMY:my,origPan:{...pan},moved:false};}
   };
   const onMouseMove=e=>{
@@ -4736,6 +4756,11 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     }else if(d.isPanning){
       if(!d.moved&&Math.hypot(mx-d.startMX,my-d.startMY)>4)d.moved=true;
       if(d.moved)setPan({x:d.origPan.x+(mx-d.startMX),y:d.origPan.y+(my-d.startMY)});
+    }else if(activeTool==="select"||activeTool==="eraser"){
+      // Select/eraser: pin cursor to the actual hovered stitch (not the next-placement snap position)
+      const hit=stAt(mx,my);
+      if(hit){setHoverCell({gx:hit.x,gy:hit.y});setGuides([]);}
+      else{const{gx}=toCont(mx,my,pan);setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);}
     }else{
       let anc=nearestAnch(mx,my,null);
       // Hysteresis: keep the locked anchor while cursor is still within 80% of snap radius.
@@ -7998,7 +8023,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
     const t=s.text.trim();
     const isSection=t.endsWith(":")&&!t.includes("(")&&t.length<=60;
     const isRepeat=!isSection&&/\brepeat\b|×|\btimes\b/i.test(t);
-    return{id:s.id,text:t,isSection,isRepeat};
+    return{id:s.id,text:t,isSection,isRepeat,rowColor:s.rowColor,posColors:s.posColors};
   }),[steps]);
 
   const stepItems=useMemo(()=>items.filter(i=>!i.isSection),[items]);
@@ -8063,7 +8088,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
 
   /* Render step text: stitch abbreviations → tappable colored spans; (count) → bold purple */
   const STITCH_RE=/\b(sl\s*st|sc[2-9]tog|dc[2-9]tog|hdc[2-9]tog|hdc|dtr|dc|sc|tr|ch|sk(?:ip)?|sp|yo|sts?|inc|dec)\b/gi;
-  const renderText=(text,stepId,rowColor)=>{
+  const renderText=(text,stepId,rowColor,posColors)=>{
     const out=[];let last=0;let ti=0;let m;
     STITCH_RE.lastIndex=0;
     const pushPlain=(chunk,prefix)=>{
@@ -8075,7 +8100,8 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
     while((m=STITCH_RE.exec(text))!==null){
       if(m.index>last) pushPlain(text.slice(last,m.index),`${stepId}_${ti}`);
       const key=`${stepId}_${ti++}`;
-      const chartCol=rowColor??stitchColors[m[0].toLowerCase().replace(/\s+/g,'')];
+      const posCol=posColors&&posColors[m.index]!==undefined?posColors[m.index]:null;
+      const chartCol=posCol??rowColor??stitchColors[m[0].toLowerCase().replace(/\s+/g,'')];
       const col=tokenColors[key]??chartCol;
       out.push(
         <span key={key} onClick={e=>{e.stopPropagation();setColorPickerFor(key);}}
@@ -8215,7 +8241,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
                   WebkitBoxOrient:isDone?"vertical":undefined,
                   transition:"font-size .2s",
                 }}>
-                  {isDone?item.text:renderText(item.text,item.id,item.rowColor)}
+                  {isDone?item.text:renderText(item.text,item.id,item.rowColor,item.posColors)}
                 </p>
 
                 {/* Repeat counter */}
@@ -8366,6 +8392,7 @@ function generatePatternText(designData){
       else{clusters.push([y]);}
     });
     const steps=[];
+    const RE_PC=/\b(sl\s*st|sc[2-9]tog|dc[2-9]tog|hdc[2-9]tog|hdc|dtr|dc|sc|tr|ch|sk(?:ip)?|sp|yo|sts?|inc|dec)\b/gi;
     clusters.forEach((cluster,rowIdx)=>{
       const ySet=new Set(cluster);
       const stitches=crochetStitches.filter(s=>ySet.has(s.y)).slice().sort((a,b)=>a.x-b.x);
@@ -8373,7 +8400,7 @@ function generatePatternText(designData){
       const parentCount={};
       stitches.forEach(s=>{const pid=s.parentIds?.[0];if(pid)parentCount[pid]=(parentCount[pid]||0)+1;});
       const usedIdx=new Set();
-      const tokens=[];
+      const tItems=[];
       let i=0;
       while(i<stitches.length){
         if(usedIdx.has(i)){i++;continue;}
@@ -8387,23 +8414,30 @@ function generatePatternText(designData){
           const desc=types.length===1
             ?`${fanGroup.length} ${abC(types[0])} in same st`
             :fanGroup.map(x=>abC(x.id)).join(', ')+' in same st';
-          tokens.push(desc);
+          const fcFreq={};fanGroup.forEach(x=>{if(x.color)fcFreq[x.color]=(fcFreq[x.color]||0)+1;});
+          const fanColor=Object.entries(fcFreq).sort((a,b)=>b[1]-a[1])[0]?.[0]||undefined;
+          tItems.push({text:desc,color:fanColor});
           fanIdxs.forEach(j=>usedIdx.add(j));
           parentCount[pid]=0;
           i++;
         }else{
           let run=1;
           while(i+run<stitches.length&&!usedIdx.has(i+run)&&stitches[i+run].id===s.id
+                &&stitches[i+run].color===s.color
                 &&!(stitches[i+run].parentIds?.[0]&&parentCount[stitches[i+run].parentIds[0]]>1))run++;
-          tokens.push(run>1?`${run} ${abC(s.id)}`:abC(s.id));
+          tItems.push({text:run>1?`${run} ${abC(s.id)}`:abC(s.id),color:s.color||undefined});
           i+=run;
         }
       }
       const total=stitches.filter(s=>s.id!=='ch').length;
       const label=isFoundation?'Foundation':`Row ${rowIdx}`;
+      const textBody=tItems.map(t=>t.text).join(', ');
+      const fullText=`${label}: ${textBody}.${total>0?` (${total} sts)`:''}`;
+      const posColors={};let pos=label.length+2;
+      tItems.forEach((ti,idx)=>{RE_PC.lastIndex=0;let m2;while((m2=RE_PC.exec(ti.text))!==null)posColors[pos+m2.index]=ti.color;pos+=ti.text.length+(idx<tItems.length-1?2:0);});
       const colorFreq={};stitches.forEach(s=>{if(s.color)colorFreq[s.color]=(colorFreq[s.color]||0)+1;});
       const rowColor=Object.entries(colorFreq).sort((a,b)=>b[1]-a[1])[0]?.[0]||undefined;
-      steps.push({id:`s${rowIdx}`,text:`${label}: ${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`,rowColor});
+      steps.push({id:`s${rowIdx}`,text:fullText,rowColor,posColors});
     });
     return steps;
   }
@@ -8443,16 +8477,22 @@ function generatePatternText(designData){
   if(type==="rounds"&&rounds?.length){
     const ABR_R={sc:'sc',hdc:'hdc',dc:'dc',tr:'tr',ch:'ch',inc:'2 sc in next st',dec:'sc2tog',slst:'sl st'};
     const abR=id=>ABR_R[id]||id;
+    const RE_PCR=/\b(sl\s*st|sc[2-9]tog|dc[2-9]tog|hdc[2-9]tog|hdc|dtr|dc|sc|tr|ch|sk(?:ip)?|sp|yo|sts?|inc|dec)\b/gi;
     return rounds.slice().sort((a,b)=>a.roundIndex-b.roundIndex).map((rnd,ri)=>{
       const sts=rnd.stitches?.slice().sort((a,b)=>a.angle-b.angle)||[];
-      const tokens=[];let i=0;
-      while(i<sts.length){const t=sts[i].type;let run=1;while(i+run<sts.length&&sts[i+run].type===t)run++;
-        tokens.push(run>1?`${run} ${abR(t)}`:abR(t));i+=run;}
+      const tItems=[];let i=0;
+      while(i<sts.length){const t=sts[i].type;const c=sts[i].color;let run=1;
+        while(i+run<sts.length&&sts[i+run].type===t&&sts[i+run].color===c)run++;
+        tItems.push({text:run>1?`${run} ${abR(t)}`:abR(t),color:c||undefined});i+=run;}
       const total=sts.filter(s=>s.type!=='ch').length;
       const prefix=ri===0?'Rnd 1: Magic ring, ':`Rnd ${rnd.roundIndex}: `;
+      const textBody=tItems.map(t=>t.text).join(', ');
+      const fullText=`${prefix}${textBody}.${total>0?` (${total} sts)`:''}`;
+      const posColors={};let pos=prefix.length;
+      tItems.forEach((ti,idx)=>{RE_PCR.lastIndex=0;let m2;while((m2=RE_PCR.exec(ti.text))!==null)posColors[pos+m2.index]=ti.color;pos+=ti.text.length+(idx<tItems.length-1?2:0);});
       const rndColorFreq={};sts.forEach(s=>{if(s.color)rndColorFreq[s.color]=(rndColorFreq[s.color]||0)+1;});
       const rowColor=Object.entries(rndColorFreq).sort((a,b)=>b[1]-a[1])[0]?.[0]||undefined;
-      return{id:`s${ri}`,text:`${prefix}${tokens.join(', ')}.${total>0?` (${total} sts)`:''}`,rowColor};
+      return{id:`s${ri}`,text:fullText,rowColor,posColors};
     });
   }
 
