@@ -4347,7 +4347,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   const ccPinchRatioRef=useRef(1);
   const ccPinchStateRef=useRef(null);
   const rowRenderOffRef=useRef({});
-  const CELL=32, CELL_H=40, SNAP_R=1.6;
+  const CELL=32, CELL_H=40, SNAP_R=1.8;
   const ROW_GAP_PX=8;
 
   // Keep rowRenderOff in sync with stitches so event handlers can use it
@@ -4492,25 +4492,25 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   // Nearest anchor within snap radius in pixels — returns null when snapping is off
   const nearestAnch=(mx,my,xk)=>{
     if(!snapEnabled)return null;
-    // Only consider stitches whose connection point (T-head) is BELOW the cursor in
-    // canvas-Y (larger canvas-Y = lower on screen = earlier crochet row). This
-    // eliminates same-row peers regardless of zoom, custom row heights, or how
-    // bestGridY extrapolates virtual rows. No hoverGridY needed.
+    // 1. Lock target row from cursor position — independent of any stitch selection.
+    //    This prevents anchor selection from ever changing the target row.
+    const targetRow=bestGridY(my,pan);
     const snapPx=SNAP_R*CELL;const cands=[];
     stitches.forEach(s=>{
       if(s.key===xk)return;
+      const ry=Math.round(s.y);
+      // 2. Anchor must be in a row strictly below the target (parent row, never same-row peer).
+      if(ry<=targetRow)return;
       const{px,py}=getConnectionPointPx(s,pan);
-      if(py<=my)return; // connection point at/above cursor → peer or child, skip
       const d=Math.hypot(px-mx,py-my);
-      if(d<snapPx)cands.push({s,d,ry:Math.round(s.y)});
+      if(d<snapPx)cands.push({s,d,ry});
     });
     if(!cands.length)return null;
-    // Among candidates, prefer the closest row below (highest s.y, i.e. least negative).
-    const bestRy=Math.max(...cands.map(c=>c.ry));
+    // 3. Pick the row closest to targetRow: Math.min(ry) is the most-negative ry
+    //    that is still > targetRow, i.e. the immediate parent row.
+    const bestRy=Math.min(...cands.map(c=>c.ry));
     const pool=cands.filter(c=>c.ry===bestRy);
-    const r=pool.reduce((b,c)=>c.d<b.d?c:b).s;
-    console.log("[anchor target]",{via:"pixel-below",key:r.key,id:r.id,bestRy});
-    return r;
+    return pool.reduce((b,c)=>c.d<b.d?c:b).s;
   };
   // Preview position for a new child (without committing)
   const previewFanPos=(ancKey,st)=>{
@@ -4606,11 +4606,12 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     const off=rowRenderOffRef.current;
     const rows=Object.keys(off).map(Number);
     if(!rows.length)return Math.round(sy/CELL_H);
-    const minR=Math.min(...rows),maxR=Math.max(...rows);
-    let best=Math.round(sy/CELL_H),bestDist=Infinity;
-    for(let ry=minR-2;ry<=maxR+2;ry++){
-      const px=off[ry]!==undefined?off[ry]:ry*CELL_H;
-      const d=Math.abs(px-sy);
+    // Only consider actual existing rows — no virtual extrapolation beyond known rows.
+    // This ensures the target row is always a real row the cursor is nearest to,
+    // never a ghost row that would make the ghost preview jump.
+    let best=rows[0],bestDist=Math.abs(off[rows[0]]-sy);
+    for(const ry of rows){
+      const d=Math.abs(off[ry]-sy);
       if(d<bestDist){bestDist=d;best=ry;}
     }
     return best;
