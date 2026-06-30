@@ -29,6 +29,7 @@
     body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif;margin:0;}
     .shadow-card{box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{from{opacity:0;transform:translate(-50%,-54%) scale(0.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
     .fade-up{animation:fadeUp .2s ease;}
     .sticker-item:hover{filter:brightness(1.03)!important;}
     .sticker-outer{transition:transform .22s ease;}
@@ -2007,49 +2008,55 @@ function KnitMorePanel({pos,activeId,activeColor,onSelect,pinnedIds,onPin,onUnpi
     <div style={{position:"fixed",top:pos.current.top,left:pos.current.left,zIndex:9999,
       background:"var(--bg-card)",borderRadius:14,
       boxShadow:"0 8px 32px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.08)",
-      border:"1.5px solid var(--border)",width:320,padding:"12px 12px 10px",
-      maxHeight:"min(440px,calc(100vh - 80px))",overflowY:"auto"}}>
-      <input type="text" placeholder="Search symbol…" value={query}
-        onChange={e=>setQuery(e.target.value)}
-        style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",marginBottom:10,
-          border:"1.5px solid var(--border)",borderRadius:8,fontSize:11,
-          color:"var(--text-muted)",outline:"none",background:"var(--bg-input)",display:"block"}}/>
-      {hasPins&&pinnedIds.length>0&&(
-        <div style={{marginBottom:10}}>
-          <div style={{fontSize:8,fontWeight:800,color:"#778EE3",letterSpacing:"0.08em",marginBottom:5}}>TOOLBAR</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
-            {pinnedIds.map((id,i)=>{
-              const sym=KNIT_SYM_BY_ID[id]||{id,name:id};
-              return(
-                <div key={id} style={{display:"flex",alignItems:"center",gap:1,
-                  background:"var(--bg-subtle)",border:"1px solid var(--border)",borderRadius:6,padding:"2px 5px 2px 4px",height:20}}>
-                  <button type="button" onClick={e=>{e.stopPropagation();onMoveLeft(id);}}
-                    disabled={i===0} title="Move left"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:i===0?"default":"pointer",color:i===0?"#D1D5DB":"#6B7280",
-                      fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8249;</button>
-                  <span style={{fontSize:8,fontWeight:600,color:"var(--text-muted)",padding:"0 2px"}}>{sym.name}</span>
-                  <button type="button" onClick={e=>{e.stopPropagation();onMoveRight(id);}}
-                    disabled={i===pinnedIds.length-1} title="Move right"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:i===pinnedIds.length-1?"default":"pointer",color:i===pinnedIds.length-1?"#D1D5DB":"#6B7280",
-                      fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8250;</button>
-                  <button type="button" onClick={e=>{e.stopPropagation();onUnpin(id);}}
-                    title="Remove from toolbar"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
-                      <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
-            {isFull&&<span style={{fontSize:7,color:"var(--text-secondary)",alignSelf:"center",marginLeft:2}}>max {TOOLBAR_MAX}</span>}
+      border:"1.5px solid var(--border)",width:320,
+      maxHeight:pos.current.maxH||440,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* sticky header: search + pins */}
+      <div style={{flexShrink:0,padding:"12px 12px 0"}}>
+        <input type="text" placeholder="Search symbol…" value={query}
+          onChange={e=>setQuery(e.target.value)}
+          style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",
+            marginBottom:hasPins&&pinnedIds.length>0?8:10,
+            border:"1.5px solid var(--border)",borderRadius:8,fontSize:11,
+            color:"var(--text-muted)",outline:"none",background:"var(--bg-input)",display:"block"}}/>
+        {hasPins&&pinnedIds.length>0&&(
+          <div style={{marginBottom:8}}>
+            <div style={{fontSize:8,fontWeight:800,color:"#778EE3",letterSpacing:"0.08em",marginBottom:5}}>TOOLBAR</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+              {pinnedIds.map((id,i)=>{
+                const sym=KNIT_SYM_BY_ID[id]||{id,name:id};
+                return(
+                  <div key={id} style={{display:"flex",alignItems:"center",gap:1,
+                    background:"var(--bg-subtle)",border:"1px solid var(--border)",borderRadius:6,padding:"2px 5px 2px 4px",height:20}}>
+                    <button type="button" onClick={e=>{e.stopPropagation();onMoveLeft(id);}}
+                      disabled={i===0} title="Move left"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:i===0?"default":"pointer",color:i===0?"#D1D5DB":"#6B7280",
+                        fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8249;</button>
+                    <span style={{fontSize:8,fontWeight:600,color:"var(--text-muted)",padding:"0 2px"}}>{sym.name}</span>
+                    <button type="button" onClick={e=>{e.stopPropagation();onMoveRight(id);}}
+                      disabled={i===pinnedIds.length-1} title="Move right"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:i===pinnedIds.length-1?"default":"pointer",color:i===pinnedIds.length-1?"#D1D5DB":"#6B7280",
+                        fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8250;</button>
+                    <button type="button" onClick={e=>{e.stopPropagation();onUnpin(id);}}
+                      title="Remove from toolbar"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+                        <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+              {isFull&&<span style={{fontSize:7,color:"var(--text-secondary)",alignSelf:"center",marginLeft:2}}>max {TOOLBAR_MAX}</span>}
+            </div>
           </div>
-        </div>
-      )}
-      <div style={{maxHeight:420,overflowY:"auto",overflowX:"hidden",paddingRight:2}}>
+        )}
+      </div>
+      {/* single scrollable body */}
+      <div style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",padding:"0 12px 10px"}}
+           onWheel={e=>e.stopPropagation()}>
         {filteredCats.map((cat,ci)=>(
           <div key={cat.key} style={{marginBottom:ci<filteredCats.length-1?14:4}}>
             <div style={{fontSize:9,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",
@@ -2160,6 +2167,7 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
   const{showMore,setShowMore,anchorRef:moreAnchorRef,panelPos:morePanelPos,openMore}=useMorePanel();
   const[panelOpen,setPanelOpen]=useState(false);
   const[showMoreColors,setShowMoreColors]=useState(false);
+  const[showHelp,setShowHelp]=useState(false);
 
   const[_imgTick,_setImgTick]=useState(0);
   const[showGridLines,setShowGridLines]=useState(()=>localStorage.getItem('knt_showGrid')!=='false');
@@ -2208,6 +2216,13 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
       if(cx>=s.col&&cx<s.col+m.w&&cy>=s.row&&cy<s.row+m.h)return s;
     }
     return null;
+  }
+
+  function evXY(e){
+    const r=canvasRef.current.getBoundingClientRect();
+    const z=parseFloat(window.getComputedStyle(document.documentElement).zoom)||1;
+    const src=e.touches?.length?e.touches[0]:e.changedTouches?.length?e.changedTouches[0]:e;
+    return{mx:(src.clientX-r.left)/z,my:(src.clientY-r.top)/z};
   }
 
   function commitStitches(next){
@@ -2323,8 +2338,7 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
   const onPointerDown=useCallback((e)=>{
     if(!e.isPrimary||e.button!==0)return;
     canvasRef.current.setPointerCapture(e.pointerId);
-    const rect=canvasRef.current.getBoundingClientRect();
-    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    const{mx,my}=evXY(e);
     const hit=stAt(mx,my);
     if(hit){
       // Eraser always erases on hit
@@ -2359,8 +2373,8 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
 
   const onPointerMove=useCallback((e)=>{
     if(!e.isPrimary)return;
-    const rect=canvasRef.current?.getBoundingClientRect();if(!rect)return;
-    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    if(!canvasRef.current)return;
+    const{mx,my}=evXY(e);
     const d=ir.current;
 
     // Promote pendingPlace → pan if the user drags more than 4px
@@ -2427,8 +2441,8 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
 
   const onContextMenu=useCallback((e)=>{
     e.preventDefault();
-    const rect=canvasRef.current?.getBoundingClientRect();if(!rect)return;
-    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    if(!canvasRef.current)return;
+    const{mx,my}=evXY(e);
     const hit=stAt(mx,my);
     if(hit){commitStitches(stRef.current.filter(s=>s.key!==hit.key));setSelectedKey(null);}
   },[]);
@@ -2465,11 +2479,11 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
         <div style={{width:1,height:16,background:'var(--border)',margin:'0 2px'}}/>
         <button type="button" title="Undo" onClick={undo} disabled={!history.length}
           style={{...kBtnSt,opacity:history.length?1:0.3,cursor:history.length?'pointer':'default'}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"var(--text-secondary)"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>
         </button>
         <button type="button" title="Redo" onClick={redo} disabled={!future.length}
           style={{...kBtnSt,opacity:future.length?1:0.3,cursor:future.length?'pointer':'default'}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"var(--text-secondary)"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.2 10H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H16q.425 0 .713.288T17 18t-.288.713T16 19H9.9q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-1.9-1.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.6 3.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-3.6 3.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"/></svg>
         </button>
         {/* Right actions */}
         <div style={{marginLeft:'auto',display:'flex',gap:4,alignItems:'center'}}>
@@ -2619,6 +2633,12 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
                 </div>
               </div>
 
+              {/* ── GUIDE ── */}
+              <button type="button" onClick={()=>setShowHelp(true)} style={{width:'100%',padding:'7px 10px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg-subtle)',color:'#778EE3',fontSize:11,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M12 10.75a.75.75 0 0 1 .75.75v5a.75.75 0 1 1-1.5 0v-5a.75.75 0 0 1 .75-.75M12 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"/><path fill="currentColor" fillRule="evenodd" d="M7.317 3.769a42.5 42.5 0 0 1 9.366 0c1.827.204 3.302 1.642 3.516 3.48c.37 3.156.37 6.346 0 9.503c-.215 1.836-1.69 3.275-3.516 3.48a42.5 42.5 0 0 1-9.366 0c-1.827-.205-3.302-1.644-3.516-3.48a41 41 0 0 1 0-9.504c.214-1.837 1.69-3.275 3.516-3.48m9.2 1.49a41 41 0 0 0-9.034 0A2.486 2.486 0 0 0 5.29 7.423a39.4 39.4 0 0 0 0 9.154a2.486 2.486 0 0 0 2.193 2.163c2.977.333 6.057.333 9.034 0a2.486 2.486 0 0 0 2.192-2.163a39.4 39.4 0 0 0 0-9.154a2.486 2.486 0 0 0-2.192-2.164" clipRule="evenodd"/></svg>
+                How to use
+              </button>
+
               {/* ── DANGER ZONE ── */}
               <div>
                 <span style={kSecLabel}>DANGER ZONE</span>
@@ -2633,6 +2653,50 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
           </div>
         </div>
       </div>
+    {showHelp&&(
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)"}} onClick={()=>setShowHelp(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--bg-card)",borderRadius:18,width:"min(420px,90vw)",maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 40px rgba(0,0,0,0.28)",animation:"popIn .2s ease"}}>
+          <div style={{padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <span style={{fontSize:14,fontWeight:800,color:"var(--text-primary)"}}>Knit Symbol Chart — Guide</span>
+            <button onClick={()=>setShowHelp(false)} style={{width:26,height:26,borderRadius:999,border:"none",background:"var(--bg-subtle)",cursor:"pointer",fontSize:16,color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{overflowY:"auto",padding:"16px 18px 28px",display:"flex",flexDirection:"column",gap:18}}>
+            {[
+              {sec:"Tools",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>,name:"Select / Move",desc:"tap to select a symbol; drag to reposition it"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l10-10 7 7-3.5 3.5"/><path d="M6.5 17.5l4-4"/></svg>,name:"Eraser",desc:"tap a symbol to delete it; right-click also erases"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>,name:"Undo",desc:"Ctrl+Z or Shift+Z to step back"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M16.2 10H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H16q.425 0 .713.288T17 18t-.288.713T16 19H9.9q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-1.9-1.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.6 3.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-3.6 3.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"/></svg>,name:"Redo",desc:"Ctrl+Y to step forward"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>,name:"Delete key",desc:"removes the currently selected symbol"},
+              ]},
+              {sec:"Symbol Palette",items:["Palette bar — quick-tap pinned symbols to select for placing","More button — browse the full library, search by name","Pin / Unpin — add or remove symbols from the palette bar","Reorder — move pinned symbols left or right with the arrow buttons"]},
+              {sec:"Canvas",items:["Place — tap an empty cell to place the selected symbol","Ghost preview — shows exactly where the symbol will land before you tap","Drag — hold and drag the selected or last-placed symbol to move it","Pan — drag on empty space to move around the chart","Zoom — pinch to zoom in or out"]},
+              {sec:"Settings",items:["Color / Yarn — choose from your yarn library, preset swatches, or a custom color","Underlay — overlay a Color Grid as a semi-transparent background; control opacity, show/hide, or remove","Grid lines — toggle the cell grid on or off","Clear all — remove every symbol from the chart"]},
+            ].map(({sec,items})=>(
+              <div key={sec}>
+                <div style={{fontSize:10,fontWeight:800,color:"#999",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:6}}>{sec}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {items.map((it,i)=>{
+                    if(it&&typeof it==="object"){return(
+                      <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
+                        <span style={{width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,color:"#778EE3"}}>{it.icon}</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{it.name}</strong>{it.desc?" — "+it.desc:""}</span>
+                      </div>
+                    );}
+                    const[name,...rest]=it.split(" — ");return(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+                        <span style={{color:"#778EE3",fontSize:13,lineHeight:1,marginTop:2,flexShrink:0}}>•</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{name}</strong>{rest.length?" — "+rest.join(" — "):""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -2651,6 +2715,7 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
   const[hoverCell,setHoverCell]=useState(null); // {x,y} for brush preview
   const[showMoreColors,setShowMoreColors]=useState(false);
   const[showImgTool,setShowImgTool]=useState(false);
+  const[showHelp,setShowHelp]=useState(false);
   const[canUndo,setCanUndo]=useState(false);
   const[canRedo,setCanRedo]=useState(false);
   const[imgState,setImgState]=useState(null);
@@ -3170,11 +3235,11 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
         {/* Undo / Redo */}
         <button onClick={handleUndo} disabled={!canUndo} title="Undo"
           style={{width:26,height:26,borderRadius:6,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:canUndo?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,opacity:canUndo?1:0.3}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"var(--text-secondary)"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>
         </button>
         <button onClick={handleRedo} disabled={!canRedo} title="Redo"
           style={{width:26,height:26,borderRadius:6,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:canRedo?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,opacity:canRedo?1:0.3}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"var(--text-secondary)"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.2 10H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H16q.425 0 .713.288T17 18t-.288.713T16 19H9.9q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-1.9-1.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.6 3.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-3.6 3.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"/></svg>
         </button>
         {/* Right side */}
         <div style={{marginLeft:"auto",display:"flex",gap:4,alignItems:"center"}}>
@@ -3341,6 +3406,10 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
                     </button>
                 }
               </div>
+              <button type="button" onClick={()=>setShowHelp(true)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--bg-subtle)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M12 10.75a.75.75 0 0 1 .75.75v5a.75.75 0 1 1-1.5 0v-5a.75.75 0 0 1 .75-.75M12 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"/><path fill="currentColor" fillRule="evenodd" d="M7.317 3.769a42.5 42.5 0 0 1 9.366 0c1.827.204 3.302 1.642 3.516 3.48c.37 3.156.37 6.346 0 9.503c-.215 1.836-1.69 3.275-3.516 3.48a42.5 42.5 0 0 1-9.366 0c-1.827-.205-3.302-1.644-3.516-3.48a41 41 0 0 1 0-9.504c.214-1.837 1.69-3.275 3.516-3.48m9.2 1.49a41 41 0 0 0-9.034 0A2.486 2.486 0 0 0 5.29 7.423a39.4 39.4 0 0 0 0 9.154a2.486 2.486 0 0 0 2.193 2.163c2.977.333 6.057.333 9.034 0a2.486 2.486 0 0 0 2.192-2.163a39.4 39.4 0 0 0 0-9.154a2.486 2.486 0 0 0-2.192-2.164" clipRule="evenodd"/></svg>
+                How to use
+              </button>
               <div>
                 <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>DANGER ZONE</span>
                 <button onClick={()=>{pushUndo();gridRef.current=makeGrid(cols,rows);draw();sync();}}
@@ -3350,6 +3419,51 @@ function ColorGrid({initialGrid,onGridChange,yarnColors,onSave}){
           </div>
         </div>
       </div>
+    {showHelp&&(
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)"}} onClick={()=>setShowHelp(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--bg-card)",borderRadius:18,width:"min(420px,90vw)",maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 40px rgba(0,0,0,0.28)",animation:"popIn .2s ease"}}>
+          <div style={{padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <span style={{fontSize:14,fontWeight:800,color:"var(--text-primary)"}}>Knit Color Grid — Guide</span>
+            <button onClick={()=>setShowHelp(false)} style={{width:26,height:26,borderRadius:999,border:"none",background:"var(--bg-subtle)",cursor:"pointer",fontSize:16,color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{overflowY:"auto",padding:"16px 18px 28px",display:"flex",flexDirection:"column",gap:18}}>
+            {[
+              {sec:"Tools",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,name:"Paint",desc:"tap or drag to fill cells with the active color"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>,name:"Brush size",desc:"switch between 1×1 and 3×3 brush"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l10-10 7 7-3.5 3.5"/><path d="M6.5 17.5l4-4"/></svg>,name:"Eraser",desc:"tap or drag to clear cells"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,name:"Selection box",desc:"drag to select a rectangular region of cells"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>,name:"Undo / Redo",desc:"step back or forward through changes"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,name:"Image to Pattern",desc:"import a photo and map its colors to your yarn palette"},
+              ]},
+              {sec:"Selection Actions",items:["Move — drag the selected region to reposition it","Duplicate — copy the selection and place it elsewhere","Flip H — flip the selection horizontally","Flip V — flip the selection vertically"]},
+              {sec:"Canvas",items:["Pan — drag to move around","Zoom — pinch to zoom in or out"]},
+              {sec:"Settings",items:["Color / Yarn — pick from your yarn library, preset swatches, or a custom color","Grid size — resize rows and columns with sliders","Row numbering — Bottom→Top or Top→Bottom","Column numbering — Left→Right or Right→Left","Clear all — wipe the entire grid"]},
+            ].map(({sec,items})=>(
+              <div key={sec}>
+                <div style={{fontSize:10,fontWeight:800,color:"#999",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:6}}>{sec}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {items.map((it,i)=>{
+                    if(it&&typeof it==="object"){return(
+                      <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
+                        <span style={{width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,color:"#778EE3"}}>{it.icon}</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{it.name}</strong>{it.desc?" — "+it.desc:""}</span>
+                      </div>
+                    );}
+                    const[name,...rest]=it.split(" — ");return(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+                        <span style={{color:"#778EE3",fontSize:13,lineHeight:1,marginTop:2,flexShrink:0}}>•</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{name}</strong>{rest.length?" — "+rest.join(" — "):""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -3857,7 +3971,8 @@ function useMorePanel(){
       const spaceBelow=window.innerHeight-r.bottom;
       const top=spaceBelow>=PANEL_H?r.bottom+6:Math.max(8,r.top-PANEL_H-6);
       const left=Math.min(window.innerWidth-328,Math.max(8,r.right-320));
-      panelPos.current={top,left};
+      const maxH=Math.min(PANEL_H,window.innerHeight-top-12);
+      panelPos.current={top,left,maxH};
     }
     setShowMore(v=>!v);
   };
@@ -4027,52 +4142,55 @@ function CrochetMorePanel({pos,groups,activeId,activeGroup,activeColor,
     <div style={{position:"fixed",top:pos.current.top,left:pos.current.left,zIndex:9999,
       background:"var(--bg-card)",borderRadius:14,
       boxShadow:"0 8px 32px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.08)",
-      border:"1.5px solid var(--border)",width:320,padding:"12px 12px 10px",
-      maxHeight:"min(440px,calc(100vh - 80px))",overflowY:"auto"}}>
-      {/* Search */}
-      <input type="text" placeholder="Search stitch…" value={query}
-        onChange={e=>setQuery(e.target.value)}
-        style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",marginBottom:10,
-          border:"1.5px solid var(--border)",borderRadius:8,fontSize:11,
-          color:"var(--text-muted)",outline:"none",background:"var(--bg-input)",display:"block"}}/>
-      {/* Toolbar strip */}
-      {hasPins&&pinnedIds.length>0&&(
-        <div style={{marginBottom:10}}>
-          <div style={{fontSize:8,fontWeight:800,color:"#778EE3",letterSpacing:"0.08em",marginBottom:5}}>TOOLBAR</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
-            {pinnedIds.map((id,i)=>{
-              const sym=(allSymbols||[]).find(s=>s.id===id)||{id,label:id};
-              return(
-                <div key={id} style={{display:"flex",alignItems:"center",gap:1,
-                  background:"var(--bg-subtle)",border:"1px solid var(--border)",borderRadius:6,padding:"2px 5px 2px 4px",height:20}}>
-                  <button type="button" onClick={e=>{e.stopPropagation();onMoveLeft(id);}}
-                    disabled={i===0} title="Move left"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:i===0?"default":"pointer",color:i===0?"#D1D5DB":"#6B7280",
-                      fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8249;</button>
-                  <span style={{fontSize:8,fontWeight:600,color:"var(--text-muted)",padding:"0 2px"}}>{sym.label}</span>
-                  <button type="button" onClick={e=>{e.stopPropagation();onMoveRight(id);}}
-                    disabled={i===pinnedIds.length-1} title="Move right"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:i===pinnedIds.length-1?"default":"pointer",color:i===pinnedIds.length-1?"#D1D5DB":"#6B7280",
-                      fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8250;</button>
-                  <button type="button" onClick={e=>{e.stopPropagation();onUnpin(id);}}
-                    title="Remove from toolbar"
-                    style={{width:11,height:11,padding:0,border:"none",background:"none",
-                      cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
-                      <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
-            {isFull&&<span style={{fontSize:7,color:"var(--text-secondary)",alignSelf:"center",marginLeft:2}}>max {TOOLBAR_MAX}</span>}
+      border:"1.5px solid var(--border)",width:320,
+      maxHeight:pos.current.maxH||440,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* sticky header: search + pins */}
+      <div style={{flexShrink:0,padding:"12px 12px 0"}}>
+        <input type="text" placeholder="Search stitch…" value={query}
+          onChange={e=>setQuery(e.target.value)}
+          style={{width:"100%",boxSizing:"border-box",padding:"6px 10px",
+            marginBottom:hasPins&&pinnedIds.length>0?8:10,
+            border:"1.5px solid var(--border)",borderRadius:8,fontSize:11,
+            color:"var(--text-muted)",outline:"none",background:"var(--bg-input)",display:"block"}}/>
+        {hasPins&&pinnedIds.length>0&&(
+          <div style={{marginBottom:8}}>
+            <div style={{fontSize:8,fontWeight:800,color:"#778EE3",letterSpacing:"0.08em",marginBottom:5}}>TOOLBAR</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+              {pinnedIds.map((id,i)=>{
+                const sym=(allSymbols||[]).find(s=>s.id===id)||{id,label:id};
+                return(
+                  <div key={id} style={{display:"flex",alignItems:"center",gap:1,
+                    background:"var(--bg-subtle)",border:"1px solid var(--border)",borderRadius:6,padding:"2px 5px 2px 4px",height:20}}>
+                    <button type="button" onClick={e=>{e.stopPropagation();onMoveLeft(id);}}
+                      disabled={i===0} title="Move left"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:i===0?"default":"pointer",color:i===0?"#D1D5DB":"#6B7280",
+                        fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8249;</button>
+                    <span style={{fontSize:8,fontWeight:600,color:"var(--text-muted)",padding:"0 2px"}}>{sym.label}</span>
+                    <button type="button" onClick={e=>{e.stopPropagation();onMoveRight(id);}}
+                      disabled={i===pinnedIds.length-1} title="Move right"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:i===pinnedIds.length-1?"default":"pointer",color:i===pinnedIds.length-1?"#D1D5DB":"#6B7280",
+                        fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>&#8250;</button>
+                    <button type="button" onClick={e=>{e.stopPropagation();onUnpin(id);}}
+                      title="Remove from toolbar"
+                      style={{width:11,height:11,padding:0,border:"none",background:"none",
+                        cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+                        <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+              {isFull&&<span style={{fontSize:7,color:"var(--text-secondary)",alignSelf:"center",marginLeft:2}}>max {TOOLBAR_MAX}</span>}
+            </div>
           </div>
-        </div>
-      )}
-      {/* Scrollable category sections */}
-      <div style={{maxHeight:420,overflowY:"auto",overflowX:"hidden",paddingRight:2}}>
+        )}
+      </div>
+      {/* single scrollable body */}
+      <div style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",padding:"0 12px 10px"}}
+           onWheel={e=>e.stopPropagation()}>
         {filteredCats.map((cat,ci)=>(
           <div key={cat.key} style={{marginBottom:ci<filteredCats.length-1?14:4}}>
             <div style={{fontSize:9,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",
@@ -4152,7 +4270,7 @@ function CrochetMorePanel({pos,groups,activeId,activeGroup,activeColor,
         )}
       </div>
       {onClearGroup&&(
-        <div style={{marginTop:8,paddingTop:7,borderTop:"1px solid var(--border-soft)",display:"flex",justifyContent:"center"}}>
+        <div style={{flexShrink:0,padding:"6px 12px 8px",borderTop:"1px solid var(--border-soft)",display:"flex",justifyContent:"center"}}>
           <button type="button" onClick={onClearGroup}
             style={{fontSize:8,fontWeight:700,color:"var(--text-secondary)",background:"none",border:"none",cursor:"pointer",padding:"2px 8px"}}>
             Clear group selection
@@ -4182,6 +4300,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   const[groupCfg,setGroupCfg]=useState({shell:{stitchType:"dc",count:5},cluster:{stitchType:"dc",count:3},puff:{stitchType:"hdc",count:4}});
   const[foundN,setFoundN]=useState("12");
   const[panelOpen,setPanelOpen]=useState(false);
+  const[showHelp,setShowHelp]=useState(false);
   const[pan,setPan]=useState({x:80,y:120});
   const[dragSt,setDragSt]=useState(null);
   const[latestPlacedKey,setLatestPlacedKey]=useState(null);
@@ -4373,26 +4492,31 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   // Nearest anchor within snap radius in pixels — returns null when snapping is off
   const nearestAnch=(mx,my,xk)=>{
     if(!snapEnabled)return null;
-    // Priority 0: stitch directly under pointer — visual targeting wins.
+    // hoverGridY: the grid-Y of the row nearest the cursor (floating-point, e.g. -5.2).
+    // Anchors must be in a LOWER row, i.e. s.y strictly greater than hoverGridY.
+    const hoverGridY=bestGridY(my,pan);
+    // Priority 0: stitch directly under pointer — only valid as anchor if it is in a
+    // lower row (s.y > hoverGridY). Same-row peer stitches must not become anchors.
     const direct=stAt(mx,my);
-    if(direct&&direct.key!==xk){console.log("[anchor target]",{via:"direct-hit",key:direct.key,id:direct.id});return direct;}
+    if(direct&&direct.key!==xk&&direct.y>hoverGridY+0.1){
+      console.log("[anchor target]",{via:"direct-hit",key:direct.key,id:direct.id});return direct;
+    }
     // Fallback: distance from each stitch's CONNECTION POINT (T-head / oval center),
     // not grid center. Fan stitches' T-head can be 40–100px above their grid center,
     // so using grid center causes misidentification of parent vs fan child.
-    const snapPx=SNAP_R*CELL;const hoverGridY=bestGridY(my,pan);const cands=[];
+    const snapPx=SNAP_R*CELL;const cands=[];
     stitches.forEach(s=>{
       if(s.key===xk)return;
+      if(s.y<=hoverGridY+0.1)return; // same row or above — never an anchor
       const cp=getConnectionPointPx(s,pan);
-      const connPoint=getStitchConnectionPoint(s);
-      console.log("[fan child connection point]",{stitchKey:s.key,stitchId:s.id,parentIds:s.parentIds,fanAngle:s.fanAngle,connPoint});
+      console.log("[fan child connection point]",{stitchKey:s.key,stitchId:s.id,parentIds:s.parentIds,fanAngle:s.fanAngle});
       const d=Math.hypot(cp.px-mx,cp.py-my);
-      if(d<snapPx)cands.push({s,d,cpGridY:connPoint.y});
+      if(d<snapPx)cands.push({s,d});
     });
     if(!cands.length)return null;
-    const lower=cands.filter(c=>Math.round(c.cpGridY)>hoverGridY);
-    if(!lower.length){return null;}
-    const sameRow=lower.filter(c=>Math.round(c.cpGridY)===hoverGridY+1);
-    const pool=sameRow.length?sameRow:lower;
+    // Prefer the closest row below (highest s.y among candidates), then nearest by distance.
+    const closestBelowY=Math.max(...cands.map(c=>c.s.y));
+    const pool=cands.filter(c=>Math.abs(c.s.y-closestBelowY)<0.5);
     const r=pool.reduce((b,c)=>c.d<b.d?c:b).s;
     console.log("[anchor target]",{via:"row-pref",key:r.key,id:r.id});
     return r;
@@ -4910,11 +5034,11 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         <button type="button" onClick={undo} disabled={!history.length} title="Undo"
           style={{...ccPanelBtnSt,opacity:history.length?1:0.3,cursor:history.length?"pointer":"default"}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"#6B7280"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>
         </button>
         <button type="button" onClick={redo} disabled={!future.length} title="Redo"
           style={{...ccPanelBtnSt,opacity:future.length?1:0.3,cursor:future.length?"pointer":"default"}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"#6B7280"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.2 10H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H16q.425 0 .713.288T17 18t-.288.713T16 19H9.9q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-1.9-1.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.6 3.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-3.6 3.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"/></svg>
         </button>
         <button type="button" onClick={()=>{setBatchMode(v=>{const next=!v;if(!next){setBatchKeys(new Set());setLassoRect(null);setBatchSpacingOpen(false);setBatchColorOpen(false);setBatchAlignOpen(false);}else{setPanelOpen(false);}return next;});}} title="Batch Actions"
           style={{...ccPanelBtnSt,border:`1.5px solid ${batchMode?"#778EE3":"var(--border)"}`,background:batchMode?"var(--accent-soft)":"var(--bg-card)"}}>
@@ -5309,6 +5433,12 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
                 </div>
               </div>
 
+              {/* ── GUIDE ── */}
+              <button type="button" onClick={()=>setShowHelp(true)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--bg-subtle)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M12 10.75a.75.75 0 0 1 .75.75v5a.75.75 0 1 1-1.5 0v-5a.75.75 0 0 1 .75-.75M12 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"/><path fill="currentColor" fillRule="evenodd" d="M7.317 3.769a42.5 42.5 0 0 1 9.366 0c1.827.204 3.302 1.642 3.516 3.48c.37 3.156.37 6.346 0 9.503c-.215 1.836-1.69 3.275-3.516 3.48a42.5 42.5 0 0 1-9.366 0c-1.827-.205-3.302-1.644-3.516-3.48a41 41 0 0 1 0-9.504c.214-1.837 1.69-3.275 3.516-3.48m9.2 1.49a41 41 0 0 0-9.034 0A2.486 2.486 0 0 0 5.29 7.423a39.4 39.4 0 0 0 0 9.154a2.486 2.486 0 0 0 2.193 2.163c2.977.333 6.057.333 9.034 0a2.486 2.486 0 0 0 2.192-2.163a39.4 39.4 0 0 0 0-9.154a2.486 2.486 0 0 0-2.192-2.164" clipRule="evenodd"/></svg>
+                How to use
+              </button>
+
               {/* ── DANGER ── */}
               <div>
                 <span style={ccPanelSecLabel}>DANGER ZONE</span>
@@ -5352,6 +5482,58 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
           </div>
         )}
       </div>
+    {showHelp&&(
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)"}} onClick={()=>setShowHelp(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--bg-card)",borderRadius:18,width:"min(420px,90vw)",maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 40px rgba(0,0,0,0.28)",animation:"popIn .2s ease"}}>
+          <div style={{padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <span style={{fontSize:14,fontWeight:800,color:"var(--text-primary)"}}>Crochet Rows — Guide</span>
+            <button onClick={()=>setShowHelp(false)} style={{width:26,height:26,borderRadius:999,border:"none",background:"var(--bg-subtle)",cursor:"pointer",fontSize:16,color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{overflowY:"auto",padding:"16px 18px 28px",display:"flex",flexDirection:"column",gap:18}}>
+            {[
+              {sec:"Tools",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>,name:"Select",desc:"tap to select a stitch; drag it to reposition"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l10-10 7 7-3.5 3.5"/><path d="M6.5 17.5l4-4"/></svg>,name:"Eraser",desc:"tap any stitch to delete it"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>,name:"Undo / Redo",desc:"step back or forward through changes"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,name:"Batch Actions",desc:"enter multi-select mode to edit multiple stitches at once"},
+              ]},
+              {sec:"Stitch Palette",items:["Palette bar — quick-tap pinned stitches to select the type for placing","More button — browse all stitches, search by name","Pin / Unpin — add or remove stitches from the palette bar"]},
+              {sec:"Canvas",items:["Place stitch — tap empty space to place the selected stitch type","Drag stitch — hold and drag any stitch to reposition it","Pan — drag on empty space to move around","Zoom — pinch to zoom in or out","Snap to parent — new stitches snap to the nearest anchor (toggle in Settings)"]},
+              {sec:"Batch Mode",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="5" width="18" height="4" rx="1"/><rect x="3" y="15" width="18" height="4" rx="1" opacity="0.45"/></svg>,name:"Row selector",desc:"tap a row pill to select / deselect all stitches in that row"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,name:"Lasso select",desc:"drag on empty canvas to box-select stitches"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3 3 7-7"/></svg>,name:"Select All",desc:"select every stitch at once"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>,name:"Delete",desc:"remove all selected stitches"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/><circle cx="12" cy="12" r="4.5" fill="currentColor"/></svg>,name:"Color",desc:"change yarn color of all selected stitches"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>,name:"Align",desc:"Align Row · Distribute · Center Col · Align Left"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="4" x2="20" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M12 8v8"/><polyline points="9 11 12 8 15 11"/><polyline points="9 13 12 16 15 13"/></svg>,name:"Row Spacing",desc:"adjust the vertical gap above each row individually"},
+              ]},
+              {sec:"Settings",items:["Color / Yarn — pick from your yarn library, preset swatches, or a custom color","Snap to parent stitch — toggle snap-on placement","Grid lines — toggle the grid on or off","Clear all — remove every stitch from the canvas"]},
+            ].map(({sec,items})=>(
+              <div key={sec}>
+                <div style={{fontSize:10,fontWeight:800,color:"#999",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:6}}>{sec}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {items.map((it,i)=>{
+                    if(it&&typeof it==="object"){return(
+                      <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
+                        <span style={{width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,color:"#778EE3"}}>{it.icon}</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{it.name}</strong>{it.desc?" — "+it.desc:""}</span>
+                      </div>
+                    );}
+                    const[name,...rest]=it.split(" — ");return(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+                        <span style={{color:"#778EE3",fontSize:13,lineHeight:1,marginTop:2,flexShrink:0}}>•</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{name}</strong>{rest.length?" — "+rest.join(" — "):""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -5915,6 +6097,324 @@ function ClosingActionSheet({message,onSaveDraft,onDiscard,onCancel,saveDraftLab
 }
 
 
+function KnitSymbolReader({stitches,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,notes=""}){
+  const{canvasBg="#FDFAF6"}=useSettings();
+  const rowNums=useMemo(()=>[...new Set(stitches.map(s=>s.row))].sort((a,b)=>a-b),[stitches]);
+  const totalRows=rowNums.length;
+  const initIdx=useMemo(()=>{if(progressMarker==null)return null;const i=rowNums.indexOf(progressMarker);return i>=0?i:null;},[progressMarker,rowNums]);
+  const[rowIdx,setRowIdx]=useState(initIdx);
+  const[savedMarker,setSavedMarker]=useState(progressMarker);
+  const[pinToast,setPinToast]=useState(null);
+  const pinToastTimer=useRef(null);
+  const showPinToast=msg=>{clearTimeout(pinToastTimer.current);setPinToast(msg);pinToastTimer.current=setTimeout(()=>setPinToast(null),2000);};
+  const[scale,setScale]=useState(1);
+  const[pan,setPan]=useState({x:0,y:0});
+  const[grabbing,setGrabbing]=useState(false);
+  const canvasRef=useRef(null);
+  const containerRef=useRef(null);
+  const dragRef=useRef(null);
+  const suppressClick=useRef(false);
+  const pinchRef=useRef(null);
+  const[localNotes,setLocalNotes]=useState(rowNotes);
+  const[noteOpen,setNoteOpen]=useState(false);
+  const[noteViewOpen,setNoteViewOpen]=useState(false);
+  const[showSymbols,setShowSymbols]=useState(false);
+  const[showSheetNotes,setShowSheetNotes]=useState(false);
+  const[noteEdit,setNoteEdit]=useState("");
+  const[,_setSvgTick]=useState(0);
+  useEffect(()=>_onSvgLoad(()=>_setSvgTick(t=>t+1)),[]);
+  useEffect(()=>{const n=document.getElementById("app-bottom-nav");if(n)n.style.visibility="hidden";return()=>{if(n)n.style.visibility="";};},[]);
+
+  const bounds=useMemo(()=>{
+    if(!stitches.length)return{minC:0,minR:0,spanC:1,spanR:1};
+    const cols=stitches.flatMap(s=>{const m=KNIT_SYM_BY_ID[s.id];return m?[s.col,s.col+m.w-1]:[s.col];});
+    const rows=stitches.flatMap(s=>{const m=KNIT_SYM_BY_ID[s.id];return m?[s.row,s.row+m.h-1]:[s.row];});
+    const minC=Math.min(...cols),maxC=Math.max(...cols)+1;
+    const minR=Math.min(...rows),maxR=Math.max(...rows)+1;
+    return{minC,minR,spanC:maxC-minC,spanR:maxR-minR};
+  },[stitches]);
+
+  useEffect(()=>{
+    const el=containerRef.current;if(!el)return;
+    const onTS=e=>{if(e.touches.length>=2){e.preventDefault();dragRef.current=null;pinchRef.current=0;}};
+    const onTM=e=>{
+      if(e.touches.length===2&&pinchRef.current!==null){
+        e.preventDefault();
+        const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+        if(pinchRef.current===0){pinchRef.current=d;return;}
+        setScale(s=>Math.max(0.3,Math.min(4,s*d/pinchRef.current)));
+        pinchRef.current=d;
+      }
+    };
+    const onTE=e=>{if(e.touches.length<2)pinchRef.current=null;};
+    const onTC=()=>{pinchRef.current=null;dragRef.current=null;setGrabbing(false);};
+    el.addEventListener("touchstart",onTS,{passive:false});
+    el.addEventListener("touchmove",onTM,{passive:false});
+    el.addEventListener("touchend",onTE);
+    el.addEventListener("touchcancel",onTC);
+    return()=>{el.removeEventListener("touchstart",onTS);el.removeEventListener("touchmove",onTM);el.removeEventListener("touchend",onTE);el.removeEventListener("touchcancel",onTC);};
+  },[]);
+  useEffect(()=>{
+    const el=containerRef.current;if(!el)return;
+    const h=e=>{e.preventDefault();setScale(s=>Math.max(0.3,Math.min(4,+(s*(e.deltaY<0?1.12:1/1.12)).toFixed(2))));};
+    el.addEventListener("wheel",h,{passive:false});return()=>el.removeEventListener("wheel",h);
+  },[]);
+  useEffect(()=>{if(scale<=1)setPan({x:0,y:0});},[scale]);
+
+  const activeRowNum=rowIdx!==null?rowNums[rowIdx]:null;
+  const draw=useCallback(()=>{
+    const c=canvasRef.current,cont=containerRef.current;if(!c||!cont)return;
+    const ML=30,MT=16,MR=30,MB=16,dpr=window.devicePixelRatio||1;
+    const{minC,minR,spanC,spanR}=bounds;
+    const baseCell=Math.min((cont.clientWidth-ML-MR)/Math.max(spanC,1),(cont.clientHeight-MT-MB)/Math.max(spanR,1)*(KNIT_CELL_W/KNIT_CELL_H));
+    const cellW=Math.max(4,baseCell)*scale;
+    const cellH=cellW*(KNIT_CELL_H/KNIT_CELL_W);
+    const gW=spanC*cellW,gH=spanR*cellH;
+    const W=ML+gW+MR,H=MT+gH+MB;
+    c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
+    c.style.width=W+"px";c.style.height=H+"px";
+    const ctx=c.getContext("2d");ctx.scale(dpr,dpr);
+    ctx.fillStyle=canvasBg;ctx.fillRect(0,0,W,H);
+    ctx.setLineDash([]);
+    for(let x=0;x<=spanC;x++){ctx.strokeStyle=x%10===0?"#9A8878":x%5===0?"#C4B4A8":"#D8D0C6";ctx.lineWidth=x%10===0?1.5:x%5===0?1:0.5;ctx.beginPath();ctx.moveTo(ML+x*cellW,MT);ctx.lineTo(ML+x*cellW,MT+gH);ctx.stroke();}
+    for(let y=0;y<=spanR;y++){ctx.strokeStyle=y%10===0?"#9A8878":y%5===0?"#C4B4A8":"#D8D0C6";ctx.lineWidth=y%10===0?1.5:y%5===0?1:0.5;ctx.beginPath();ctx.moveTo(ML,MT+y*cellH);ctx.lineTo(ML+gW,MT+y*cellH);ctx.stroke();}
+    ctx.strokeStyle="#9A8878";ctx.lineWidth=1.5;ctx.strokeRect(ML,MT,gW,gH);
+    if(activeRowNum!==null){const ry=MT+(activeRowNum-minR)*cellH;ctx.fillStyle="rgba(124,58,237,0.1)";ctx.fillRect(ML,ry,gW,cellH);ctx.strokeStyle="#778EE3";ctx.lineWidth=2.5;ctx.strokeRect(ML,ry,gW,cellH);}
+    stitches.forEach(s=>{
+      const m=KNIT_SYM_BY_ID[s.id];if(!m)return;
+      const sx=ML+(s.col-minC)*cellW,sy=MT+(s.row-minR)*cellH;
+      const sw=m.w*cellW,sh=m.h*cellH;
+      const dimmed=activeRowNum!==null&&s.row!==activeRowNum;
+      if(dimmed){ctx.save();ctx.globalAlpha=0.25;}
+      const tinted=_tintKnitSvg(s.id,sw,sh,s.color);
+      if(tinted)ctx.drawImage(tinted,sx,sy,sw,sh);
+      else{ctx.fillStyle=s.color||"#778EE3";ctx.fillRect(sx+1,sy+1,sw-2,sh-2);}
+      if(dimmed)ctx.restore();
+    });
+    const fs=Math.max(8,Math.min(11,cellH*0.6));
+    ctx.textBaseline="middle";
+    rowNums.forEach((rn,ri)=>{
+      const isAct=rn===activeRowNum;
+      const dimmed=activeRowNum!==null&&!isAct;
+      const dispNum=totalRows-ri;
+      ctx.globalAlpha=dimmed?0.25:1;ctx.fillStyle=isAct?"#778EE3":"#8A7A6A";
+      ctx.font=`bold ${isAct?fs+2:fs}px -apple-system,sans-serif`;
+      const cy=MT+(rn-minR+0.5)*cellH;
+      ctx.textAlign="right";ctx.fillText(String(dispNum),ML-4,cy);
+      ctx.textAlign="left";ctx.fillText(String(dispNum),ML+gW+4,cy);
+    });
+    ctx.globalAlpha=1;
+    if(savedMarker!==null){const smi=rowNums.indexOf(savedMarker);if(smi>=0){const cy=MT+(savedMarker-minR+0.5)*cellH;ctx.fillStyle="#059669";ctx.beginPath();ctx.moveTo(2,cy-5);ctx.lineTo(12,cy);ctx.lineTo(2,cy+5);ctx.fill();}}
+  },[stitches,bounds,scale,activeRowNum,canvasBg,savedMarker,totalRows,rowNums]);
+
+  useLayoutEffect(()=>{draw();},[draw]);
+
+  const onPD=useCallback(e=>{if(!e.isPrimary||scale<=1)return;dragRef.current={startX:e.clientX,startY:e.clientY,startPanX:pan.x,startPanY:pan.y,moved:false};e.currentTarget.setPointerCapture(e.pointerId);setGrabbing(true);},[scale,pan]);
+  const onPM=useCallback(e=>{if(!dragRef.current)return;const dx=e.clientX-dragRef.current.startX,dy=e.clientY-dragRef.current.startY;if(Math.abs(dx)+Math.abs(dy)>4)dragRef.current.moved=true;setPan({x:dragRef.current.startPanX+dx,y:dragRef.current.startPanY+dy});},[]);
+  const onPU=useCallback(()=>{if(dragRef.current?.moved)suppressClick.current=true;dragRef.current=null;setGrabbing(false);},[]);
+
+  const handleClick=useCallback(e=>{
+    if(suppressClick.current){suppressClick.current=false;return;}
+    const c=canvasRef.current,cont=containerRef.current;if(!c||!cont)return;
+    const ML=30,MT=16,MR=30,MB=16;
+    const{minR,spanC,spanR}=bounds;
+    const baseCell=Math.min((cont.clientWidth-ML-MR)/Math.max(spanC,1),(cont.clientHeight-MT-MB)/Math.max(spanR,1)*(KNIT_CELL_W/KNIT_CELL_H));
+    const cellH=Math.max(4,baseCell)*scale*(KNIT_CELL_H/KNIT_CELL_W);
+    const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+    const ry=(e.clientY-r.top)*(c.height/dpr)/r.height;
+    const gridRow=Math.floor((ry-MT)/cellH)+minR;
+    const ri=rowNums.indexOf(gridRow);
+    if(ri<0)return;
+    setRowIdx(prev=>prev===ri?null:ri);
+  },[bounds,scale,rowNums]);
+
+  const navRow=useCallback(delta=>{setRowIdx(prev=>{if(prev===null)return totalRows-1;return Math.max(0,Math.min(totalRows-1,prev+delta));});},[totalRows]);
+  const displayRow=rowIdx!==null?totalRows-rowIdx:null;
+  const activeStitchCount=activeRowNum!==null?stitches.filter(s=>s.row===activeRowNum).length:0;
+
+  const rowStitchSummary=useMemo(()=>{
+    if(activeRowNum===null)return[];
+    const rowSts=stitches.filter(s=>s.row===activeRowNum).slice().sort((a,b)=>a.col-b.col);
+    const tokens=[];let i=0;
+    while(i<rowSts.length){
+      const s=rowSts[i];
+      const m=KNIT_SYM_BY_ID[s.id];
+      const ab=m?.abbrev||m?.name||s.id;
+      let run=1;
+      while(i+run<rowSts.length&&rowSts[i+run].id===s.id)run++;
+      tokens.push({label:run>1?`${ab} ×${run}`:ab,color:s.color||"#778EE3"});
+      i+=run*(m?.w||1);
+    }
+    return tokens;
+  },[stitches,activeRowNum]);
+
+  return(
+    <>
+      <div style={{position:"fixed",inset:0,background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
+        <StitchCounter/>
+        <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+          <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
+          <button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>← Back</button>
+        </div>
+        <div ref={containerRef}
+          style={{flex:1,minHeight:0,overflow:"hidden",background:canvasBg,position:"relative",
+            cursor:scale>1?(grabbing?"grabbing":"grab"):"crosshair",touchAction:"none"}}
+          onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onClick={handleClick}>
+          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{transform:`translate(${pan.x}px,${pan.y}px)`,display:"inline-block",padding:8}}>
+              <canvas ref={canvasRef} style={{display:"block"}}/>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Bottom panel: truly fixed at viewport bottom, unaffected by outer zoom/layout */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:101,background:"var(--bg-card)",
+        borderTop:"1px solid var(--nav-border)",padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`}}>
+        {/* Row info + nav buttons */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{displayRow!==null?`R${displayRow}`:"Tap a row"}</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#4C1D95",lineHeight:1.1}}>{displayRow!==null?<>{activeStitchCount} <span style={{fontSize:12,fontWeight:600,color:"#3850A6"}}>sts</span></>:<span style={{fontSize:14,color:"var(--text-secondary)"}}>—</span>}</div>
+          </div>
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            <button onClick={()=>navRow(1)} disabled={rowIdx===null||rowIdx===totalRows-1}
+              style={{width:36,height:36,borderRadius:10,border:"1.5px solid rgba(59,95,138,0.2)",background:"var(--bg-card)",cursor:rowIdx===null||rowIdx===totalRows-1?"default":"pointer",opacity:rowIdx===null||rowIdx===totalRows-1?0.3:1,fontSize:20,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#3B5F8A"}}>←</button>
+            <button onClick={()=>navRow(-1)} disabled={rowIdx===0}
+              style={{width:36,height:36,borderRadius:10,border:"1.5px solid rgba(59,95,138,0.2)",background:"var(--bg-card)",cursor:rowIdx===0?"default":"pointer",opacity:rowIdx===0?0.3:1,fontSize:20,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#3B5F8A"}}>→</button>
+            {onSaveProgress&&(
+              <button onClick={()=>{if(rowIdx!==null){const rn=rowNums[rowIdx];onSaveProgress(rn);setSavedMarker(rn);showPinToast(`R${displayRow} pinned`);}}} disabled={rowIdx===null}
+                style={{width:36,height:36,borderRadius:10,border:rowIdx!==null&&savedMarker===rowNums[rowIdx]?"1.5px solid rgba(5,150,105,0.6)":"1.5px solid rgba(5,150,105,0.35)",background:rowIdx!==null&&savedMarker===rowNums[rowIdx]?"rgba(5,150,105,0.15)":"rgba(5,150,105,0.08)",cursor:rowIdx!==null?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",color:"#059669",flexShrink:0}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+              </button>
+            )}
+            {onSaveRowNotes&&displayRow!==null&&(
+              <button onClick={()=>setNoteViewOpen(true)}
+                style={{width:36,height:36,borderRadius:10,
+                  border:(localNotes[String(displayRow)]||"").trim()?"1.5px solid rgba(245,158,11,0.5)":"1.5px solid rgba(245,158,11,0.25)",
+                  background:(localNotes[String(displayRow)]||"").trim()?"rgba(245,158,11,0.12)":"rgba(245,158,11,0.06)",
+                  cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#92400e",fontSize:14,fontWeight:700,flexShrink:0}}>✎</button>
+            )}
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div style={{height:3,background:"#EEF0FD",borderRadius:99,overflow:"hidden",marginBottom:9}}>
+          <div style={{height:"100%",width:`${rowIdx!==null?((totalRows-rowIdx)/totalRows)*100:0}%`,background:"#778EE3",borderRadius:99,transition:"width 0.35s ease"}}/>
+        </div>
+        {/* Row pills — R1 leftmost (first worked), RN rightmost */}
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"flex-end"}}>
+          {[...rowNums].reverse().map((rn,pi)=>{
+            const dr=pi+1;
+            const ri=totalRows-1-pi;
+            const active=ri===rowIdx;
+            const isProgress=savedMarker===rn;
+            return(
+              <div key={ri} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                <div style={{height:10,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {isProgress&&<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>}
+                </div>
+                <button onClick={()=>setRowIdx(ri)}
+                  style={{padding:"4px 10px",borderRadius:20,cursor:"pointer",border:"none",
+                    background:active?"#778EE3":"#EEF0FD",
+                    color:active?"white":"#778EE3",
+                    fontSize:11,fontWeight:active?700:500,transition:"all 0.18s ease"}}>
+                  R{dr}{(localNotes[String(dr)]||"").trim()?<span style={{display:"inline-block",width:5,height:5,borderRadius:999,background:active?"#FCD34D":"#F59E0B",marginLeft:3,verticalAlign:"middle"}}/>:null}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {/* Symbols / Notes pills */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+          <button type="button" onClick={()=>setShowSymbols(true)}
+            style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+              background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
+            ≡ Symbols
+          </button>
+          {(Object.keys(localNotes).some(k=>(localNotes[k]||"").trim())||notes)&&(
+            <button type="button" onClick={()=>setShowSheetNotes(true)}
+              style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+                background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
+              ✎ Notes
+            </button>
+          )}
+        </div>
+      </div>
+      {pinToast&&(
+        <div style={{position:"fixed",bottom:`calc(80px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:999999,
+          background:"#059669",color:"white",borderRadius:12,padding:"8px 18px",fontSize:13,fontWeight:700,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.18)",pointerEvents:"none",whiteSpace:"nowrap",
+          animation:"sr-pop .2s ease"}}>
+          ✓ {pinToast}
+        </div>
+      )}
+      <ReadModeBottomSheet title={activeRowNum!==null?`R${displayRow} Symbols`:"Symbols"} open={showSymbols} onClose={()=>setShowSymbols(false)}>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,paddingTop:4}}>
+          {[...new Map((activeRowNum!==null?stitches.filter(s=>s.row===activeRowNum):stitches).map(s=>[s.id,s])).values()].map(s=>{
+            const sym=KNIT_SYM_BY_ID[s.id];
+            return(
+              <div key={s.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:20,background:"#F7F9FF",border:"1px solid rgba(59,95,138,0.14)"}}>
+                <span style={{width:10,height:10,borderRadius:"50%",background:s.color||"#778EE3",display:"inline-block",flexShrink:0}}/>
+                <div>
+                  <div style={{fontSize:10,fontWeight:700,color:"#1e3a5f"}}>{sym?.name||s.id}</div>
+                  {sym?.abbrev&&<div style={{fontSize:9,color:"rgba(59,95,138,0.45)"}}>{sym.abbrev}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ReadModeBottomSheet>
+      <ReadModeBottomSheet title="Notes" open={showSheetNotes} onClose={()=>setShowSheetNotes(false)}>
+        {Object.keys(localNotes).some(k=>(localNotes[k]||"").trim())&&(
+          <div style={{marginBottom:notes?16:0}}>
+            <div style={{fontSize:9,fontWeight:800,color:"rgba(180,100,0,0.55)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>Row Notes</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {Object.keys(localNotes).filter(k=>(localNotes[k]||"").trim()).sort((a,b)=>+a-+b).map(k=>(
+                <div key={k} style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+                  <span style={{fontSize:10,fontWeight:800,color:"#92400e",background:"rgba(245,158,11,0.15)",borderRadius:6,padding:"2px 7px",flexShrink:0,marginTop:1}}>R{k}</span>
+                  <span style={{fontSize:12,color:"#1e3a5f",lineHeight:1.55}}>{localNotes[k]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {notes&&(
+          <div>
+            <div style={{fontSize:9,fontWeight:800,color:"rgba(59,95,138,0.45)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>Pattern Notes</div>
+            <div style={{fontSize:13,color:"#1e3a5f",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{notes}</div>
+          </div>
+        )}
+      </ReadModeBottomSheet>
+      <ReadModeBottomSheet title={`R${displayRow} note`} open={noteViewOpen&&displayRow!==null} onClose={()=>setNoteViewOpen(false)}>
+        {(localNotes[String(displayRow)]||"").trim()?(
+          <>
+            <p style={{fontSize:13,color:"var(--text-primary)",lineHeight:1.65,margin:"0 0 14px",whiteSpace:"pre-wrap"}}>{localNotes[String(displayRow)]}</p>
+            <button onClick={()=>{setNoteEdit(localNotes[String(displayRow)]||"");setNoteViewOpen(false);setNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Edit note</button>
+          </>
+        ):(
+          <>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"0 0 14px"}}>No note for R{displayRow} yet.</p>
+            <button onClick={()=>{setNoteEdit("");setNoteViewOpen(false);setNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add note</button>
+          </>
+        )}
+      </ReadModeBottomSheet>
+      <ReadModeBottomSheet title={`Edit note · R${displayRow}`} open={noteOpen} onClose={()=>setNoteOpen(false)}>
+        <textarea autoFocus value={noteEdit} onChange={e=>setNoteEdit(e.target.value)}
+          placeholder="Add a note for this row…"
+          style={{width:"100%",minHeight:80,borderRadius:10,border:"1.5px solid var(--border)",
+            padding:"8px 10px",fontSize:13,resize:"vertical",boxSizing:"border-box",outline:"none"}}/>
+        <div style={{display:"flex",gap:8,marginTop:10}}>
+          <button onClick={()=>{const val=noteEdit.trim();const u={...localNotes,[String(displayRow)]:val||undefined};const clean=Object.fromEntries(Object.entries(u).filter(([,v])=>v));setLocalNotes(clean);onSaveRowNotes(clean);setNoteOpen(false);}}
+            style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Save</button>
+          <button onClick={()=>setNoteOpen(false)}
+            style={{padding:"9px 18px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+        </div>
+      </ReadModeBottomSheet>
+    </>
+  );
+}
+
 function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,onSaveProgress,currentCell,onSaveCurrentCell}){
   useBodyScrollLock();
   const[rowIdx,setRowIdx]=useState(()=>{
@@ -5924,6 +6424,7 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   });
   const[rowNotes,setRowNotes]=useState(()=>pattern?.rowNotes||{});
   const[noteOpen,setNoteOpen]=useState(false);
+  const[noteViewOpen,setNoteViewOpen]=useState(false);
   const[noteEdit,setNoteEdit]=useState("");
   const[showSymbols,setShowSymbols]=useState(false);
   const[showSheetNotes,setShowSheetNotes]=useState(false);
@@ -5974,15 +6475,15 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   }
   if(pattern.type==="knit"&&pattern.knitStitches?.length){
     return createPortal(
-      <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:99999,display:"flex",flexDirection:"column"}}>
-        <div style={{padding:`calc(12px + ${SAFE_TOP}) 14px 12px`,borderBottom:"1px solid #EFEFEF",display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
-          <span style={{fontSize:15,fontWeight:700,color:"var(--text-primary)"}}>Color Grid</span>
-        </div>
-        <div style={{flex:1,minHeight:0,overflow:"hidden"}}>
-          <KnitPatternMaker initialStitches={pattern.knitStitches} yarnColors={[]} onSave={null}/>
-        </div>
-      </div>,document.body);
+      <KnitSymbolReader
+        stitches={pattern.knitStitches}
+        onBack={onClose}
+        progressMarker={pattern.progressMarker??null}
+        onSaveProgress={onSaveProgress}
+        rowNotes={pattern.rowNotes||{}}
+        onSaveRowNotes={onSaveRowNotes}
+        notes={notes||""}
+      />,document.body);
   }
   if(pattern.type==="rounds"){
     return createPortal(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:99999,display:"flex",flexDirection:"column"}}><CPM_RoundsReader pattern={pattern} themeColor={pattern.themeColor||"#778EE3"} onBack={onClose} notes={notes||""} onSaveProgress={onSaveProgress} rowNotes={pattern?.rowNotes||{}} onSaveRowNotes={onSaveRowNotes}/></div>,document.body);
@@ -5992,7 +6493,8 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   }
 
   return createPortal(
-    <div style={{position:"fixed",inset:0,minHeight:"100dvh",zIndex:99999,background:"var(--bg-card)",display:"flex",flexDirection:"column"}}>
+    <>
+    <div style={{position:"fixed",inset:0,zIndex:99999,background:"var(--bg-card)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <StitchCounter/>
 
       {/* Header — matches CPM_Preview */}
@@ -6001,89 +6503,14 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
         <button type="button" onClick={onClose} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>← Back</button>
       </div>
 
-
-      <>
           {/* Chart — flex:1, fills viewport with pan+zoom canvas */}
-          <div style={{flex:1,overflow:"hidden",display:"flex"}}>
+          <div style={{flex:1,minHeight:0,overflow:"hidden",display:"flex"}}>
             <CrochetChartView
               stitches={stitches}
               highlightY={currentY===0?null:currentY}
               currentRowY={currentY===0?null:currentY}
               onRowClick={y=>{const i=rowLevels.indexOf(y);if(i>=0){setRowIdx(i);if(onSaveRowNotes){const rn=actualRowLevels.indexOf(y)+1;setNoteEdit(rowNotes[String(rn)]||"");setNoteOpen(true);}}}}
-            />
-          </div>
-
-          {/* Bottom navigation panel */}
-          <div className="modal-in" style={{padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)",flexShrink:0}}>
-            {/* Active row info + prev/next */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
-              <div style={{minWidth:0}}>
-                <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{isFndActive?"FC":`R${rowNum}`}</div>
-                <div style={{fontSize:22,fontWeight:800,color:"#4C1D95",lineHeight:1.1}}>{currentRowStitchCount} <span style={{fontSize:12,fontWeight:600,color:"#3850A6"}}>{isFndActive?"ch":"sts"}</span></div>
-              </div>
-              <div style={{display:"flex",gap:8,flexShrink:0}}>
-                {navBtn(()=>{setRowIdx(i=>Math.max(0,i-1));setNoteOpen(false);},rowIdx===0,"←")}
-                {navBtn(()=>{setRowIdx(i=>Math.min(totalRows-1,i+1));setNoteOpen(false);},rowIdx===totalRows-1,"→")}
-                {onSaveProgress&&(
-                  <button type="button" onClick={()=>{onSaveProgress(rowIdx);setSavedMarker(rowIdx);showPinToast(isFndActive?"FC pinned":`R${rowNum} pinned`);}} title="Save progress here"
-                    style={{width:36,height:36,borderRadius:10,border:savedMarker===rowIdx?"1.5px solid rgba(5,150,105,0.6)":"1.5px solid rgba(5,150,105,0.35)",background:savedMarker===rowIdx?"rgba(5,150,105,0.15)":"rgba(5,150,105,0.08)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#059669",flexShrink:0}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-                  </button>
-                )}
-              </div>
-            </div>
-            {/* Progress bar */}
-            <div style={{height:3,background:"#EEF0FD",borderRadius:99,overflow:"hidden",marginBottom:9}}>
-              <div style={{height:"100%",width:`${((rowIdx+1)/totalRows)*100}%`,background:"#778EE3",borderRadius:99,transition:"width 0.35s ease"}}/>
-            </div>
-            {/* Row pills */}
-            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-              {rowLevels.map((y,i)=>{
-                const isFnd=y===0;
-                const label=isFnd?"FC":`R${actualRowLevels.indexOf(y)+1}`;
-                const active=i===rowIdx;
-                const isProgress=!!onSaveProgress&&i===savedMarker;
-                return(
-                  <button key={i} onClick={()=>{setRowIdx(i);setNoteOpen(false);}}
-                    style={{padding:"4px 10px",borderRadius:20,cursor:"pointer",
-                      border:isProgress?"1.5px solid #059669":"none",
-                      background:active?(isFnd?"#92400E":"#778EE3"):(isFnd?"#FEF3C7":"#EEF0FD"),
-                      color:active?"white":(isFnd?"#92400E":"#778EE3"),
-                      fontSize:11,fontWeight:active?700:500,transition:"all 0.18s ease"}}>
-                    {label}{isProgress?<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:2,verticalAlign:"middle"}}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>:""}{(!isFnd&&(rowNotes[String(actualRowLevels.indexOf(y)+1)]||"").trim())?<span style={{display:"inline-block",width:5,height:5,borderRadius:999,background:active?"#FCD34D":"#F59E0B",marginLeft:3,verticalAlign:"middle"}}/>:null}
-                  </button>
-                );
-              })}
-            </div>
-            {(stitches.length>0||(onSaveRowNotes&&Object.keys(rowNotes).some(k=>(rowNotes[k]||"").trim()))||notes||onSaveRowNotes)&&(
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                {stitches.length>0&&(
-                  <button type="button" onClick={()=>setShowSymbols(true)}
-                    style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
-                      background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
-                    ≡ Symbols
-                  </button>
-                )}
-                {((onSaveRowNotes&&Object.keys(rowNotes).some(k=>(rowNotes[k]||"").trim()))||notes)&&(
-                  <button type="button" onClick={()=>setShowSheetNotes(true)}
-                    style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
-                      background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
-                    ✎ Notes
-                  </button>
-                )}
-                {onSaveRowNotes&&!isFndActive&&currentY!==null&&(
-                  <button type="button" onClick={()=>{setNoteEdit(rowNotes[String(rowNum)]||"");setNoteOpen(true);}}
-                    style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
-                      background:(rowNotes[String(rowNum)]||"").trim()?"rgba(245,158,11,0.12)":"#FEF9EC",
-                      color:"#92400e",fontSize:11,fontWeight:700}}>
-                    ✎ {(rowNotes[String(rowNum)]||"").trim()?`R${rowNum} note`:"+ row note"}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-      </>
-
+            /></div>
       <ReadModeBottomSheet
         title={currentY===null?"Symbols":isFndActive?"Foundation Chain Symbols":`Row ${rowNum} Symbols`}
         open={showSymbols} onClose={()=>setShowSymbols(false)}>
@@ -6123,7 +6550,22 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
           </div>
         )}
       </ReadModeBottomSheet>
-      <ReadModeBottomSheet title={`Note for R${rowNum}`} open={!!noteOpen&&!isFndActive} onClose={()=>setNoteOpen(false)}>
+      <ReadModeBottomSheet title={`R${rowNum} note`} open={noteViewOpen&&!isFndActive} onClose={()=>setNoteViewOpen(false)}>
+        {(rowNotes[String(rowNum)]||"").trim()?(
+          <>
+            <p style={{fontSize:13,color:"var(--text-primary)",lineHeight:1.65,margin:"0 0 14px",whiteSpace:"pre-wrap"}}>{rowNotes[String(rowNum)]}</p>
+            <button onClick={()=>{setNoteEdit(rowNotes[String(rowNum)]||"");setNoteViewOpen(false);setNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Edit note</button>
+          </>
+        ):(
+          <>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"0 0 14px"}}>No note for R{rowNum} yet.</p>
+            <button onClick={()=>{setNoteEdit("");setNoteViewOpen(false);setNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add note</button>
+          </>
+        )}
+      </ReadModeBottomSheet>
+      <ReadModeBottomSheet title={`Edit note · R${rowNum}`} open={!!noteOpen&&!isFndActive} onClose={()=>setNoteOpen(false)}>
         <textarea autoFocus value={noteEdit} onChange={e=>setNoteEdit(e.target.value)}
           placeholder="Add a note for this row…"
           style={{width:"100%",minHeight:80,borderRadius:10,border:"1.5px solid var(--border)",
@@ -6145,14 +6587,89 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
       </ReadModeBottomSheet>
 
       {pinToast&&(
-        <div style={{position:"fixed",bottom:`calc(96px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:999999,
+        <div style={{position:"fixed",bottom:`calc(80px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:999999,
           background:"#059669",color:"white",borderRadius:12,padding:"8px 18px",fontSize:13,fontWeight:700,
           boxShadow:"0 4px 16px rgba(0,0,0,0.18)",pointerEvents:"none",whiteSpace:"nowrap",
           animation:"sr-pop .2s ease"}}>
           ✓ {pinToast}
         </div>
       )}
-    </div>,
+    </div>
+    {/* Bottom navigation panel: truly fixed at viewport bottom */}
+    <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100000,background:"var(--bg-card)",
+      borderTop:"1px solid var(--nav-border)",padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`}}>
+            {/* Active row info + prev/next */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
+              <div style={{minWidth:0}}>
+                <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{isFndActive?"FC":`R${rowNum}`}</div>
+                <div style={{fontSize:22,fontWeight:800,color:"#4C1D95",lineHeight:1.1}}>{currentRowStitchCount} <span style={{fontSize:12,fontWeight:600,color:"#3850A6"}}>{isFndActive?"ch":"sts"}</span></div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0}}>
+                {navBtn(()=>{setRowIdx(i=>Math.max(0,i-1));setNoteOpen(false);},rowIdx===0,"←")}
+                {navBtn(()=>{setRowIdx(i=>Math.min(totalRows-1,i+1));setNoteOpen(false);},rowIdx===totalRows-1,"→")}
+                {onSaveProgress&&(
+                  <button type="button" onClick={()=>{onSaveProgress(rowIdx);setSavedMarker(rowIdx);showPinToast(isFndActive?"FC pinned":`R${rowNum} pinned`);}} title="Save progress here"
+                    style={{width:36,height:36,borderRadius:10,border:savedMarker===rowIdx?"1.5px solid rgba(5,150,105,0.6)":"1.5px solid rgba(5,150,105,0.35)",background:savedMarker===rowIdx?"rgba(5,150,105,0.15)":"rgba(5,150,105,0.08)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#059669",flexShrink:0}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                  </button>
+                )}
+                {onSaveRowNotes&&!isFndActive&&(
+                  <button type="button" onClick={()=>setNoteViewOpen(true)}
+                    style={{width:36,height:36,borderRadius:10,
+                      border:(rowNotes[String(rowNum)]||"").trim()?"1.5px solid rgba(245,158,11,0.5)":"1.5px solid rgba(245,158,11,0.25)",
+                      background:(rowNotes[String(rowNum)]||"").trim()?"rgba(245,158,11,0.12)":"rgba(245,158,11,0.06)",
+                      cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#92400e",fontSize:14,fontWeight:700,flexShrink:0}}>✎</button>
+                )}
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div style={{height:3,background:"#EEF0FD",borderRadius:99,overflow:"hidden",marginBottom:9}}>
+              <div style={{height:"100%",width:`${((rowIdx+1)/totalRows)*100}%`,background:"#778EE3",borderRadius:99,transition:"width 0.35s ease"}}/>
+            </div>
+            {/* Row pills */}
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"flex-end"}}>
+              {rowLevels.map((y,i)=>{
+                const isFnd=y===0;
+                const label=isFnd?"FC":`R${actualRowLevels.indexOf(y)+1}`;
+                const active=i===rowIdx;
+                const isProgress=!!onSaveProgress&&i===savedMarker;
+                const rowN=isFnd?null:actualRowLevels.indexOf(y)+1;
+                return(
+                  <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                    <div style={{height:10,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {isProgress&&<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>}
+                    </div>
+                    <button onClick={()=>{setRowIdx(i);setNoteOpen(false);}}
+                      style={{padding:"4px 10px",borderRadius:20,cursor:"pointer",border:"none",
+                        background:active?(isFnd?"#92400E":"#778EE3"):(isFnd?"#FEF3C7":"#EEF0FD"),
+                        color:active?"white":(isFnd?"#92400E":"#778EE3"),
+                        fontSize:11,fontWeight:active?700:500,transition:"all 0.18s ease"}}>
+                      {label}{(!isFnd&&(rowNotes[String(rowN)]||"").trim())?<span style={{display:"inline-block",width:5,height:5,borderRadius:999,background:active?"#FCD34D":"#F59E0B",marginLeft:3,verticalAlign:"middle"}}/>:null}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {(stitches.length>0||(onSaveRowNotes&&Object.keys(rowNotes).some(k=>(rowNotes[k]||"").trim()))||notes||onSaveRowNotes)&&(
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                {stitches.length>0&&(
+                  <button type="button" onClick={()=>setShowSymbols(true)}
+                    style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+                      background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
+                    ≡ Symbols
+                  </button>
+                )}
+                {((onSaveRowNotes&&Object.keys(rowNotes).some(k=>(rowNotes[k]||"").trim()))||notes)&&(
+                  <button type="button" onClick={()=>setShowSheetNotes(true)}
+                    style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
+                      background:"var(--accent-soft)",color:"#778EE3",fontSize:11,fontWeight:700}}>
+                    ✎ Notes
+                  </button>
+                )}
+              </div>
+            )}
+    </div>
+    </>,
     document.body
   );
 }
@@ -8038,6 +8555,12 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   useEffect(()=>{const n=document.getElementById("app-bottom-nav");if(n)n.style.visibility="hidden";return()=>{if(n)n.style.visibility="";};},[]);
   const pinToastTimer=useRef(null);
   const showPinToast=msg=>{clearTimeout(pinToastTimer.current);setPinToast(msg);pinToastTimer.current=setTimeout(()=>setPinToast(null),2000);};
+  const notesStorageKey=`sr-notes:${patName||"__imp"}`;
+  const[stepNotes,setStepNotes]=useState(()=>{try{return JSON.parse(localStorage.getItem(`sr-notes:${patName||"__imp"}`)||"{}");}catch{return{};}});
+  const saveStepNote=(id,val)=>{const next=val?{...stepNotes,[id]:val}:Object.fromEntries(Object.entries(stepNotes).filter(([k])=>k!==id));setStepNotes(next);try{localStorage.setItem(notesStorageKey,JSON.stringify(next));}catch{}};
+  const[noteViewOpen,setNoteViewOpen]=useState(false);
+  const[stepNoteOpen,setStepNoteOpen]=useState(false);
+  const[noteEdit,setNoteEdit]=useState("");
   const[counts,setCounts]=useState({});
   const[stitches,setStitches]=useState(0);
   const justChecked=useRef(new Set());
@@ -8069,6 +8592,8 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   const pct=total?Math.round((checkedCount/total)*100):0;
   const allDone=total>0&&checkedCount===total;
   const activeId=stepItems.find(s=>!checked[s.id])?.id;
+  const activeStep=stepItems.find(s=>s.id===activeId);
+  const activeLabel=activeStep?activeStep.text.split(':')[0].trim().split('(')[0].trim():null;
 
   const toggleCheck=id=>{
     setChecked(c=>{
@@ -8154,18 +8679,23 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
               </button>
             );
           })()}
+          <button type="button" onClick={()=>{if(activeId){setNoteEdit(stepNotes[activeId]||"");setNoteViewOpen(true);}}} disabled={!activeId}
+            style={{width:32,height:32,borderRadius:10,cursor:activeId?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15,fontWeight:700,
+              border:(activeId&&(stepNotes[activeId]||"").trim())?"1.5px solid rgba(245,158,11,0.5)":"1.5px solid rgba(245,158,11,0.25)",
+              background:(activeId&&(stepNotes[activeId]||"").trim())?"rgba(245,158,11,0.12)":"rgba(245,158,11,0.06)",
+              color:"#92400e",opacity:activeId?1:0.4}}>✎</button>
           <span style={{fontSize:12,fontWeight:700,flexShrink:0,padding:"3px 10px",borderRadius:999,minWidth:52,textAlign:"center",
-            color:allDone?"#16A34A":"#778EE3",background:allDone?"#DCFCE7":"#EBEEFB"}}>
+            color:allDone?"rgb(26,106,138)":"#778EE3",background:allDone?"#D1EEF5":"#EBEEFB"}}>
             {checkedCount} / {total}
           </span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{flex:1,height:4,background:"#F0F0F0",borderRadius:999,overflow:"hidden"}}>
             <div style={{height:"100%",borderRadius:999,transition:"width .35s ease",
-              background:allDone?"#16A34A":"#778EE3",width:`${pct}%`}}/>
+              background:allDone?"rgb(26,106,138)":"#778EE3",width:`${pct}%`}}/>
           </div>
           <span style={{fontSize:11,fontWeight:700,minWidth:30,textAlign:"right",
-            color:allDone?"#16A34A":"#6B7280"}}>{pct}%</span>
+            color:allDone?"rgb(26,106,138)":"#6B7280"}}>{pct}%</span>
         </div>
       </div>
 
@@ -8242,6 +8772,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
                   transition:"font-size .2s",
                 }}>
                   {isDone?item.text:renderText(item.text,item.id,item.rowColor,item.posColors)}
+                {(stepNotes[item.id]||"").trim()&&<span style={{display:"inline-block",width:6,height:6,borderRadius:999,background:"#F59E0B",marginLeft:5,verticalAlign:"middle",flexShrink:0}}/>}
                 </p>
 
                 {/* Repeat counter */}
@@ -8292,14 +8823,34 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
         </div>
       )}
 
-      {/* ── All-done banner ── */}
-      {allDone&&(
-        <div style={{padding:"14px 20px 28px",background:"var(--bg-card)",borderTop:"1px solid #D1FAE5",display:"flex",flexDirection:"column",alignItems:"center",gap:8,flexShrink:0}}>
-          <Ico n="basil:star-outline" sz={28} style={{color:"#16A34A"}}/>
-          <p style={{margin:0,fontSize:14,fontWeight:700,color:"#16A34A"}}>All steps complete!</p>
-          <button onClick={onBack} style={{padding:"10px 32px",borderRadius:12,background:"#16A34A",color:"white",border:"none",fontWeight:700,fontSize:14,cursor:"pointer"}}>Done</button>
+
+      <ReadModeBottomSheet title={activeLabel?`Note · ${activeLabel}`:"Note"} open={noteViewOpen&&!!activeId} onClose={()=>setNoteViewOpen(false)}>
+        {(stepNotes[activeId]||"").trim()?(
+          <>
+            <p style={{fontSize:13,color:"var(--text-primary)",lineHeight:1.65,margin:"0 0 14px",whiteSpace:"pre-wrap"}}>{stepNotes[activeId]}</p>
+            <button onClick={()=>{setNoteViewOpen(false);setStepNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Edit note</button>
+          </>
+        ):(
+          <>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"0 0 14px"}}>No note for this step yet.</p>
+            <button onClick={()=>{setNoteViewOpen(false);setStepNoteOpen(true);}}
+              style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add note</button>
+          </>
+        )}
+      </ReadModeBottomSheet>
+      <ReadModeBottomSheet title={activeLabel?`Edit note · ${activeLabel}`:"Edit note"} open={stepNoteOpen&&!!activeId} onClose={()=>setStepNoteOpen(false)}>
+        <textarea autoFocus value={noteEdit} onChange={e=>setNoteEdit(e.target.value)}
+          placeholder="Add a note for this step…"
+          style={{width:"100%",minHeight:80,borderRadius:10,border:"1.5px solid var(--border)",
+            padding:"8px 10px",fontSize:13,resize:"vertical",boxSizing:"border-box",outline:"none"}}/>
+        <div style={{display:"flex",gap:8,marginTop:10}}>
+          <button onClick={()=>{saveStepNote(activeId,noteEdit.trim());setStepNoteOpen(false);}}
+            style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Save</button>
+          <button onClick={()=>setStepNoteOpen(false)}
+            style={{padding:"9px 18px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--bg-card)",color:"var(--text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancel</button>
         </div>
-      )}
+      </ReadModeBottomSheet>
 
       {pinToast&&(
         <div style={{position:"fixed",bottom:`calc(32px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:999999,
@@ -8442,6 +8993,24 @@ function generatePatternText(designData){
     return steps;
   }
 
+  if(type==="knit"&&knitStitches?.length){
+    const byRow={};
+    knitStitches.forEach(s=>{(byRow[s.row]=byRow[s.row]||[]).push(s);});
+    // Sort descending: largest grid coord = bottom of chart = Row 1 (worked first in knitting)
+    const rowNums=Object.keys(byRow).map(Number).sort((a,b)=>b-a);
+    return rowNums.map((r,ri)=>{
+      const row=byRow[r].slice().sort((a,b)=>a.col-b.col);
+      const tokens=[];let i=0;
+      while(i<row.length){
+        const s=row[i];const sym=KNIT_SYM_BY_ID[s.id];
+        const ab=sym?.abbrev||sym?.name||s.id;const w=sym?.w||1;
+        let run=1;while(i+run<row.length&&row[i+run].id===s.id)run++;
+        tokens.push(run>1?`${ab} ×${run}`:ab);i+=run*w;
+      }
+      return{id:`s${ri}`,text:`Row ${ri+1} (${ri%2===0?'RS':'WS'}): ${tokens.join(', ')}.`};
+    });
+  }
+
   if(type==="knit"&&grid?.length){
     const colorCount={};
     grid.forEach(row=>row.forEach(c=>{if(c)colorCount[c]=(colorCount[c]||0)+1;}));
@@ -8454,23 +9023,6 @@ function generatePatternText(designData){
       while(i<cells.length){const c=cells[i];let run=1;while(i+run<cells.length&&cells[i+run]===c)run++;
         tokens.push(run>1?`K${run} ${c?colorLabel(c):'skip'}`:`K ${c?colorLabel(c):'skip'}`);i+=run;}
       return{id:`s${ri}`,text:`Row ${ri+1} (${rs?'RS':'WS'}): ${tokens.join(', ')}.`};
-    });
-  }
-
-  if(type==="knit"&&knitStitches?.length){
-    const byRow={};
-    knitStitches.forEach(s=>{(byRow[s.row]=byRow[s.row]||[]).push(s);});
-    const rowNums=Object.keys(byRow).map(Number).sort((a,b)=>a-b);
-    return rowNums.map((r,ri)=>{
-      const row=byRow[r].slice().sort((a,b)=>a.col-b.col);
-      const tokens=[];let i=0;
-      while(i<row.length){
-        const s=row[i];const sym=KNIT_SYM_BY_ID[s.id];
-        const ab=sym?.abbrev||sym?.name||s.id;const w=sym?.w||1;
-        let run=1;while(i+run<row.length&&row[i+run].id===s.id)run++;
-        tokens.push(run>1?`${ab} ×${run}`:ab);i+=run*w;
-      }
-      return{id:`s${ri}`,text:`Row ${r+1} (${ri%2===0?'RS':'WS'}): ${tokens.join(', ')}.`};
     });
   }
 
@@ -8563,7 +9115,9 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       notes={pat.notes}
       onClose={()=>setShowChartView(false)}
       onDesign={()=>{setShowChartView(false);setOpenMaker(true);}}
+      onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
       onSaveRowNotes={rn=>onUpdate({...pat,designData:{...pat.designData,rowNotes:rn}})}
+      onSaveCurrentCell={cell=>onUpdate({...pat,designData:{...pat.designData,currentCell:cell}})}
     />
   );
   if(showRoundsRead) return(
@@ -8571,8 +9125,13 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       <CPM_RoundsReader pattern={pat.designData} themeColor={pat.designData?.themeColor||accentColor} onBack={()=>setShowRoundsRead(false)} notes={pat.notes}/>
     </div>
   );
-  if(showKnitRead) return(
-    <KnitReadChart grid={pat.designData?.grid||[]} onBack={()=>setShowKnitRead(false)}/>
+  if(showKnitRead) return createPortal(
+    <KnitReadChart grid={pat.designData?.grid||[]} onBack={()=>setShowKnitRead(false)}
+      progressMarker={pat.designData?.progressMarker??null}
+      onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
+      rowNotes={pat.designData?.rowNotes||{}}
+      onSaveRowNotes={rn=>onUpdate({...pat,designData:{...pat.designData,rowNotes:rn}})}
+    />,document.body
   );
   if(showStepRead) return(
     <StepReader
@@ -8652,7 +9211,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
             <div style={{padding:"14px 16px 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                 <span style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)"}}>
-                  {pat.designData.type==="knit"?"Color Grid":pat.designData.type==="rounds"?"Rounds Chart":"Crochet Pattern"}
+                  {pat.designData.type==="knit"&&pat.designData.knitStitches?.length?"Knit Chart":pat.designData.type==="knit"?"Color Grid":pat.designData.type==="rounds"?"Rounds Chart":"Crochet Pattern"}
                 </span>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
                   {isCrochetDesign&&(
@@ -8669,11 +9228,15 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                     </button>
                   </>)}
                   {!isRoundsDesign&&(<>
-                    {pat.designData?.type==="knit"&&(
+                    {pat.designData?.type==="knit"&&pat.designData?.knitStitches?.length?(
+                      <button onClick={()=>setShowChartView(true)} style={{fontSize:11,fontWeight:700,color:"#92400e",background:"rgba(245,158,11,0.12)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
+                        <Ico n="basil:book-open-outline" sz={11}/>Read Chart
+                      </button>
+                    ):pat.designData?.type==="knit"&&pat.designData?.grid?.length?(
                       <button onClick={()=>setShowKnitRead(true)} style={{fontSize:11,fontWeight:700,color:"#92400e",background:"rgba(245,158,11,0.12)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                         <Ico n="basil:book-open-outline" sz={11}/>Read Chart
                       </button>
-                    )}
+                    ):null}
                     <button onClick={()=>setOpenMaker(true)} style={{fontSize:11,fontWeight:700,color:accentColor,background:accentColor+"12",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                       <Ico n="basil:edit-outline" sz={11}/>Edit Design
                     </button>
@@ -12734,6 +13297,7 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
   const{canvasBg="#FDFAF6"}=useSettings();
   const svgRef=useRef(null);
   const[showMoreColors,setShowMoreColors]=useState(false);
+  const[showHelp,setShowHelp]=useState(false);
   const[panelOpen,setPanelOpen]=useState(false);
   const[activeColor,setActiveColor]=useState(()=>yarnColors?.[0]?.color||themeColor);
   // Keep a live ref so any closure (useEffect, drag handlers) always reads current activeColor
@@ -13200,11 +13764,11 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         <button type="button" onClick={cpmUndo} disabled={!cpmHistory.length} title="Undo"
           style={{...panelBtnSt,opacity:cpmHistory.length?1:0.3,cursor:cpmHistory.length?"pointer":"default"}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"#6B7280"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>
         </button>
         <button type="button" onClick={cpmRedo} disabled={!cpmFuture.length} title="Redo"
           style={{...panelBtnSt,opacity:cpmFuture.length?1:0.3,cursor:cpmFuture.length?"pointer":"default"}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.84"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style={{color:"#6B7280"}}><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.2 10H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H16q.425 0 .713.288T17 18t-.288.713T16 19H9.9q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-1.9-1.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.6 3.6q.15.15.213.325t.062.375t-.062.375t-.213.325l-3.6 3.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"/></svg>
         </button>
         <button type="button" onClick={()=>{setCpmBatchMode(v=>{const next=!v;if(!next){setCpmBatchKeys(new Set());setCpmBatchColorOpen(false);setCpmBatchSpacingOpen(false);}else{setToolActive(false);setEraserActive(false);setGhostPos(null);setSelectedStitch(null);}return next;});}} title="Batch Actions"
           style={{...panelBtnSt,border:`1.5px solid ${cpmBatchMode?"#778EE3":"var(--border)"}`,background:cpmBatchMode?"var(--accent-soft)":"var(--bg-card)"}}>
@@ -13621,6 +14185,12 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
                 )}
               </div>
 
+              {/* ── GUIDE ── */}
+              <button type="button" onClick={()=>setShowHelp(true)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--bg-subtle)",color:"#778EE3",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M12 10.75a.75.75 0 0 1 .75.75v5a.75.75 0 1 1-1.5 0v-5a.75.75 0 0 1 .75-.75M12 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"/><path fill="currentColor" fillRule="evenodd" d="M7.317 3.769a42.5 42.5 0 0 1 9.366 0c1.827.204 3.302 1.642 3.516 3.48c.37 3.156.37 6.346 0 9.503c-.215 1.836-1.69 3.275-3.516 3.48a42.5 42.5 0 0 1-9.366 0c-1.827-.205-3.302-1.644-3.516-3.48a41 41 0 0 1 0-9.504c.214-1.837 1.69-3.275 3.516-3.48m9.2 1.49a41 41 0 0 0-9.034 0A2.486 2.486 0 0 0 5.29 7.423a39.4 39.4 0 0 0 0 9.154a2.486 2.486 0 0 0 2.193 2.163c2.977.333 6.057.333 9.034 0a2.486 2.486 0 0 0 2.192-2.163a39.4 39.4 0 0 0 0-9.154a2.486 2.486 0 0 0-2.192-2.164" clipRule="evenodd"/></svg>
+                How to use
+              </button>
+
               {/* ── DANGER ── */}
               <div>
                 <span style={panelSecLabel}>DANGER ZONE</span>
@@ -13636,6 +14206,70 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
         </div>
       </div>
 
+    {showHelp&&(
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)"}} onClick={()=>setShowHelp(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--bg-card)",borderRadius:18,width:"min(420px,90vw)",maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 40px rgba(0,0,0,0.28)",animation:"popIn .2s ease"}}>
+          <div style={{padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <span style={{fontSize:14,fontWeight:800,color:"var(--text-primary)"}}>Crochet Rounds — Guide</span>
+            <button onClick={()=>setShowHelp(false)} style={{width:26,height:26,borderRadius:999,border:"none",background:"var(--bg-subtle)",cursor:"pointer",fontSize:16,color:"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{overflowY:"auto",padding:"16px 18px 28px",display:"flex",flexDirection:"column",gap:18}}>
+            {[
+              {sec:"Tools",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>,name:"Select",desc:"tap a stitch on the canvas to select it and view its properties"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l10-10 7 7-3.5 3.5"/><path d="M6.5 17.5l4-4"/></svg>,name:"Eraser",desc:"tap a stitch to delete it from the round"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M8 19q-.425 0-.712-.288T7 18t.288-.712T8 17h6.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l1.9 1.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275L4.7 9.7q-.15-.15-.213-.325T4.426 9t.063-.375T4.7 8.3l3.6-3.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z"/></svg>,name:"Undo / Redo",desc:"step backwards or forwards through your edit history"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,name:"Batch Actions",desc:"switch to batch mode to edit an entire round at once"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,name:"Read Preview",desc:"open the chart in read-only mode to follow your pattern"},
+              ]},
+              {sec:"Canvas",items:[
+                "Place stitch — tap anywhere near a round ring to place the active stitch type",
+                "Ghost preview — a faint dot shows where the stitch will land before you tap",
+                "Drag — hold and drag a placed stitch to reposition it along the ring",
+                "Pan & zoom — pinch to zoom or drag the background to pan the canvas",
+              ]},
+              {sec:"Foundation Round (R1)",items:[
+                "Stitch count — set the number of stitches in the first round (4–24)",
+                "Layout preset — Even spreads stitches equally, Grouped clusters them, Manual lets you drag freely",
+                "Stitch type — choose the stitch symbol used for R1 from the palette",
+              ]},
+              {sec:"Batch Mode",items:[
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg>,name:"Round selector",desc:"choose which round to apply batch actions to"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3 3 7-7"/></svg>,name:"Select All",desc:"highlight every stitch in the chosen round"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>,name:"Delete",desc:"remove all selected stitches at once"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/><circle cx="12" cy="12" r="4.5" fill="currentColor"/></svg>,name:"Color",desc:"recolor all selected stitches to the active color"},
+                {icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path strokeLinecap="round" d="M12 3v3M12 18v3"/></svg>,name:"Round Spacing",desc:"adjust the radius gap between rounds"},
+              ]},
+              {sec:"Settings",items:[
+                "Color / Yarn — pick the active stitch color from your yarn palette or a custom color",
+                "Theme color — change the overall accent color of the maker UI",
+                "Clear all — remove every stitch and start the pattern from scratch",
+              ]},
+            ].map(({sec,items})=>(
+              <div key={sec}>
+                <div style={{fontSize:10,fontWeight:800,color:"#999",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:6}}>{sec}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {items.map((it,i)=>{
+                    if(it&&typeof it==="object"){return(
+                      <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
+                        <span style={{width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,color:"#778EE3"}}>{it.icon}</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{it.name}</strong>{it.desc?" — "+it.desc:""}</span>
+                      </div>
+                    );}
+                    const[name,...rest]=it.split(" — ");return(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+                        <span style={{color:"#778EE3",fontSize:13,lineHeight:1,marginTop:2,flexShrink:0}}>•</span>
+                        <span style={{fontSize:12,color:"var(--text-primary)",lineHeight:1.55}}><strong>{name}</strong>{rest.length?" — "+rest.join(" — "):""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
