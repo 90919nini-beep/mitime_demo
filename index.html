@@ -4492,33 +4492,24 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   // Nearest anchor within snap radius in pixels — returns null when snapping is off
   const nearestAnch=(mx,my,xk)=>{
     if(!snapEnabled)return null;
-    // hoverGridY: the grid-Y of the row nearest the cursor (floating-point, e.g. -5.2).
-    // Anchors must be in a LOWER row, i.e. s.y strictly greater than hoverGridY.
-    const hoverGridY=bestGridY(my,pan);
-    // Priority 0: stitch directly under pointer — only valid as anchor if it is in a
-    // lower row (s.y > hoverGridY). Same-row peer stitches must not become anchors.
-    const direct=stAt(mx,my);
-    if(direct&&direct.key!==xk&&direct.y>hoverGridY+0.1){
-      console.log("[anchor target]",{via:"direct-hit",key:direct.key,id:direct.id});return direct;
-    }
-    // Fallback: distance from each stitch's CONNECTION POINT (T-head / oval center),
-    // not grid center. Fan stitches' T-head can be 40–100px above their grid center,
-    // so using grid center causes misidentification of parent vs fan child.
+    // Only consider stitches whose connection point (T-head) is BELOW the cursor in
+    // canvas-Y (larger canvas-Y = lower on screen = earlier crochet row). This
+    // eliminates same-row peers regardless of zoom, custom row heights, or how
+    // bestGridY extrapolates virtual rows. No hoverGridY needed.
     const snapPx=SNAP_R*CELL;const cands=[];
     stitches.forEach(s=>{
       if(s.key===xk)return;
-      if(s.y<=hoverGridY+0.1)return; // same row or above — never an anchor
-      const cp=getConnectionPointPx(s,pan);
-      console.log("[fan child connection point]",{stitchKey:s.key,stitchId:s.id,parentIds:s.parentIds,fanAngle:s.fanAngle});
-      const d=Math.hypot(cp.px-mx,cp.py-my);
-      if(d<snapPx)cands.push({s,d});
+      const{px,py}=getConnectionPointPx(s,pan);
+      if(py<=my)return; // connection point at/above cursor → peer or child, skip
+      const d=Math.hypot(px-mx,py-my);
+      if(d<snapPx)cands.push({s,d,ry:Math.round(s.y)});
     });
     if(!cands.length)return null;
-    // Prefer the closest row below (highest s.y among candidates), then nearest by distance.
-    const closestBelowY=Math.max(...cands.map(c=>c.s.y));
-    const pool=cands.filter(c=>Math.abs(c.s.y-closestBelowY)<0.5);
+    // Among candidates, prefer the closest row below (highest s.y, i.e. least negative).
+    const bestRy=Math.max(...cands.map(c=>c.ry));
+    const pool=cands.filter(c=>c.ry===bestRy);
     const r=pool.reduce((b,c)=>c.d<b.d?c:b).s;
-    console.log("[anchor target]",{via:"row-pref",key:r.key,id:r.id});
+    console.log("[anchor target]",{via:"pixel-below",key:r.key,id:r.id,bestRy});
     return r;
   };
   // Preview position for a new child (without committing)
