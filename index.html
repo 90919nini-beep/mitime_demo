@@ -4492,25 +4492,24 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   // Nearest anchor within snap radius in pixels — returns null when snapping is off
   const nearestAnch=(mx,my,xk)=>{
     if(!snapEnabled)return null;
-    // 1. Lock target row from cursor position — independent of any stitch selection.
-    //    This prevents anchor selection from ever changing the target row.
+    // Step 1: targetRow locked from cursor — immutable from this point
     const targetRow=bestGridY(my,pan);
+    // Step 2: parentRow = the single existing row immediately below targetRow
+    const existingRows=Object.keys(rowRenderOffRef.current).map(Number);
+    const below=existingRows.filter(ry=>ry>targetRow);
+    if(!below.length)return null;
+    const parentRow=Math.min(...below);
+    // Step 3: candidates only from parentRow, within SNAP_R
     const snapPx=SNAP_R*CELL;const cands=[];
     stitches.forEach(s=>{
       if(s.key===xk)return;
-      const ry=Math.round(s.y);
-      // 2. Anchor must be in a row strictly below the target (parent row, never same-row peer).
-      if(ry<=targetRow)return;
+      if(Math.round(s.y)!==parentRow)return;
       const{px,py}=getConnectionPointPx(s,pan);
       const d=Math.hypot(px-mx,py-my);
-      if(d<snapPx)cands.push({s,d,ry});
+      if(d<snapPx)cands.push({s,d});
     });
     if(!cands.length)return null;
-    // 3. Pick the row closest to targetRow: Math.min(ry) is the most-negative ry
-    //    that is still > targetRow, i.e. the immediate parent row.
-    const bestRy=Math.min(...cands.map(c=>c.ry));
-    const pool=cands.filter(c=>c.ry===bestRy);
-    return pool.reduce((b,c)=>c.d<b.d?c:b).s;
+    return cands.reduce((b,c)=>c.d<b.d?c:b).s;
   };
   // Preview position for a new child (without committing)
   const previewFanPos=(ancKey,st)=>{
@@ -4604,16 +4603,20 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
   const bestGridY=(my,p)=>{
     const sy=my-p.y;
     const off=rowRenderOffRef.current;
-    const rows=Object.keys(off).map(Number);
+    const rows=Object.keys(off).map(Number).sort((a,b)=>a-b); // ascending: topmost row first
     if(!rows.length)return Math.round(sy/CELL_H);
-    // Only consider actual existing rows — no virtual extrapolation beyond known rows.
-    // This ensures the target row is always a real row the cursor is nearest to,
-    // never a ghost row that would make the ghost preview jump.
+    // Nearest actual row by foot-position distance (foot = row zone center)
     let best=rows[0],bestDist=Math.abs(off[rows[0]]-sy);
     for(const ry of rows){
       const d=Math.abs(off[ry]-sy);
       if(d<bestDist){bestDist=d;best=ry;}
     }
+    // One virtual "new row" above topmost: its foot is estimated from the spacing
+    // between the two topmost existing rows (pure position data, no stitch geometry).
+    const topRy=rows[0];
+    const rowSpacing=rows.length>1?(off[rows[1]]-off[rows[0]]):CELL_H;
+    const virtualOff=off[topRy]-rowSpacing;
+    if(Math.abs(virtualOff-sy)<bestDist)best=topRy-1;
     return best;
   };
   const calcGuides=(mx,my,xk)=>{
