@@ -4497,7 +4497,10 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     // Step 2: parentRow = the single existing row immediately below targetRow
     const existingRows=Object.keys(rowRenderOffRef.current).map(Number);
     const below=existingRows.filter(ry=>ry>targetRow);
-    if(!below.length)return null;
+    if(!below.length){
+      console.log("[nearestAnch] targetRow:",targetRow,"→ no parentRow (cursor at/below all rows) → null");
+      return null;
+    }
     const parentRow=Math.min(...below);
     // Step 3: candidates only from parentRow, within SNAP_R
     const snapPx=SNAP_R*CELL;const cands=[];
@@ -4508,8 +4511,13 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
       const d=Math.hypot(px-mx,py-my);
       if(d<snapPx)cands.push({s,d});
     });
-    if(!cands.length)return null;
-    return cands.reduce((b,c)=>c.d<b.d?c:b).s;
+    if(!cands.length){
+      console.log("[nearestAnch] targetRow:",targetRow,"| parentRow:",parentRow,"→ no anchor in SNAP_R → null");
+      return null;
+    }
+    const anc=cands.reduce((b,c)=>c.d<b.d?c:b).s;
+    console.log("[nearestAnch] targetRow:",targetRow,"| parentRow:",parentRow,"| anchorRow:",Math.round(anc.y),"| anchor:",anc.key,anc.id);
+    return anc;
   };
   // Preview position for a new child (without committing)
   const previewFanPos=(ancKey,st)=>{
@@ -4530,10 +4538,15 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     commit(ns);
   };
   const placeAt=(mx,my)=>{
+    const _targetRow_p=bestGridY(my,pan);
     const anc=nearestAnch(mx,my,null);
     const newKey=`${Date.now()}_${Math.random().toString(36).slice(2)}`;
     if(anc){
       const pos=previewFanPos(anc.key,stitches);
+      const _anchorRow_p=Math.round(anc.y);
+      const _previewRow_p=Math.round(pos.y);
+      console.log("[PIPELINE|placeAt] targetRow(bestGridY):",_targetRow_p,"| anchorRow:",_anchorRow_p,"| previewRow(previewFanPos):",_previewRow_p,"| placedY:",pos.y);
+      if(_previewRow_p!==_targetRow_p) console.log("[ROW CHANGED] from:",_targetRow_p,"to:",_previewRow_p,"function: previewFanPos in placeAt (anchorRow:",_anchorRow_p,")");
       const parentIds=[anc.key];
       const draft=[...stitches,{key:newKey,id:activeSym,color:activeColor,x:pos.x,y:pos.y,parentIds}];
       console.log("[structural parent]",{child:newKey,parent:anc.key,ancId:anc.id});
@@ -4542,6 +4555,8 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
     }else{
       const{gx}=toCont(mx,my,pan);
       const rx=Math.round(gx),ry=bestGridY(my,pan);
+      console.log("[PIPELINE|placeAt] no anchor | targetRow:",_targetRow_p,"| freeRow(bestGridY):",ry,"| placedY:",ry);
+      if(ry!==_targetRow_p) console.log("[ROW CHANGED] from:",_targetRow_p,"to:",ry,"function: bestGridY (free placement in placeAt)");
       if(stitches.some(s=>Math.hypot(s.x-rx,s.y-ry)<0.5))return;
       commit([...stitches,{key:newKey,id:activeSym,color:activeColor,x:rx,y:ry,parentIds:[]}]);
     }
@@ -4881,22 +4896,32 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
       if(hit){setHoverCell({gx:hit.x,gy:hit.y});setGuides([]);}
       else{const{gx}=toCont(mx,my,pan);setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);}
     }else{
+      const _targetRow=bestGridY(my,pan);
       let anc=nearestAnch(mx,my,null);
       // Hysteresis: keep the locked anchor while cursor is still within 80% of snap radius.
+      let _hysteresisUsed=false;
       if(!anc&&lockedAnchorKeyRef.current){
         const lockedSt=stitches.find(s=>s.key===lockedAnchorKeyRef.current);
-        if(lockedSt){const{sx,sy}=stScreenPos(lockedSt);if(Math.hypot(sx-mx,sy-my)<SNAP_R*CELL*0.8)anc=lockedSt;else lockedAnchorKeyRef.current=null;}
+        if(lockedSt){const{sx,sy}=stScreenPos(lockedSt);if(Math.hypot(sx-mx,sy-my)<SNAP_R*CELL*0.8){anc=lockedSt;_hysteresisUsed=true;}else lockedAnchorKeyRef.current=null;}
         else lockedAnchorKeyRef.current=null;
       }
       if(anc)lockedAnchorKeyRef.current=anc.key;else lockedAnchorKeyRef.current=null;
       if(anc){
         const pos=previewFanPos(anc.key,stitches)||{x:anc.x,y:anc.y-1};
+        const _anchorRow=Math.round(anc.y);
+        const _previewRow=Math.round(pos.y);
+        const _src=_hysteresisUsed?"hysteresis":"nearestAnch";
+        console.log("[PIPELINE|hover] cursorRow:",_targetRow,"| targetRow(bestGridY):",_targetRow,"| anchorRow("+_src+"):"+_anchorRow,"| previewRow(previewFanPos):"+_previewRow,"| pos.y:",pos.y);
+        if(_previewRow!==_targetRow) console.log("[ROW CHANGED] from:",_targetRow,"to:",_previewRow,"function: previewFanPos (source: "+_src+", anchorRow: "+_anchorRow+")");
         const mode=childrenOf(anc.key).length>0?"fan":"newrow";
         setHoverCell({gx:pos.x,gy:pos.y,snapTo:anc.key,mode});
         setGuides([{axis:"anchor",x:anc.x,y:anc.y,childCount:childrenOf(anc.key).length,ancKey:anc.key}]);
       }else if(!stAt(mx,my)){
         const{gx}=toCont(mx,my,pan);
-        setHoverCell({gx:Math.round(gx),gy:bestGridY(my,pan)});setGuides([]);
+        const _freeRow=bestGridY(my,pan);
+        console.log("[PIPELINE|hover] cursorRow:",_targetRow,"| no anchor → freeRow(bestGridY):",_freeRow);
+        if(_freeRow!==_targetRow) console.log("[ROW CHANGED] from:",_targetRow,"to:",_freeRow,"function: bestGridY (free placement fallback)");
+        setHoverCell({gx:Math.round(gx),gy:_freeRow});setGuides([]);
       }else{setHoverCell(null);setGuides([]);}
     }
   };
