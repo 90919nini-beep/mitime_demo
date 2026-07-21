@@ -85,6 +85,12 @@
       100%{opacity:0}
     }
     .modal-in{animation:fadeIn .2s cubic-bezier(.4,0,.2,1);margin-bottom:calc(-1 * env(safe-area-inset-bottom, 0px));will-change:transform;overscroll-behavior:contain;touch-action:pan-y;}
+    /* overscroll-behavior:contain on .modal-in itself only stops chaining if THAT element
+       is what scrolls — most modals actually scroll a nested child div (overflow-y:auto),
+       which needs its own containment or wheel/touch input "chains" past it to the page
+       behind once the inner content hits its scroll bounds. Apply to every descendant so
+       we don't have to hunt down and tag each modal's specific scrollable child. */
+    .modal-in *{overscroll-behavior:contain;}
     body.modal-open{touch-action:none;}
     .modal-overlay{transition:none!important;will-change:opacity;}
     @media(display-mode:standalone){.modal-in{margin-bottom:0;}}
@@ -1133,10 +1139,17 @@ function _preventBgScroll(e){if(!e.target.closest('.modal-in'))e.preventDefault(
 function _applyScrollLock(){
   document.body.classList.add('modal-open');
   document.addEventListener('wheel',_preventBgScroll,{passive:false});
+  // touch-action:none on body (the .modal-open rule) only stops touch scrolling that
+  // starts ON the body element itself — it does NOT reach a nested scrollable container
+  // (e.g. the pattern list) if a touch happens to start there, so swiping the background
+  // behind an open modal could still scroll it on touch devices. Block touchmove the same
+  // way wheel is already blocked, exempting the modal's own scrollable content (.modal-in).
+  document.addEventListener('touchmove',_preventBgScroll,{passive:false});
 }
 function _releaseScrollLock(){
   document.body.classList.remove('modal-open');
   document.removeEventListener('wheel',_preventBgScroll);
+  document.removeEventListener('touchmove',_preventBgScroll);
 }
 function useBodyScrollLock(){
   useLayoutEffect(()=>{if(++_scrollLockCount===1)_applyScrollLock();return()=>{if(--_scrollLockCount===0)_releaseScrollLock();};},[]);
@@ -8882,22 +8895,20 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
 }
 
 /* ── Color Grid Read Chart ── */
-function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,currentCell=null,onSaveCurrentCell}){
+function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,currentCell=null,onSaveCurrentCell,onSwitchToText}){
   const{t}=useLang();
-  const{canvasBg="#FDFAF6",stepGuideExpanded,setSetting}=useSettings();
+  const{canvasBg="#FDFAF6"}=useSettings();
   const rows=grid.length;
   const[pinToast,setPinToast]=useState(null);
   const pinToastTimer=useRef(null);
   const showPinToast=msg=>{clearTimeout(pinToastTimer.current);setPinToast(msg);pinToastTimer.current=setTimeout(()=>setPinToast(null),2000);};
-  const[sgExpanded,setSgExpanded]=useState(!!stepGuideExpanded);
-  const toggleStepGuide=()=>{const next=!sgExpanded;setSgExpanded(next);setSetting?.('stepGuideExpanded',next);};
-  const colorLabelFn=useMemo(()=>buildKnitColorLabeler(grid),[grid]);
   const cols=grid[0]?.length||0;
   const[scale,setScale]=useState(1);
   const[activeRow,setActiveRow]=useState(()=>progressMarker!=null&&progressMarker>=0&&progressMarker<grid.length?progressMarker:null);
   const[savedMarker,setSavedMarker]=useState(progressMarker!=null&&progressMarker>=0&&progressMarker<grid.length?progressMarker:null);
   const[localNotes,setLocalNotes]=useState(rowNotes);
   const[localCurrentCell,setLocalCurrentCell]=useState(currentCell);
+  const[tappedCell,setTappedCell]=useState(currentCell);
   const[krcNoteOpen,setKrcNoteOpen]=useState(false);
   const[krcNoteEdit,setKrcNoteEdit]=useState("");
   const[pan,setPan]=useState({x:0,y:0});
@@ -9017,7 +9028,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
       ctx.fillStyle="#059669";ctx.globalAlpha=1;
       ctx.beginPath();ctx.moveTo(2,cy-5);ctx.lineTo(12,cy);ctx.lineTo(2,cy+5);ctx.fill();
     }
-    // Cell progress marker — amber ring on exact cell
+    // Pinned box marker — solid amber ring on the saved cell
     if(localCurrentCell){
       const{x:mx,y:my}=localCurrentCell;
       if(mx>=0&&mx<cols&&my>=0&&my<rows){
@@ -9031,7 +9042,18 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
         ctx.globalAlpha=1;
       }
     }
-  },[grid,rows,cols,scale,activeRow,canvasBg,savedMarker,localCurrentCell]);
+    // Tapped/candidate box — thin dashed outline showing what "Pin Box" would save;
+    // skipped when it's the same cell already pinned above (avoids a redundant overlay).
+    if(tappedCell&&!(localCurrentCell&&tappedCell.x===localCurrentCell.x&&tappedCell.y===localCurrentCell.y)){
+      const{x:mx,y:my}=tappedCell;
+      if(mx>=0&&mx<cols&&my>=0&&my<rows){
+        ctx.strokeStyle="#F59E0B";ctx.lineWidth=Math.max(1,cellSize*0.06);
+        ctx.setLineDash([3,3]);ctx.globalAlpha=0.85;
+        ctx.strokeRect(ML+mx*cellSize+1,MT+my*cellSize+1,cellSize-2,cellSize-2);
+        ctx.setLineDash([]);ctx.globalAlpha=1;
+      }
+    }
+  },[grid,rows,cols,scale,activeRow,canvasBg,savedMarker,localCurrentCell,tappedCell]);
 
   useLayoutEffect(()=>{draw();},[draw]);
 
@@ -9056,7 +9078,11 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     setGrabbing(false);
   },[]);
 
-  /* ── Row selection + cell progress marker on click ── */
+  /* ── Row selection + box candidate on click ── */
+  // Tapping only highlights the row for reading and marks a *candidate* box (dashed
+  // outline). Neither is persisted until the user explicitly presses "Pin Row" or
+  // "Pin Box" below — that way the two can be pinned independently instead of every
+  // tap silently overwriting whichever box was previously pinned.
   const handleClick=useCallback(e=>{
     if(suppressClick.current){suppressClick.current=false;return;}
     const c=canvasRef.current,cont=containerRef.current;if(!c||!cont)return;
@@ -9070,14 +9096,8 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     const y=Math.floor((ry-MT)/cellSize);
     if(y<0||y>=rows)return;
     setActiveRow(prev=>prev===y?null:y);
-    // Cell progress marker: tap cell to set; tap same cell to clear
-    if(onSaveCurrentCell&&x>=0&&x<cols){
-      const isMarked=localCurrentCell&&localCurrentCell.x===x&&localCurrentCell.y===y;
-      const next=isMarked?null:{x,y};
-      setLocalCurrentCell(next);
-      onSaveCurrentCell(next);
-    }
-  },[cols,rows,scale,localCurrentCell,onSaveCurrentCell]);
+    if(x>=0&&x<cols)setTappedCell({x,y});
+  },[cols,rows,scale]);
 
   /* ── Row navigation buttons ── */
   // [+] = higher row number (move up, y-1); [−] = lower row number (move down, y+1)
@@ -9088,13 +9108,6 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     });
   },[rows]);
   const displayRow=activeRow!==null?rows-activeRow:null;
-  const stepGuideTokens=useMemo(()=>{
-    if(activeRow===null)return[];
-    const rs=displayRow%2===1; // odd row number = RS, universal convention regardless of array direction
-    const cells=rs?grid[activeRow]:[...grid[activeRow]].reverse();
-    return buildGridKnitRowTokens(cells,colorLabelFn);
-  },[grid,activeRow,displayRow,colorLabelFn]);
-  const stepGuideLabel=displayRow!==null?`${t.stepGuideRow} ${displayRow} (${displayRow%2===1?"RS":"WS"})`:t.stepGuideTapRow;
 
   return(
     <>
@@ -9103,6 +9116,11 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
       {/* Header */}
       <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
+        {onSwitchToText&&(
+          <button onClick={onSwitchToText} title="Switch to full row-by-row text" style={{padding:"6px 12px",borderRadius:11,border:"1.5px solid #778EE3",background:"var(--bg-card)",color:"#778EE3",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
+            <Ico n="basil:clipboard-outline" sz={12}/>Read Text
+          </button>
+        )}
         <button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>← Back</button>
       </div>
       {/* Canvas area */}
@@ -9121,7 +9139,6 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     </div>
       {/* Bottom navigation panel: fixed overlay, matching the crochet and knit-symbol readers */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:101,padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)"}}>
-        <StepGuidePanel label={stepGuideLabel} tokens={stepGuideTokens} expanded={sgExpanded} onToggle={toggleStepGuide}/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{displayRow!==null?`Row ${displayRow}`:"— —"}</div>
@@ -9132,7 +9149,13 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
             <button onClick={()=>navRow(-1)} style={{width:36,height:36,borderRadius:10,border:"1.5px solid rgba(59,95,138,0.2)",background:"var(--bg-card)",cursor:activeRow===0?"default":"pointer",opacity:activeRow===0?0.3:1,fontSize:20,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#3B5F8A",flexShrink:0}} disabled={activeRow===0}>→</button>
             {onSaveProgress&&(
               <button onClick={()=>{if(activeRow!==null){onSaveProgress(activeRow);setSavedMarker(activeRow);showPinToast(`Row ${rows-activeRow} pinned`);}}} disabled={activeRow===null}
-                style={{width:36,height:36,borderRadius:10,border:savedMarker===activeRow&&activeRow!==null?"1.5px solid rgba(5,150,105,0.6)":"1.5px solid rgba(5,150,105,0.35)",background:savedMarker===activeRow&&activeRow!==null?"rgba(5,150,105,0.15)":"rgba(5,150,105,0.08)",cursor:activeRow!==null?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",color:"#059669",flexShrink:0}}>
+                title="Pin row" style={{width:36,height:36,borderRadius:10,border:savedMarker===activeRow&&activeRow!==null?"1.5px solid rgba(5,150,105,0.6)":"1.5px solid rgba(5,150,105,0.35)",background:savedMarker===activeRow&&activeRow!==null?"rgba(5,150,105,0.15)":"rgba(5,150,105,0.08)",cursor:activeRow!==null?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",color:"#059669",flexShrink:0}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+              </button>
+            )}
+            {onSaveCurrentCell&&(
+              <button onClick={()=>{if(tappedCell){setLocalCurrentCell(tappedCell);onSaveCurrentCell(tappedCell);showPinToast(`Row ${rows-tappedCell.y}, Col ${tappedCell.x+1} box pinned`);}}} disabled={!tappedCell}
+                title="Pin box" style={{width:36,height:36,borderRadius:10,border:localCurrentCell&&tappedCell&&localCurrentCell.x===tappedCell.x&&localCurrentCell.y===tappedCell.y?"1.5px solid rgba(245,158,11,0.6)":"1.5px solid rgba(245,158,11,0.35)",background:localCurrentCell&&tappedCell&&localCurrentCell.x===tappedCell.x&&localCurrentCell.y===tappedCell.y?"rgba(245,158,11,0.15)":"rgba(245,158,11,0.08)",cursor:tappedCell?"pointer":"default",opacity:tappedCell?1:0.4,display:"flex",alignItems:"center",justifyContent:"center",color:"#F59E0B",flexShrink:0}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
               </button>
             )}
@@ -9141,6 +9164,23 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
         {activeRow!==null&&(
           <div style={{height:3,background:"#EEF0FD",borderRadius:99,overflow:"hidden",marginBottom:9}}>
             <div style={{height:"100%",width:`${((rows-activeRow)/rows)*100}%`,background:"#778EE3",borderRadius:99,transition:"width 0.35s ease"}}/>
+          </div>
+        )}
+        {tappedCell&&onSaveCurrentCell&&(
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:9,padding:"6px 8px 6px 12px",borderRadius:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.25)"}}>
+            <span style={{fontSize:11,fontWeight:700,color:"#92400e",flexShrink:0}}>Box: Row {rows-tappedCell.y}, Col {tappedCell.x+1}</span>
+            <div style={{display:"flex",gap:4,flexShrink:0}}>
+              {[["↑","Nudge up",()=>setTappedCell(tc=>{if(!tc)return tc;const ny=Math.max(0,tc.y-1);setActiveRow(ny);return{...tc,y:ny};})],
+                ["↓","Nudge down",()=>setTappedCell(tc=>{if(!tc)return tc;const ny=Math.min(rows-1,tc.y+1);setActiveRow(ny);return{...tc,y:ny};})],
+                ["←","Nudge left",()=>setTappedCell(tc=>tc&&({...tc,x:Math.max(0,tc.x-1)}))],
+                ["→","Nudge right",()=>setTappedCell(tc=>tc&&({...tc,x:Math.min(cols-1,tc.x+1)}))]
+              ].map(([sym,title,fn])=>(
+                <button key={sym} onClick={fn} title={title}
+                  style={{width:26,height:26,borderRadius:7,border:"1px solid rgba(245,158,11,0.35)",background:"var(--bg-card)",color:"#92400e",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                  {sym}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {(onSaveRowNotes&&displayRow!==null||localCurrentCell&&onSaveCurrentCell)&&(
@@ -9154,10 +9194,10 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
               </button>
             )}
             {localCurrentCell&&onSaveCurrentCell&&(
-              <button onClick={()=>{setLocalCurrentCell(null);onSaveCurrentCell(null);}}
+              <button onClick={()=>{setLocalCurrentCell(null);onSaveCurrentCell(null);setTappedCell(null);}}
                 style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",
                   background:"rgba(245,158,11,0.1)",color:"#92400E",fontSize:11,fontWeight:700}}>
-                ✕ Clear marker
+                ✕ Clear box pin
               </button>
             )}
           </div>
@@ -9822,6 +9862,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
   const isCrochetDesign=hasDesign&&pat.designData.type==="crochet";
   const isRoundsDesign=hasDesign&&pat.designData.type==="rounds";
   const isImportedDesign=hasDesign&&pat.designData?.type==="imported";
+  const isColorGridDesign=hasDesign&&pat.designData.type==="knit"&&!pat.designData?.knitStitches?.length&&!!pat.designData?.grid?.length;
 
   if(showChartView) return(
     <PatternViewModal
@@ -9845,6 +9886,13 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
       rowNotes={pat.designData?.rowNotes||{}}
       onSaveRowNotes={rn=>onUpdate({...pat,designData:{...pat.designData,rowNotes:rn}})}
+      onSwitchToText={()=>{
+        const steps=generatePatternText(pat.designData);
+        setLocalGeneratedSteps(steps);
+        onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps}});
+        setShowKnitRead(false);
+        setShowGeneratedRead(true);
+      }}
     />,document.body
   );
   if(showStepRead) return(
@@ -9955,6 +10003,10 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                       <Ico n="basil:edit-outline" sz={11}/>Edit Design
                     </button>
                   </>)}
+                  {/* Generate/Read Text — manual/on-demand for every design type EXCEPT color
+                      grid. Color grid text is only reachable via Read Chart's own "Read Text"
+                      button (onSwitchToText below) so it's never bypassed straight to text. */}
+                  {!isColorGridDesign&&(
                   <button onClick={()=>{
                     const steps=generatePatternText(pat.designData);
                     setLocalGeneratedSteps(steps);
@@ -9963,6 +10015,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                   }} style={{fontSize:11,fontWeight:700,color:"#778EE3",background:"var(--accent-soft)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>
                     <Ico n="basil:clipboard-outline" sz={11}/>{pat.designData?.generatedSteps?"Read Text":"Generate Text"}
                   </button>
+                  )}
                 </div>
               </div>
               {isRoundsDesign?(
@@ -12143,7 +12196,9 @@ function AvatarPage({config={}, onChange, onBack}){
     <div style={{position:"fixed",inset:0,background:"var(--bg-card)",zIndex:210,display:"flex",flexDirection:"column"}}>
       {/* Header */}
       <div style={{padding:`calc(12px + ${SAFE_TOP}) 16px 10px`,borderBottom:"1px solid #EEF0FD",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
-        <button onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#778EE3",padding:"4px 8px 4px 0",lineHeight:1}}>←</button>
+        <button onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--text-primary)"}}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" fillRule="evenodd" d="M14.03 7.47a.75.75 0 0 1 0 1.06L10.56 12l3.47 3.47a.75.75 0 1 1-1.06 1.06l-4-4a.75.75 0 0 1 0-1.06l4-4a.75.75 0 0 1 1.06 0" clipRule="evenodd"/></svg>
+        </button>
         <div style={{fontSize:18,fontWeight:800,color:"var(--text-primary)"}}>My Avatar</div>
       </div>
       <div style={{flex:"0 1 auto",minHeight:0,overflowY:"auto",padding:"20px 16px 60px"}}>
