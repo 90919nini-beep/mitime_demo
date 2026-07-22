@@ -1,0 +1,17 @@
+.claude/settings.local.json
+
+# macOS Finder junk
+.DS_Store
+
+# Local-only working backups (not part of the shipped project)
+.session_backups/
+
+# Node / Capacitor
+node_modules/
+
+# Xcode
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
