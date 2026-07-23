@@ -8,11 +8,11 @@ const wwwDir = path.join(root, "www");
 
 const filesToCopy = [
   "index.html",
-  "app_icon.png",
-  "app_icon_rounded.svg",
-  "Sec_logo_nobg.png",
-  "primary_logo.svg",
-  "yarn.png",
+  "logo icon/app_icon.png",
+  "logo icon/app_icon_rounded.svg",
+  "logo icon/Sec_logo_nobg.png",
+  "logo icon/primary_logo.svg",
+  "logo icon/yarn.png",
 ];
 
 const dirsToCopy = ["avatar"];
@@ -20,7 +20,7 @@ const dirsToCopy = ["avatar"];
 fs.mkdirSync(wwwDir, { recursive: true });
 
 for (const file of filesToCopy) {
-  fs.copyFileSync(path.join(root, file), path.join(wwwDir, file));
+  fs.copyFileSync(path.join(root, file), path.join(wwwDir, path.basename(file)));
 }
 
 for (const dir of dirsToCopy) {

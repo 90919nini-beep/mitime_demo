@@ -41,6 +41,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         if let capBridgeVC = bridgeVC as? CAPBridgeViewController {
             capBridgeVC.webView?.configuration.userContentController.add(self, name: Self.readyMessageHandlerName)
+            // Registered here (rather than via capacitor.config.json's packageClassList,
+            // which only auto-lists installed @capacitor/* npm plugins and gets
+            // regenerated on every `cap sync`) since this is a local, non-npm plugin.
+            capBridgeVC.bridge?.registerPluginInstance(BackgroundRemovalPlugin())
         }
 
         let splash = NativeSplashViewController()
