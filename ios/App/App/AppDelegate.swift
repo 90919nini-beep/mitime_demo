@@ -45,6 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             // which only auto-lists installed @capacitor/* npm plugins and gets
             // regenerated on every `cap sync`) since this is a local, non-npm plugin.
             capBridgeVC.bridge?.registerPluginInstance(BackgroundRemovalPlugin())
+            capBridgeVC.bridge?.registerPluginInstance(WidgetSyncPlugin())
         }
 
         let splash = NativeSplashViewController()

@@ -7,31 +7,81 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00C0D2730EF1BCEDE5AEA4D5 /* ProjectSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */; };
+		0A632EA6FA1BA7270E0FB1DC /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06084193D21686D9E70979F9 /* WidgetKit.framework */; };
+		18C5BC0493F1F054E713C307 /* MiitimeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2676653D731DFE2246FA2663 /* FinishedProjectsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */; };
+		2B0FF6395DA04DD0B441A4D4 /* ProjectSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */; };
+		2E3AD37B39D74CC1C357AC7D /* WidgetSharedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216BFA9252A53011C86B772F /* WidgetSharedModels.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		3461E48831B734D984224E54 /* MiitimeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6028CCA05267B8590A58C414 /* MiitimeWidget.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
-		5C7703C2F7EE587198B73156 /* BackgroundRemovalPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */; };
-		ECB8FFD6AD6DD75E52B73747 /* NativeSplashViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		5C7703C2F7EE587198B73156 /* BackgroundRemovalPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */; };
+		9C4D78B7ECF17D6A37857942 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */; };
+		9D160108B37B714D9E77CAA1 /* MiitimeBrandColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */; };
+		9D79582572419F0AA776E59B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */; };
+		BEE73E0235145151351A7E92 /* MiitimeWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1879060753634786CCCC5C /* MiitimeWidgetBundle.swift */; };
+		C4BDCF8354B4F605F0D599AD /* WidgetSyncPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */; };
+		C80F19B19640E84364C5180B /* WidgetSharedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216BFA9252A53011C86B772F /* WidgetSharedModels.swift */; };
+		ECB8FFD6AD6DD75E52B73747 /* NativeSplashViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		8D3A9179820C1D85FF71652C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EC8E123B343BCFD037303CCE;
+			remoteInfo = MiitimeWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2C00295D380C5230C7ABFC84 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				18C5BC0493F1F054E713C307 /* MiitimeWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		06084193D21686D9E70979F9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		216BFA9252A53011C86B772F /* WidgetSharedModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSharedModels.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSplashViewController.swift; sourceTree = "<group>"; };
+		4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FinishedProjectsWidget.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRemovalPlugin.swift; sourceTree = "<group>"; };
-		432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSplashViewController.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSyncPlugin.swift; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRemovalPlugin.swift; sourceTree = "<group>"; };
+		5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		5F1879060753634786CCCC5C /* MiitimeWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeWidgetBundle.swift; sourceTree = "<group>"; };
+		6028CCA05267B8590A58C414 /* MiitimeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeWidget.swift; sourceTree = "<group>"; };
+		6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MiitimeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeBrandColors.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProjectSnapshot.swift; sourceTree = "<group>"; };
+		BB1377E466DB8E7A295BF7CE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C705476B9CB8E45433A29E0C /* MiitimeWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MiitimeWidget.entitlements; sourceTree = "<group>"; };
+		EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,15 +93,60 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		752DDE605230DEE2B0AD6AC7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9C4D78B7ECF17D6A37857942 /* Foundation.framework in Frameworks */,
+				0A632EA6FA1BA7270E0FB1DC /* WidgetKit.framework in Frameworks */,
+				9D79582572419F0AA776E59B /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0F9BFDE2E2953A404EC95D30 /* MiitimeWidget */ = {
+			isa = PBXGroup;
+			children = (
+				B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */,
+				6028CCA05267B8590A58C414 /* MiitimeWidget.swift */,
+				5F1879060753634786CCCC5C /* MiitimeWidgetBundle.swift */,
+				BB1377E466DB8E7A295BF7CE /* Info.plist */,
+				C705476B9CB8E45433A29E0C /* MiitimeWidget.entitlements */,
+				4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */,
+				729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */,
+			);
+			path = MiitimeWidget;
+			sourceTree = "<group>";
+		};
+		2CAE2CB374A9C6180DE566FC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4EEE2D207080612C84BF9371 /* iOS */,
+				06084193D21686D9E70979F9 /* WidgetKit.framework */,
+				EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4EEE2D207080612C84BF9371 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
+				0F9BFDE2E2953A404EC95D30 /* MiitimeWidget */,
+				2CAE2CB374A9C6180DE566FC /* Frameworks */,
+				67546FC84D02B8B3B41BFE50 /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -59,6 +154,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -76,8 +172,18 @@
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
+				509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		67546FC84D02B8B3B41BFE50 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				216BFA9252A53011C86B772F /* WidgetSharedModels.swift */,
+			);
+			name = Shared;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -90,10 +196,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				2C00295D380C5230C7ABFC84 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				91654EC3CED21FD85A7CD44F /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -102,6 +210,23 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		EC8E123B343BCFD037303CCE /* MiitimeWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 279B6108F0A0A6040C56B295 /* Build configuration list for PBXNativeTarget "MiitimeWidget" */;
+			buildPhases = (
+				CECB02B5A364AC232CD8E16D /* Sources */,
+				752DDE605230DEE2B0AD6AC7 /* Frameworks */,
+				345F79FF3972D9401A08423D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MiitimeWidget;
+			productName = MiitimeWidget;
+			productReference = 6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -116,6 +241,18 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					EC8E123B343BCFD037303CCE = {
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -130,17 +267,26 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
+				5394F28B3013EFC3000D2011 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				EC8E123B343BCFD037303CCE /* MiitimeWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		345F79FF3972D9401A08423D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -164,10 +310,35 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				ECB8FFD6AD6DD75E52B73747 /* NativeSplashViewController.swift in Sources */,
 				5C7703C2F7EE587198B73156 /* BackgroundRemovalPlugin.swift in Sources */,
+				2E3AD37B39D74CC1C357AC7D /* WidgetSharedModels.swift in Sources */,
+				C4BDCF8354B4F605F0D599AD /* WidgetSyncPlugin.swift in Sources */,
+				00C0D2730EF1BCEDE5AEA4D5 /* ProjectSnapshot.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CECB02B5A364AC232CD8E16D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B0FF6395DA04DD0B441A4D4 /* ProjectSnapshot.swift in Sources */,
+				3461E48831B734D984224E54 /* MiitimeWidget.swift in Sources */,
+				BEE73E0235145151351A7E92 /* MiitimeWidgetBundle.swift in Sources */,
+				2676653D731DFE2246FA2663 /* FinishedProjectsWidget.swift in Sources */,
+				9D160108B37B714D9E77CAA1 /* MiitimeBrandColors.swift in Sources */,
+				C80F19B19640E84364C5180B /* WidgetSharedModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		91654EC3CED21FD85A7CD44F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MiitimeWidget;
+			target = EC8E123B343BCFD037303CCE /* MiitimeWidget */;
+			targetProxy = 8D3A9179820C1D85FF71652C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -244,7 +415,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -302,7 +473,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -317,13 +488,14 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 22429V6CQ9;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = mitime;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -344,13 +516,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = mitime;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -366,9 +539,61 @@
 			};
 			name = Release;
 		};
+		5F6268D8DAD7CAC89558B22B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = MiitimeWidget/MiitimeWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22429V6CQ9;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MiitimeWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.MiitimeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		98CCB70EB63BAD50D275C099 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = MiitimeWidget/MiitimeWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22429V6CQ9;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MiitimeWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.MiitimeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		279B6108F0A0A6040C56B295 /* Build configuration list for PBXNativeTarget "MiitimeWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F6268D8DAD7CAC89558B22B /* Release */,
+				98CCB70EB63BAD50D275C099 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -395,6 +620,17 @@
 			relativePath = "CapApp-SPM";
 		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5394F28B3013EFC3000D2011 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
