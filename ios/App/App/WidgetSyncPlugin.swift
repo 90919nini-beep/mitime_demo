@@ -13,7 +13,8 @@ public class WidgetSyncPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "WidgetSync"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "syncFinishedProjects", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "syncCurrentProject", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "syncCurrentProject", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearCurrentProject", returnType: CAPPluginReturnPromise)
     ]
 
     private static let thumbnailMaxDimension: CGFloat = 240
@@ -121,6 +122,14 @@ public class WidgetSyncPlugin: CAPPlugin, CAPBridgedPlugin {
 
         WidgetCenter.shared.reloadTimelines(ofKind: "MiitimeWidget")
         print("[WidgetSync] reloadTimelines(ofKind: MiitimeWidget) requested")
+        call.resolve(["ok": true])
+    }
+
+    @objc func clearCurrentProject(_ call: CAPPluginCall) {
+        WidgetAppGroup.sharedDefaults?.removeObject(forKey: WidgetAppGroup.currentProjectKey)
+        print("[WidgetSync] clearCurrentProject — no in-progress project, cleared shared snapshot")
+
+        WidgetCenter.shared.reloadTimelines(ofKind: "MiitimeWidget")
         call.resolve(["ok": true])
     }
 

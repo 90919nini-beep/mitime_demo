@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "Kein Projekt in Bearbeitung";
+"widget.current.empty.subtitle" = "Starte ein Projekt, um es hier zu sehen!";
+
+/* Current Project widget — content */
+"widget.current.next" = "WEITER";
+"widget.current.rows.short" = "%1$lld/%2$lld Reihen";
+"widget.current.rows.long" = "%1$lld / %2$lld Reihen · %3$lld%% fertig";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "Aktuelles Projekt";
+"widget.current.description" = "Verfolge den Fortschritt deines aktuellen Strick- oder Häkelprojekts.";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "Noch keine fertigen Projekte";
+"widget.finished.empty.subtitle" = "Schließe ein Projekt ab und füge ein Foto hinzu!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "FERTIGE PROJEKTE";
+"widget.finished.count.singular" = "%lld Projekt";
+"widget.finished.count.plural" = "%lld Projekte";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "Fertige Projekte";
+"widget.finished.description" = "Ein Blick auf deine fertigen Strick- und Häkelarbeiten.";

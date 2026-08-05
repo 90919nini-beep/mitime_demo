@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "진행 중인 프로젝트 없음";
+"widget.current.empty.subtitle" = "프로젝트를 시작하면 여기에 표시됩니다!";
+
+/* Current Project widget — content */
+"widget.current.next" = "다음";
+"widget.current.rows.short" = "%1$lld/%2$lld단";
+"widget.current.rows.long" = "%1$lld / %2$lld단 · %3$lld%% 완료";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "진행 중인 프로젝트";
+"widget.current.description" = "진행 중인 뜨개질 또는 코바늘 프로젝트의 진행 상황을 확인하세요.";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "완성된 프로젝트가 아직 없어요";
+"widget.finished.empty.subtitle" = "프로젝트를 완성하고 사진을 추가해 보세요!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "완성 프로젝트";
+"widget.finished.count.singular" = "프로젝트 %lld개";
+"widget.finished.count.plural" = "프로젝트 %lld개";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "완성 프로젝트";
+"widget.finished.description" = "완성한 뜨개질과 코바늘 작품을 한눈에 확인하세요.";

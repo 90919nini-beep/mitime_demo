@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "कोई प्रोजेक्ट जारी नहीं है";
+"widget.current.empty.subtitle" = "प्रोजेक्ट शुरू करें और इसे यहाँ देखें!";
+
+/* Current Project widget — content */
+"widget.current.next" = "अगला";
+"widget.current.rows.short" = "%1$lld/%2$lld पंक्तियाँ";
+"widget.current.rows.long" = "%1$lld / %2$lld पंक्तियाँ · %3$lld%% पूर्ण";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "वर्तमान प्रोजेक्ट";
+"widget.current.description" = "अपने जारी निटिंग या क्रोशेट प्रोजेक्ट की प्रगति देखें।";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "अभी तक कोई पूर्ण प्रोजेक्ट नहीं";
+"widget.finished.empty.subtitle" = "एक प्रोजेक्ट पूरा करें और फ़ोटो जोड़ें!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "पूर्ण प्रोजेक्ट";
+"widget.finished.count.singular" = "%lld प्रोजेक्ट";
+"widget.finished.count.plural" = "%lld प्रोजेक्ट";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "पूर्ण प्रोजेक्ट";
+"widget.finished.description" = "अपने पूर्ण निटिंग और क्रोशेट कार्यों की एक झलक।";

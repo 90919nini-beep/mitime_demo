@@ -23,12 +23,15 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		5C7703C2F7EE587198B73156 /* BackgroundRemovalPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */; };
+		841892547F67575672FE03EC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E036C8CBBC2496DD7420F2E1 /* Localizable.strings */; };
 		9C4D78B7ECF17D6A37857942 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */; };
 		9D160108B37B714D9E77CAA1 /* MiitimeBrandColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */; };
 		9D79582572419F0AA776E59B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */; };
 		BEE73E0235145151351A7E92 /* MiitimeWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1879060753634786CCCC5C /* MiitimeWidgetBundle.swift */; };
+		C387BDAF1781935E333387AB /* WidgetLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9FFD02F52FED1FAB1216616 /* WidgetLocalization.swift */; };
 		C4BDCF8354B4F605F0D599AD /* WidgetSyncPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */; };
 		C80F19B19640E84364C5180B /* WidgetSharedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216BFA9252A53011C86B772F /* WidgetSharedModels.swift */; };
+		E0E58BAC0B9D28CE2F3D380F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74FAECCEEF3A50DEFDE88C53 /* Assets.xcassets */; };
 		ECB8FFD6AD6DD75E52B73747 /* NativeSplashViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -58,8 +61,11 @@
 
 /* Begin PBXFileReference section */
 		06084193D21686D9E70979F9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		0D279258C573D1D1BCCAFB8C /* ko */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		216BFA9252A53011C86B772F /* WidgetSharedModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSharedModels.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		33EEC9A9882F6736B4796589 /* en */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		417CBEEE9AD640339DA24B01 /* es */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSplashViewController.swift; sourceTree = "<group>"; };
 		4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FinishedProjectsWidget.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -71,17 +77,27 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSyncPlugin.swift; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		53D37E09A6C6B699C251CCCF /* de */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		57FF5C3260AD10B286C51EBB /* th */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRemovalPlugin.swift; sourceTree = "<group>"; };
+		5E3379D662808F09ACD7ADE5 /* hi */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		5F1879060753634786CCCC5C /* MiitimeWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeWidgetBundle.swift; sourceTree = "<group>"; };
 		6028CCA05267B8590A58C414 /* MiitimeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeWidget.swift; sourceTree = "<group>"; };
 		6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MiitimeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiitimeBrandColors.swift; sourceTree = "<group>"; };
+		74FAECCEEF3A50DEFDE88C53 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7BCE8C67D136E3B9723080A7 /* zh-Hans */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		99A9B60A8D483002268E056B /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProjectSnapshot.swift; sourceTree = "<group>"; };
+		B9FFD02F52FED1FAB1216616 /* WidgetLocalization.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetLocalization.swift; sourceTree = "<group>"; };
 		BB1377E466DB8E7A295BF7CE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C705476B9CB8E45433A29E0C /* MiitimeWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MiitimeWidget.entitlements; sourceTree = "<group>"; };
 		EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		EE29C45E1BDFBDEAEF62A5F5 /* pt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EEF015B3DF16C52B2CB1CE90 /* zh-Hant */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		FFEA5684E6379C24DADDC0D8 /* ja */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +132,9 @@
 				C705476B9CB8E45433A29E0C /* MiitimeWidget.entitlements */,
 				4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */,
 				729261FA5720158EE71C6ABA /* MiitimeBrandColors.swift */,
+				74FAECCEEF3A50DEFDE88C53 /* Assets.xcassets */,
+				B9FFD02F52FED1FAB1216616 /* WidgetLocalization.swift */,
+				E036C8CBBC2496DD7420F2E1 /* Localizable.strings */,
 			);
 			path = MiitimeWidget;
 			sourceTree = "<group>";
@@ -263,6 +282,16 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
+				ja,
+				"zh-Hant",
+				"zh-Hans",
+				ko,
+				es,
+				de,
+				th,
+				pt,
+				hi,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
@@ -284,6 +313,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0E58BAC0B9D28CE2F3D380F /* Assets.xcassets in Resources */,
+				841892547F67575672FE03EC /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -326,6 +357,7 @@
 				2676653D731DFE2246FA2663 /* FinishedProjectsWidget.swift in Sources */,
 				9D160108B37B714D9E77CAA1 /* MiitimeBrandColors.swift in Sources */,
 				C80F19B19640E84364C5180B /* WidgetSharedModels.swift in Sources */,
+				C387BDAF1781935E333387AB /* WidgetLocalization.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,6 +387,24 @@
 				504EC3111FED79650016851F /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		E036C8CBBC2496DD7420F2E1 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				33EEC9A9882F6736B4796589 /* en */,
+				99A9B60A8D483002268E056B /* fr */,
+				FFEA5684E6379C24DADDC0D8 /* ja */,
+				EEF015B3DF16C52B2CB1CE90 /* zh-Hant */,
+				7BCE8C67D136E3B9723080A7 /* zh-Hans */,
+				0D279258C573D1D1BCCAFB8C /* ko */,
+				417CBEEE9AD640339DA24B01 /* es */,
+				53D37E09A6C6B699C251CCCF /* de */,
+				57FF5C3260AD10B286C51EBB /* th */,
+				EE29C45E1BDFBDEAEF62A5F5 /* pt */,
+				5E3379D662808F09ACD7ADE5 /* hi */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

@@ -124,6 +124,11 @@
     input,select,textarea{font-size:16px!important;}
     ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:#E5E7EB;border-radius:99px;}
     canvas{touch-action:none;}
+    /* Ancestors set touch-action:pan-y to lock modal scrolling to vertical only
+       (see .modal-in above) — without this, that intersects with range inputs'
+       own touch handling and WKWebView only ever registers a tap on the track,
+       never a horizontal thumb-drag. Same fix as canvas above. */
+    input[type="range"]{touch-action:none;}
     .btn-ghost{background:none;border:none;cursor:pointer;}
     /* Belt-and-suspenders alongside the inline appearance:"none" some selects
        already set — unprefixed `appearance` only landed in Safari/WebKit
@@ -144,11 +149,16 @@
       --bg-page-clear:rgba(242,242,247,0);
       --fp-base:#f5f2ec;--fp-blob1:rgba(119,142,227,0.50);--fp-blob2:rgba(220,185,75,0.44);--fp-blob3:rgba(155,170,230,0.38);
       --fp-frost-mid:rgba(255,255,255,0.56);--fp-frost-top:rgba(255,255,255,0.64);--fp-frost-hi:rgba(255,255,255,0.80);
+      /* Active-step wash in the pattern reader (StepReader) — a low-alpha tint
+         over --bg-card, so it needs its own light/dark value rather than one
+         fixed rgba, or it reads as a muddy dark patch once --bg-card goes dark. */
+      --step-active-bg:rgba(36,123,160,0.07);
     }
     [data-theme="dark"]{
       --bg-page:#161519;--bg-card:#1F1D24;--bg-elevated:#252231;--bg-subtle:#27242E;--bg-input:#2C2934;
       --border:rgba(180,165,220,0.10);--border-soft:rgba(180,165,220,0.06);
       --text-primary:#EDE9F4;--text-secondary:#9B93AE;--text-muted:#C5BCDA;
+      --step-active-bg:rgba(94,201,232,0.14);
       --accent:#778EE3;--accent-soft:#1D1E35;
       --shadow:rgba(0,0,0,0.35);
       --st-ip-bg:#18203A;--st-done-bg:#0F2820;--st-hold-bg:#2A1F0D;--st-none-bg:#27242E;
@@ -384,7 +394,11 @@
       // Moving up, or predominantly sideways (e.g. a horizontal carousel) — not a dismiss drag.
       if(dragging){
         el.style.transition = ""; el.style.transform = "";
-        if(backdrop){ backdrop.style.transition = ""; backdrop.style.backgroundColor = ""; }
+        // Restoring to baseAlpha, not "" — clearing the longhand background-color
+        // back to empty doesn't fall back to the shorthand `background: rgba(...)`
+        // React originally set (mixing shorthand + longhand inline-style writes
+        // doesn't compose that way), it just leaves the backdrop transparent.
+        if(backdrop){ backdrop.style.transition = ""; backdrop.style.backgroundColor = "rgba(0,0,0," + baseAlpha + ")"; }
         dragging = false;
       }
       return;
@@ -413,7 +427,7 @@
       setTimeout(function(){ if(sheetBackdrop) sheetBackdrop.click(); }, 180);
     }else{
       sheet.style.transform = "";
-      if(sheetBackdrop) sheetBackdrop.style.backgroundColor = "";
+      if(sheetBackdrop) sheetBackdrop.style.backgroundColor = "rgba(0,0,0," + baseAlpha + ")";
     }
   });
 })();
@@ -475,7 +489,11 @@
       // own content) — not a go-back drag.
       if(dragging){
         el.style.transition = ""; el.style.transform = "";
-        if(backdrop){ backdrop.style.transition = ""; backdrop.style.backgroundColor = ""; }
+        // Restoring to the same rgba(0,0,0,.5) every swipe-back-backdrop is
+        // rendered with, not "" — clearing the longhand background-color back
+        // to empty doesn't fall back to the shorthand `background: rgba(...)`
+        // React originally set, it just leaves the backdrop transparent.
+        if(backdrop){ backdrop.style.transition = ""; backdrop.style.backgroundColor = "rgba(0,0,0,.5)"; }
         dragging = false;
       }
       return;
@@ -506,7 +524,7 @@
       setTimeout(function(){ if(trigger) trigger.click(); }, 180);
     }else{
       page.style.transform = "";
-      if(pageBackdrop) pageBackdrop.style.backgroundColor = "";
+      if(pageBackdrop) pageBackdrop.style.backgroundColor = "rgba(0,0,0,.5)";
     }
   });
 })();
@@ -1011,7 +1029,7 @@ const T={
     mkImgFillMethod:"FILL METHOD",mkImgFill:"Fill",mkImgFitPad:"Fit (pad)",
     mkImgAdjust:"ADJUSTMENTS",mkImgBrightness:"Brightness",mkImgContrast:"Contrast",mkImgReset:"Reset",mkImgApply:"Apply to Grid",
     mkPickGridTitle:"Choose Color Grid Background",mkPickGridNone:"No background / Remove",mkPickGridEmpty:"No Color Grid patterns in library yet.",mkPickGridEmptyHint:"Create one under Pattern Library \u2192 Knitting \u2192 Color Grid.",mkRowsCols:"{r} rows \u00d7 {c} cols",
-    mkSecGridSize:"GRID SIZE",mkSecNumbering:"NUMBERING",mkCols:"Cols",mkRows:"Rows",mkColumns:"Columns",mkLargeGrid:"Large grid. ",mkCells:"cells",mkBotTop:"\u2191 Bot\u2192Top",mkTopBot:"\u2193 Top\u2192Bot",mkLR:"\u2192 L\u2192R",mkRL:"\u2190 R\u2192L",
+    mkSecGridSize:"GRID SIZE",mkSecPreview:"PREVIEW",mkShowRepeat:"Show Repeat",mkRepeatH:"Horizontal",mkRepeatV:"Vertical",mkSecNumbering:"NUMBERING",mkCols:"Cols",mkRows:"Rows",mkColumns:"Columns",mkLargeGrid:"Large grid. ",mkCells:"cells",mkBotTop:"\u2191 Bot\u2192Top",mkTopBot:"\u2193 Top\u2192Bot",mkLR:"\u2192 L\u2192R",mkRL:"\u2190 R\u2192L",
     mkGridSetupTitle:"Set Grid Size",mkGridSetupHint:"You can resize this anytime from Settings.",mkCreateGrid:"Create Grid",
     guideTitleKnitSym:"Knit Symbol Chart — Guide",
     guideKnitSym:[
@@ -1022,7 +1040,7 @@ const T={
     ],
     guideTitleColorGrid:"Knit Color Grid — Guide",
     guideColorGrid:[
-      {sec:"Tools",items:["Paint — tap or drag to fill cells with the active color","Brush size — switch between 1×1 and 3×3 brush","Eraser — tap or drag to clear cells","Selection box — drag to select a rectangular region of cells","Undo / Redo — step back or forward through changes","Image to Pattern — import a photo and map its colors to your yarn palette"]},
+      {sec:"Tools",items:["Paint — tap or drag to fill cells with the active color","Brush size — switch between 1×1 and 3×3 brush","Eraser — tap or drag to clear cells","Pan tool — switch to a dedicated cursor so dragging or pinch-zooming never accidentally paints","Selection box — drag to select a rectangular region of cells","Undo / Redo — step back or forward through changes","Image to Pattern — import a photo and map its colors to your yarn palette"]},
       {sec:"Selection Actions",items:["Move — drag the selected region to reposition it","Duplicate — copy the selection and place it elsewhere","Flip H — flip the selection horizontally","Flip V — flip the selection vertically"]},
       {sec:"Canvas",items:["Pan — drag to move around","Zoom — pinch to zoom in or out"]},
       {sec:"Settings",items:["Color / Yarn — pick from your yarn library, preset swatches, or a custom color","Grid size — resize rows and columns with sliders","Row numbering — Bottom→Top or Top→Bottom","Column numbering — Left→Right or Right→Left","Clear all — wipe the entire grid"]},
@@ -1148,7 +1166,7 @@ const T={
     mkImgFillMethod:"REMPLISSAGE",mkImgFill:"Remplir",mkImgFitPad:"Ajuster (marges)",
     mkImgAdjust:"AJUSTEMENTS",mkImgBrightness:"Luminosité",mkImgContrast:"Contraste",mkImgReset:"Réinitialiser",mkImgApply:"Appliquer à la grille",
     mkPickGridTitle:"Choisir la grille de fond",mkPickGridNone:"Aucun fond / Retirer",mkPickGridEmpty:"Aucune grille de couleurs dans la bibliothèque.",mkPickGridEmptyHint:"Créez-en une dans Bibliothèque \u2192 Tricot \u2192 Grille de couleurs.",mkRowsCols:"{r} rangs \u00d7 {c} col.",
-    mkSecGridSize:"TAILLE DE GRILLE",mkSecNumbering:"NUMÉROTATION",mkCols:"Col.",mkRows:"Rangs",mkColumns:"Colonnes",mkLargeGrid:"Grande grille. ",mkCells:"cases",mkBotTop:"\u2191 Bas\u2192Haut",mkTopBot:"\u2193 Haut\u2192Bas",mkLR:"\u2192 G\u2192D",mkRL:"\u2190 D\u2192G",
+    mkSecGridSize:"TAILLE DE GRILLE",mkSecPreview:"APERÇU",mkShowRepeat:"Afficher répétition",mkRepeatH:"Horizontal",mkRepeatV:"Vertical",mkSecNumbering:"NUMÉROTATION",mkCols:"Col.",mkRows:"Rangs",mkColumns:"Colonnes",mkLargeGrid:"Grande grille. ",mkCells:"cases",mkBotTop:"\u2191 Bas\u2192Haut",mkTopBot:"\u2193 Haut\u2192Bas",mkLR:"\u2192 G\u2192D",mkRL:"\u2190 D\u2192G",
     mkGridSetupTitle:"Définir la taille de la grille",mkGridSetupHint:"Vous pourrez la redimensionner plus tard depuis les réglages.",mkCreateGrid:"Créer la grille",
     guideTitleKnitSym:"Diagramme de symboles tricot — Guide",
     guideKnitSym:[
@@ -1159,7 +1177,7 @@ const T={
     ],
     guideTitleColorGrid:"Grille de couleurs tricot — Guide",
     guideColorGrid:[
-      {sec:"Outils",items:["Peindre — touchez ou glissez pour remplir les cases avec la couleur active","Taille de pinceau — basculez entre pinceau 1×1 et 3×3","Gomme — touchez ou glissez pour vider les cases","Boîte de sélection — glissez pour sélectionner une zone rectangulaire","Annuler / Rétablir — reculez ou avancez dans les modifications","Image vers patron — importez une photo et associez ses couleurs à votre palette de laines"]},
+      {sec:"Outils",items:["Peindre — touchez ou glissez pour remplir les cases avec la couleur active","Taille de pinceau — basculez entre pinceau 1×1 et 3×3","Gomme — touchez ou glissez pour vider les cases","Outil Déplacement — passez à un curseur dédié pour que le glissement ou le zoom ne peigne jamais accidentellement","Boîte de sélection — glissez pour sélectionner une zone rectangulaire","Annuler / Rétablir — reculez ou avancez dans les modifications","Image vers patron — importez une photo et associez ses couleurs à votre palette de laines"]},
       {sec:"Actions de sélection",items:["Déplacer — glissez la zone sélectionnée pour la repositionner","Dupliquer — copiez la sélection et placez-la ailleurs","Miroir H — retournez la sélection horizontalement","Miroir V — retournez la sélection verticalement"]},
       {sec:"Canevas",items:["Panoramique — glissez pour vous déplacer","Zoom — pincez pour zoomer ou dézoomer"]},
       {sec:"Réglages",items:["Couleur / Laine — bibliothèque de laines, nuanciers ou couleur personnalisée","Taille de grille — redimensionnez rangs et colonnes avec les curseurs","Numérotation des rangs — Bas→Haut ou Haut→Bas","Numérotation des colonnes — Gauche→Droite ou Droite→Gauche","Tout effacer — vide toute la grille"]},
@@ -1285,7 +1303,7 @@ const T={
     mkImgFillMethod:"配置方法",mkImgFill:"埋める",mkImgFitPad:"収める（余白）",
     mkImgAdjust:"調整",mkImgBrightness:"明るさ",mkImgContrast:"コントラスト",mkImgReset:"リセット",mkImgApply:"グリッドに適用",
     mkPickGridTitle:"背景の色グリッドを選択",mkPickGridNone:"背景なし / 削除",mkPickGridEmpty:"ライブラリに色グリッドのパターンがありません。",mkPickGridEmptyHint:"パターンライブラリ \u2192 棒針 \u2192 カラーグリッド から作成できます。",mkRowsCols:"{r}段 \u00d7 {c}列",
-    mkSecGridSize:"グリッドサイズ",mkSecNumbering:"番号方向",mkCols:"列",mkRows:"段",mkColumns:"列",mkLargeGrid:"大きなグリッド。",mkCells:"マス",mkBotTop:"\u2191 下\u2192上",mkTopBot:"\u2193 上\u2192下",mkLR:"\u2192 左\u2192右",mkRL:"\u2190 右\u2192左",
+    mkSecGridSize:"グリッドサイズ",mkSecPreview:"プレビュー",mkShowRepeat:"リピート表示",mkRepeatH:"横",mkRepeatV:"縦",mkSecNumbering:"番号方向",mkCols:"列",mkRows:"段",mkColumns:"列",mkLargeGrid:"大きなグリッド。",mkCells:"マス",mkBotTop:"\u2191 下\u2192上",mkTopBot:"\u2193 上\u2192下",mkLR:"\u2192 左\u2192右",mkRL:"\u2190 右\u2192左",
     mkGridSetupTitle:"グリッドサイズを設定",mkGridSetupHint:"サイズは設定からいつでも変更できます。",mkCreateGrid:"グリッドを作成",
     guideTitleKnitSym:"編み目記号チャート — ガイド",
     guideKnitSym:[
@@ -1296,7 +1314,7 @@ const T={
     ],
     guideTitleColorGrid:"編み込みカラーグリッド — ガイド",
     guideColorGrid:[
-      {sec:"ツール",items:["ペイント — タップまたはドラッグでマスを塗る","ブラシサイズ — 1×1 と 3×3 を切り替え","消しゴム — タップまたはドラッグでマスを消去","選択ボックス — ドラッグで矩形範囲を選択","元に戻す / やり直す — 変更を前後に移動","画像からパターン — 写真を読み込み、色を毛糸パレットに割り当て"]},
+      {sec:"ツール",items:["ペイント — タップまたはドラッグでマスを塗る","ブラシサイズ — 1×1 と 3×3 を切り替え","消しゴム — タップまたはドラッグでマスを消去","パンツール — 専用カーソルに切り替えて、ドラッグやピンチズームで誤って塗ってしまうのを防ぐ","選択ボックス — ドラッグで矩形範囲を選択","元に戻す / やり直す — 変更を前後に移動","画像からパターン — 写真を読み込み、色を毛糸パレットに割り当て"]},
       {sec:"選択操作",items:["移動 — 選択範囲をドラッグして移動","複製 — 選択範囲をコピーして別の場所に配置","左右反転 — 選択範囲を水平方向に反転","上下反転 — 選択範囲を垂直方向に反転"]},
       {sec:"キャンバス",items:["パン — ドラッグで移動","ズーム — ピンチで拡大・縮小"]},
       {sec:"設定",items:["色 / 毛糸 — 毛糸ライブラリ、プリセット、カスタム色から選択","グリッドサイズ — スライダーで行と列を変更","行番号 — 下→上 または 上→下","列番号 — 左→右 または 右→左","すべて削除 — グリッド全体を消去"]},
@@ -1422,7 +1440,7 @@ const T={
     mkImgFillMethod:"填滿方式",mkImgFill:"填滿",mkImgFitPad:"符合（留白）",
     mkImgAdjust:"調整",mkImgBrightness:"亮度",mkImgContrast:"對比",mkImgReset:"重設",mkImgApply:"套用到網格",
     mkPickGridTitle:"選擇色格底圖",mkPickGridNone:"無底圖 / 移除",mkPickGridEmpty:"圖案庫中尚無色格圖案。",mkPickGridEmptyHint:"可在圖案庫 \u2192 棒針 \u2192 色格圖 中建立。",mkRowsCols:"{r} 行 \u00d7 {c} 欄",
-    mkSecGridSize:"網格大小",mkSecNumbering:"編號方向",mkCols:"欄",mkRows:"行",mkColumns:"欄",mkLargeGrid:"網格較大。",mkCells:"格",mkBotTop:"\u2191 下\u2192上",mkTopBot:"\u2193 上\u2192下",mkLR:"\u2192 左\u2192右",mkRL:"\u2190 右\u2192左",
+    mkSecGridSize:"網格大小",mkSecPreview:"預覽",mkShowRepeat:"顯示重複",mkRepeatH:"水平",mkRepeatV:"垂直",mkSecNumbering:"編號方向",mkCols:"欄",mkRows:"行",mkColumns:"欄",mkLargeGrid:"網格較大。",mkCells:"格",mkBotTop:"\u2191 下\u2192上",mkTopBot:"\u2193 上\u2192下",mkLR:"\u2192 左\u2192右",mkRL:"\u2190 右\u2192左",
     mkGridSetupTitle:"設定網格大小",mkGridSetupHint:"之後可隨時在設定中調整大小。",mkCreateGrid:"建立網格",
     guideTitleKnitSym:"棒針符號圖 — 指南",
     guideKnitSym:[
@@ -1433,7 +1451,7 @@ const T={
     ],
     guideTitleColorGrid:"棒針色格圖 — 指南",
     guideColorGrid:[
-      {sec:"工具",items:["上色 — 點選或拖曳以填入目前顏色","筆刷大小 — 在 1×1 與 3×3 筆刷間切換","橡皮擦 — 點選或拖曳以清除格子","選取框 — 拖曳以選取矩形區域","復原 / 重做 — 在變更間前後移動","圖片轉圖案 — 匯入照片並將顏色對應到毛線色盤"]},
+      {sec:"工具",items:["上色 — 點選或拖曳以填入目前顏色","筆刷大小 — 在 1×1 與 3×3 筆刷間切換","橡皮擦 — 點選或拖曳以清除格子","平移工具 — 切換到專用游標，讓拖曳或雙指縮放時不會不小心塗到顏色","選取框 — 拖曳以選取矩形區域","復原 / 重做 — 在變更間前後移動","圖片轉圖案 — 匯入照片並將顏色對應到毛線色盤"]},
       {sec:"選取操作",items:["移動 — 拖曳選取區域以移動","複製 — 複製選取範圍並放到其他位置","水平翻轉 — 將選取範圍左右翻轉","垂直翻轉 — 將選取範圍上下翻轉"]},
       {sec:"畫布",items:["平移 — 拖曳以移動","縮放 — 雙指縮放"]},
       {sec:"設定",items:["顏色 / 毛線 — 從毛線庫、預設色票或自訂顏色選擇","網格大小 — 以滑桿調整行列數","行編號 — 由下而上或由上而下","列編號 — 由左至右或由右至左","全部清除 — 清空整個網格"]},
@@ -1559,7 +1577,7 @@ const T={
     mkImgFillMethod:"채움 방식",mkImgFill:"채우기",mkImgFitPad:"맞춤(여백)",
     mkImgAdjust:"조정",mkImgBrightness:"밝기",mkImgContrast:"대비",mkImgReset:"초기화",mkImgApply:"격자에 적용",
     mkPickGridTitle:"배경 색상 격자 선택",mkPickGridNone:"배경 없음 / 제거",mkPickGridEmpty:"라이브러리에 색상 격자 도안이 없습니다.",mkPickGridEmptyHint:"도안 라이브러리 \u2192 대바늘 \u2192 색상 격자에서 만들 수 있습니다.",mkRowsCols:"{r}행 \u00d7 {c}열",
-    mkSecGridSize:"격자 크기",mkSecNumbering:"번호 방향",mkCols:"열",mkRows:"행",mkColumns:"열",mkLargeGrid:"큰 격자입니다. ",mkCells:"칸",mkBotTop:"\u2191 아래\u2192위",mkTopBot:"\u2193 위\u2192아래",mkLR:"\u2192 좌\u2192우",mkRL:"\u2190 우\u2192좌",
+    mkSecGridSize:"격자 크기",mkSecPreview:"미리보기",mkShowRepeat:"반복 표시",mkRepeatH:"가로",mkRepeatV:"세로",mkSecNumbering:"번호 방향",mkCols:"열",mkRows:"행",mkColumns:"열",mkLargeGrid:"큰 격자입니다. ",mkCells:"칸",mkBotTop:"\u2191 아래\u2192위",mkTopBot:"\u2193 위\u2192아래",mkLR:"\u2192 좌\u2192우",mkRL:"\u2190 우\u2192좌",
     mkGridSetupTitle:"격자 크기 설정",mkGridSetupHint:"나중에 설정에서 언제든지 크기를 조정할 수 있습니다.",mkCreateGrid:"격자 만들기",
     guideTitleKnitSym:"대바늘 기호 차트 — 가이드",
     guideKnitSym:[
@@ -1570,7 +1588,7 @@ const T={
     ],
     guideTitleColorGrid:"대바늘 색상 격자 — 가이드",
     guideColorGrid:[
-      {sec:"도구",items:["칠하기 — 탭 또는 드래그로 칸을 현재 색으로 채우기","브러시 크기 — 1×1과 3×3 브러시 전환","지우개 — 탭 또는 드래그로 칸 지우기","선택 상자 — 드래그로 직사각형 영역 선택","실행 취소 / 다시 실행 — 변경 사항 앞뒤로 이동","이미지로 도안 만들기 — 사진을 불러와 색상을 실 팔레트에 매핑"]},
+      {sec:"도구",items:["칠하기 — 탭 또는 드래그로 칸을 현재 색으로 채우기","브러시 크기 — 1×1과 3×3 브러시 전환","지우개 — 탭 또는 드래그로 칸 지우기","이동 도구 — 전용 커서로 전환하여 드래그나 핀치 줌 중 실수로 색칠되는 것을 방지","선택 상자 — 드래그로 직사각형 영역 선택","실행 취소 / 다시 실행 — 변경 사항 앞뒤로 이동","이미지로 도안 만들기 — 사진을 불러와 색상을 실 팔레트에 매핑"]},
       {sec:"선택 작업",items:["이동 — 선택 영역을 드래그하여 이동","복제 — 선택 영역을 복사해 다른 곳에 배치","좌우 반전 — 선택 영역을 가로로 뒤집기","상하 반전 — 선택 영역을 세로로 뒤집기"]},
       {sec:"캔버스",items:["화면 이동 — 드래그로 이동","확대/축소 — 핀치로 확대·축소"]},
       {sec:"설정",items:["색상 / 실 — 실 라이브러리, 프리셋 견본, 사용자 지정 색상에서 선택","격자 크기 — 슬라이더로 행과 열 조절","행 번호 — 아래→위 또는 위→아래","열 번호 — 왼쪽→오른쪽 또는 오른쪽→왼쪽","모두 지우기 — 격자 전체 비우기"]},
@@ -1697,7 +1715,7 @@ const T={
     mkImgFillMethod:"MÉTODO DE RELLENO",mkImgFill:"Rellenar",mkImgFitPad:"Ajustar (relleno)",
     mkImgAdjust:"AJUSTES",mkImgBrightness:"Brillo",mkImgContrast:"Contraste",mkImgReset:"Restablecer",mkImgApply:"Aplicar a la Cuadrícula",
     mkPickGridTitle:"Elegir Fondo de Cuadrícula de Color",mkPickGridNone:"Sin fondo / Eliminar",mkPickGridEmpty:"Aún no hay patrones de Cuadrícula de Color en la biblioteca.",mkPickGridEmptyHint:"Crea uno en Biblioteca de Patrones → Punto → Cuadrícula de Color.",mkRowsCols:"{r} filas × {c} col.",
-    mkSecGridSize:"TAMAÑO DE CUADRÍCULA",mkSecNumbering:"NUMERACIÓN",mkCols:"Col.",mkRows:"Filas",mkColumns:"Columnas",mkLargeGrid:"Cuadrícula grande. ",mkCells:"celdas",mkBotTop:"↑ Abajo→Arriba",mkTopBot:"↓ Arriba→Abajo",mkLR:"→ I→D",mkRL:"← D→I",
+    mkSecGridSize:"TAMAÑO DE CUADRÍCULA",mkSecPreview:"VISTA PREVIA",mkShowRepeat:"Mostrar repetición",mkRepeatH:"Horizontal",mkRepeatV:"Vertical",mkSecNumbering:"NUMERACIÓN",mkCols:"Col.",mkRows:"Filas",mkColumns:"Columnas",mkLargeGrid:"Cuadrícula grande. ",mkCells:"celdas",mkBotTop:"↑ Abajo→Arriba",mkTopBot:"↓ Arriba→Abajo",mkLR:"→ I→D",mkRL:"← D→I",
     mkGridSetupTitle:"Definir Tamaño de Cuadrícula",mkGridSetupHint:"Puedes cambiar el tamaño en cualquier momento desde Ajustes.",mkCreateGrid:"Crear Cuadrícula",
     guideTitleKnitSym:"Gráfico de Símbolos de Punto — Guía",
     guideKnitSym:[
@@ -1708,7 +1726,7 @@ const T={
     ],
     guideTitleColorGrid:"Cuadrícula de Color de Punto — Guía",
     guideColorGrid:[
-      {sec:"Herramientas",items:["Pintar — toca o arrastra para rellenar celdas con el color activo","Tamaño de pincel — cambia entre pincel de 1×1 y 3×3","Borrador — toca o arrastra para borrar celdas","Cuadro de selección — arrastra para seleccionar una región rectangular de celdas","Deshacer / Rehacer — retrocede o avanza en los cambios","Imagen a Patrón — importa una foto y asigna sus colores a tu paleta de hilos"]},
+      {sec:"Herramientas",items:["Pintar — toca o arrastra para rellenar celdas con el color activo","Tamaño de pincel — cambia entre pincel de 1×1 y 3×3","Borrador — toca o arrastra para borrar celdas","Herramienta de desplazamiento — cambia a un cursor dedicado para que arrastrar o hacer zoom con pellizco nunca pinte accidentalmente","Cuadro de selección — arrastra para seleccionar una región rectangular de celdas","Deshacer / Rehacer — retrocede o avanza en los cambios","Imagen a Patrón — importa una foto y asigna sus colores a tu paleta de hilos"]},
       {sec:"Acciones de Selección",items:["Mover — arrastra la región seleccionada para reposicionarla","Duplicar — copia la selección y colócala en otro lugar","Voltear H — voltea la selección horizontalmente","Voltear V — voltea la selección verticalmente"]},
       {sec:"Lienzo",items:["Desplazar — arrastra para moverte por el lienzo","Zoom — pellizca para acercar o alejar"]},
       {sec:"Ajustes",items:["Color / Hilo — elige de tu biblioteca de hilos, muestras predefinidas o un color personalizado","Tamaño de cuadrícula — cambia el tamaño de filas y columnas con los deslizadores","Numeración de filas — Abajo→Arriba o Arriba→Abajo","Numeración de columnas — Izquierda→Derecha o Derecha→Izquierda","Borrar todo — vacía toda la cuadrícula"]},
@@ -1835,7 +1853,7 @@ const T={
     mkImgFillMethod:"FÜLLMETHODE",mkImgFill:"Füllen",mkImgFitPad:"Anpassen (mit Rand)",
     mkImgAdjust:"ANPASSUNGEN",mkImgBrightness:"Helligkeit",mkImgContrast:"Kontrast",mkImgReset:"Zurücksetzen",mkImgApply:"Auf Raster Anwenden",
     mkPickGridTitle:"Farbraster-Hintergrund Wählen",mkPickGridNone:"Kein Hintergrund / Entfernen",mkPickGridEmpty:"Noch keine Farbraster-Muster in der Bibliothek.",mkPickGridEmptyHint:"Erstelle eins unter Muster-Bibliothek → Stricken → Farbraster.",mkRowsCols:"{r} Reihen × {c} Spalten",
-    mkSecGridSize:"RASTERGRÖSSE",mkSecNumbering:"NUMMERIERUNG",mkCols:"Sp.",mkRows:"Reihen",mkColumns:"Spalten",mkLargeGrid:"Großes Raster. ",mkCells:"Zellen",mkBotTop:"↑ Unten→Oben",mkTopBot:"↓ Oben→Unten",mkLR:"→ L→R",mkRL:"← R→L",
+    mkSecGridSize:"RASTERGRÖSSE",mkSecPreview:"VORSCHAU",mkShowRepeat:"Wdh. anzeigen",mkRepeatH:"Horizontal",mkRepeatV:"Vertikal",mkSecNumbering:"NUMMERIERUNG",mkCols:"Sp.",mkRows:"Reihen",mkColumns:"Spalten",mkLargeGrid:"Großes Raster. ",mkCells:"Zellen",mkBotTop:"↑ Unten→Oben",mkTopBot:"↓ Oben→Unten",mkLR:"→ L→R",mkRL:"← R→L",
     mkGridSetupTitle:"Rastergröße Festlegen",mkGridSetupHint:"Du kannst dies jederzeit in den Einstellungen ändern.",mkCreateGrid:"Raster Erstellen",
     guideTitleKnitSym:"Strick-Symboldiagramm — Anleitung",
     guideKnitSym:[
@@ -1846,7 +1864,7 @@ const T={
     ],
     guideTitleColorGrid:"Strick-Farbraster — Anleitung",
     guideColorGrid:[
-      {sec:"Werkzeuge",items:["Malen — tippen oder ziehen, um Zellen mit der aktiven Farbe zu füllen","Pinselgröße — zwischen 1×1- und 3×3-Pinsel wechseln","Radierer — tippen oder ziehen, um Zellen zu löschen","Auswahlrahmen — ziehen, um einen rechteckigen Zellbereich auszuwählen","Rückgängig / Wiederholen — Änderungen zurück- oder vorwärtsgehen","Bild zu Muster — ein Foto importieren und seine Farben deiner Garnpalette zuordnen"]},
+      {sec:"Werkzeuge",items:["Malen — tippen oder ziehen, um Zellen mit der aktiven Farbe zu füllen","Pinselgröße — zwischen 1×1- und 3×3-Pinsel wechseln","Radierer — tippen oder ziehen, um Zellen zu löschen","Verschieben-Werkzeug — wechsle zu einem eigenen Cursor, damit Ziehen oder Zoomen mit zwei Fingern nie versehentlich malt","Auswahlrahmen — ziehen, um einen rechteckigen Zellbereich auszuwählen","Rückgängig / Wiederholen — Änderungen zurück- oder vorwärtsgehen","Bild zu Muster — ein Foto importieren und seine Farben deiner Garnpalette zuordnen"]},
       {sec:"Auswahlaktionen",items:["Verschieben — den ausgewählten Bereich ziehen, um ihn neu zu positionieren","Duplizieren — die Auswahl kopieren und anderswo platzieren","Horizontal Spiegeln — die Auswahl horizontal spiegeln","Vertikal Spiegeln — die Auswahl vertikal spiegeln"]},
       {sec:"Arbeitsfläche",items:["Schwenken — ziehen, um dich zu bewegen","Zoom — zum Vergrößern oder Verkleinern zusammenziehen oder auseinanderziehen"]},
       {sec:"Einstellungen",items:["Farbe / Garn — aus deiner Garn-Bibliothek, voreingestellten Mustern oder einer benutzerdefinierten Farbe wählen","Rastergröße — Reihen und Spalten mit Schiebereglern anpassen","Reihennummerierung — Unten→Oben oder Oben→Unten","Spaltennummerierung — Links→Rechts oder Rechts→Links","Alles löschen — das gesamte Raster leeren"]},
@@ -1973,7 +1991,7 @@ const T={
     mkImgFillMethod:"วิธีเติมเต็ม",mkImgFill:"เติมเต็ม",mkImgFitPad:"พอดี (เว้นขอบ)",
     mkImgAdjust:"การปรับแต่ง",mkImgBrightness:"ความสว่าง",mkImgContrast:"ความคมชัด",mkImgReset:"รีเซ็ต",mkImgApply:"นำไปใช้กับกริด",
     mkPickGridTitle:"เลือกพื้นหลังกราฟสี",mkPickGridNone:"ไม่มีพื้นหลัง / ลบออก",mkPickGridEmpty:"ยังไม่มีแพทเทิร์นกราฟสีในคลัง",mkPickGridEmptyHint:"สร้างได้ที่คลังแพทเทิร์น → ถักไหมพรม → กราฟสี",mkRowsCols:"{r} แถว × {c} คอลัมน์",
-    mkSecGridSize:"ขนาดกริด",mkSecNumbering:"การนับเลข",mkCols:"คอลัมน์",mkRows:"แถว",mkColumns:"คอลัมน์",mkLargeGrid:"กริดขนาดใหญ่ ",mkCells:"ช่อง",mkBotTop:"↑ ล่าง→บน",mkTopBot:"↓ บน→ล่าง",mkLR:"→ ซ้าย→ขวา",mkRL:"← ขวา→ซ้าย",
+    mkSecGridSize:"ขนาดกริด",mkSecPreview:"ตัวอย่าง",mkShowRepeat:"แสดงการทำซ้ำ",mkRepeatH:"แนวนอน",mkRepeatV:"แนวตั้ง",mkSecNumbering:"การนับเลข",mkCols:"คอลัมน์",mkRows:"แถว",mkColumns:"คอลัมน์",mkLargeGrid:"กริดขนาดใหญ่ ",mkCells:"ช่อง",mkBotTop:"↑ ล่าง→บน",mkTopBot:"↓ บน→ล่าง",mkLR:"→ ซ้าย→ขวา",mkRL:"← ขวา→ซ้าย",
     mkGridSetupTitle:"ตั้งค่าขนาดกริด",mkGridSetupHint:"คุณสามารถปรับขนาดนี้ได้ทุกเมื่อในหน้าตั้งค่า",mkCreateGrid:"สร้างกริด",
     guideTitleKnitSym:"แผนภูมิสัญลักษณ์การถักไหมพรม — คู่มือ",
     guideKnitSym:[
@@ -1984,7 +2002,7 @@ const T={
     ],
     guideTitleColorGrid:"กราฟสีสำหรับถักไหมพรม — คู่มือ",
     guideColorGrid:[
-      {sec:"เครื่องมือ",items:["ระบายสี — แตะหรือลากเพื่อเติมสีที่ใช้งานอยู่ลงในช่อง","ขนาดแปรง — สลับระหว่างแปรงขนาด 1×1 และ 3×3","ยางลบ — แตะหรือลากเพื่อล้างช่อง","กรอบเลือก — ลากเพื่อเลือกพื้นที่สี่เหลี่ยมของช่อง","เลิกทำ / ทำซ้ำ — ย้อนกลับหรือไปข้างหน้าผ่านการเปลี่ยนแปลง","แปลงรูปภาพเป็นแพทเทิร์น — นำเข้ารูปถ่ายแล้วจับคู่สีกับจานสีไหมพรมของคุณ"]},
+      {sec:"เครื่องมือ",items:["ระบายสี — แตะหรือลากเพื่อเติมสีที่ใช้งานอยู่ลงในช่อง","ขนาดแปรง — สลับระหว่างแปรงขนาด 1×1 และ 3×3","ยางลบ — แตะหรือลากเพื่อล้างช่อง","เครื่องมือเลื่อน — สลับไปใช้เคอร์เซอร์เฉพาะเพื่อไม่ให้การลากหรือซูมด้วยการบีบนิ้วไปเผลอระบายสีโดยไม่ตั้งใจ","กรอบเลือก — ลากเพื่อเลือกพื้นที่สี่เหลี่ยมของช่อง","เลิกทำ / ทำซ้ำ — ย้อนกลับหรือไปข้างหน้าผ่านการเปลี่ยนแปลง","แปลงรูปภาพเป็นแพทเทิร์น — นำเข้ารูปถ่ายแล้วจับคู่สีกับจานสีไหมพรมของคุณ"]},
       {sec:"การกระทำกับส่วนที่เลือก",items:["ย้าย — ลากพื้นที่ที่เลือกเพื่อย้ายตำแหน่ง","ทำสำเนา — คัดลอกส่วนที่เลือกแล้ววางที่อื่น","พลิกแนวนอน — พลิกส่วนที่เลือกในแนวนอน","พลิกแนวตั้ง — พลิกส่วนที่เลือกในแนวตั้ง"]},
       {sec:"พื้นที่ทำงาน",items:["แพน — ลากเพื่อเลื่อนดู","ซูม — บีบนิ้วเพื่อซูมเข้าหรือออก"]},
       {sec:"ตั้งค่า",items:["สี / ไหมพรม — เลือกจากคลังไหมพรมของคุณ ตัวอย่างสีที่ตั้งไว้ หรือสีกำหนดเอง","ขนาดกริด — ปรับขนาดแถวและคอลัมน์ด้วยแถบเลื่อน","การนับแถว — ล่าง→บน หรือ บน→ล่าง","การนับคอลัมน์ — ซ้าย→ขวา หรือ ขวา→ซ้าย","ล้างทั้งหมด — ล้างกริดทั้งหมด"]},
@@ -2111,7 +2129,7 @@ const T={
     mkImgFillMethod:"MÉTODO DE PREENCHIMENTO",mkImgFill:"Preencher",mkImgFitPad:"Ajustar (preenchimento)",
     mkImgAdjust:"AJUSTES",mkImgBrightness:"Brilho",mkImgContrast:"Contraste",mkImgReset:"Redefinir",mkImgApply:"Aplicar à Grade",
     mkPickGridTitle:"Escolher Fundo de Grade de Cores",mkPickGridNone:"Sem fundo / Remover",mkPickGridEmpty:"Ainda não há padrões de Grade de Cores na biblioteca.",mkPickGridEmptyHint:"Crie um em Biblioteca de Padrões → Tricô → Grade de Cores.",mkRowsCols:"{r} fileiras × {c} col.",
-    mkSecGridSize:"TAMANHO DA GRADE",mkSecNumbering:"NUMERAÇÃO",mkCols:"Col.",mkRows:"Fileiras",mkColumns:"Colunas",mkLargeGrid:"Grade grande. ",mkCells:"células",mkBotTop:"↑ Baixo→Cima",mkTopBot:"↓ Cima→Baixo",mkLR:"→ E→D",mkRL:"← D→E",
+    mkSecGridSize:"TAMANHO DA GRADE",mkSecPreview:"PRÉ-VISUALIZAÇÃO",mkShowRepeat:"Mostrar repetição",mkRepeatH:"Horizontal",mkRepeatV:"Vertical",mkSecNumbering:"NUMERAÇÃO",mkCols:"Col.",mkRows:"Fileiras",mkColumns:"Colunas",mkLargeGrid:"Grade grande. ",mkCells:"células",mkBotTop:"↑ Baixo→Cima",mkTopBot:"↓ Cima→Baixo",mkLR:"→ E→D",mkRL:"← D→E",
     mkGridSetupTitle:"Definir Tamanho da Grade",mkGridSetupHint:"Você pode redimensionar isso a qualquer momento em Ajustes.",mkCreateGrid:"Criar Grade",
     guideTitleKnitSym:"Gráfico de Símbolos de Tricô — Guia",
     guideKnitSym:[
@@ -2122,7 +2140,7 @@ const T={
     ],
     guideTitleColorGrid:"Grade de Cores de Tricô — Guia",
     guideColorGrid:[
-      {sec:"Ferramentas",items:["Pintar — toque ou arraste para preencher células com a cor ativa","Tamanho do pincel — alterne entre pincel 1×1 e 3×3","Borracha — toque ou arraste para limpar células","Caixa de seleção — arraste para selecionar uma região retangular de células","Desfazer / Refazer — retroceda ou avance nas alterações","Imagem para Padrão — importe uma foto e mapeie suas cores para sua paleta de fios"]},
+      {sec:"Ferramentas",items:["Pintar — toque ou arraste para preencher células com a cor ativa","Tamanho do pincel — alterne entre pincel 1×1 e 3×3","Borracha — toque ou arraste para limpar células","Ferramenta de deslocamento — mude para um cursor dedicado para que arrastar ou dar zoom com pinça nunca pinte acidentalmente","Caixa de seleção — arraste para selecionar uma região retangular de células","Desfazer / Refazer — retroceda ou avance nas alterações","Imagem para Padrão — importe uma foto e mapeie suas cores para sua paleta de fios"]},
       {sec:"Ações de Seleção",items:["Mover — arraste a região selecionada para reposicioná-la","Duplicar — copie a seleção e coloque-a em outro lugar","Inverter H — inverte a seleção horizontalmente","Inverter V — inverte a seleção verticalmente"]},
       {sec:"Tela",items:["Deslocar — arraste para se mover pela tela","Zoom — belisque para aproximar ou afastar"]},
       {sec:"Ajustes",items:["Cor / Fio — escolha da sua biblioteca de fios, amostras predefinidas ou uma cor personalizada","Tamanho da grade — redimensione fileiras e colunas com controles deslizantes","Numeração de fileiras — Baixo→Cima ou Cima→Baixo","Numeração de colunas — Esquerda→Direita ou Direita→Esquerda","Limpar tudo — apaga toda a grade"]},
@@ -2249,7 +2267,7 @@ const T={
     mkImgFillMethod:"फिल विधि",mkImgFill:"भरें",mkImgFitPad:"फ़िट (पैडिंग)",
     mkImgAdjust:"समायोजन",mkImgBrightness:"चमक",mkImgContrast:"कंट्रास्ट",mkImgReset:"रीसेट करें",mkImgApply:"ग्रिड पर लागू करें",
     mkPickGridTitle:"कलर ग्रिड पृष्ठभूमि चुनें",mkPickGridNone:"कोई पृष्ठभूमि नहीं / हटाएं",mkPickGridEmpty:"लाइब्रेरी में अभी तक कोई कलर ग्रिड पैटर्न नहीं है।",mkPickGridEmptyHint:"पैटर्न लाइब्रेरी → बुनाई → कलर ग्रिड के तहत एक बनाएं।",mkRowsCols:"{r} पंक्तियाँ × {c} कॉलम",
-    mkSecGridSize:"ग्रिड आकार",mkSecNumbering:"नंबरिंग",mkCols:"कॉलम",mkRows:"पंक्तियाँ",mkColumns:"कॉलम",mkLargeGrid:"बड़ा ग्रिड। ",mkCells:"सेल",mkBotTop:"↑ नीचे→ऊपर",mkTopBot:"↓ ऊपर→नीचे",mkLR:"→ बाएं→दाएं",mkRL:"← दाएं→बाएं",
+    mkSecGridSize:"ग्रिड आकार",mkSecPreview:"पूर्वावलोकन",mkShowRepeat:"दोहराव दिखाएं",mkRepeatH:"क्षैतिज",mkRepeatV:"ऊर्ध्वाधर",mkSecNumbering:"नंबरिंग",mkCols:"कॉलम",mkRows:"पंक्तियाँ",mkColumns:"कॉलम",mkLargeGrid:"बड़ा ग्रिड। ",mkCells:"सेल",mkBotTop:"↑ नीचे→ऊपर",mkTopBot:"↓ ऊपर→नीचे",mkLR:"→ बाएं→दाएं",mkRL:"← दाएं→बाएं",
     mkGridSetupTitle:"ग्रिड आकार सेट करें",mkGridSetupHint:"आप इसे कभी भी सेटिंग्स से रीसाइज़ कर सकते हैं।",mkCreateGrid:"ग्रिड बनाएं",
     guideTitleKnitSym:"बुनाई प्रतीक चार्ट — गाइड",
     guideKnitSym:[
@@ -2260,7 +2278,7 @@ const T={
     ],
     guideTitleColorGrid:"बुनाई कलर ग्रिड — गाइड",
     guideColorGrid:[
-      {sec:"उपकरण",items:["पेंट — सक्रिय रंग से सेल भरने के लिए टैप करें या खींचें","ब्रश आकार — 1×1 और 3×3 ब्रश के बीच स्विच करें","इरेज़र — सेल साफ़ करने के लिए टैप करें या खींचें","सिलेक्शन बॉक्स — सेल के आयताकार क्षेत्र को चुनने के लिए खींचें","पूर्ववत / फिर से करें — बदलावों में पीछे या आगे जाएं","इमेज से पैटर्न — एक फोटो इम्पोर्ट करें और उसके रंगों को अपने धागा पैलेट से मैप करें"]},
+      {sec:"उपकरण",items:["पेंट — सक्रिय रंग से सेल भरने के लिए टैप करें या खींचें","ब्रश आकार — 1×1 और 3×3 ब्रश के बीच स्विच करें","इरेज़र — सेल साफ़ करने के लिए टैप करें या खींचें","पैन टूल — एक समर्पित कर्सर पर स्विच करें ताकि खींचने या पिंच-ज़ूम करने से गलती से रंग न लगे","सिलेक्शन बॉक्स — सेल के आयताकार क्षेत्र को चुनने के लिए खींचें","पूर्ववत / फिर से करें — बदलावों में पीछे या आगे जाएं","इमेज से पैटर्न — एक फोटो इम्पोर्ट करें और उसके रंगों को अपने धागा पैलेट से मैप करें"]},
       {sec:"सिलेक्शन क्रियाएं",items:["हिलाएं — चयनित क्षेत्र को फिर से स्थान देने के लिए खींचें","डुप्लिकेट करें — चयन को कॉपी करें और इसे कहीं और रखें","फ्लिप H — चयन को क्षैतिज रूप से फ्लिप करें","फ्लिप V — चयन को लंबवत रूप से फ्लिप करें"]},
       {sec:"कैनवास",items:["पैन — घूमने के लिए खींचें","ज़ूम — ज़ूम इन या आउट करने के लिए पिंच करें"]},
       {sec:"सेटिंग्स",items:["रंग / धागा — अपनी धागा लाइब्रेरी, प्रीसेट स्वैच या कस्टम रंग से चुनें","ग्रिड आकार — स्लाइडर के साथ पंक्तियों और कॉलम का आकार बदलें","पंक्ति नंबरिंग — नीचे→ऊपर या ऊपर→नीचे","कॉलम नंबरिंग — बाएं→दाएं या दाएं→बाएं","सभी साफ़ करें — पूरा ग्रिड मिटाएं"]},
@@ -4405,7 +4423,7 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
         {/* Right actions */}
         <div style={{marginLeft:'auto',display:'flex',gap:4,alignItems:'center'}}>
           {onSave&&<button type="button" onClick={onSave}
-            style={{padding:'4px 12px',borderRadius:7,border:'none',background:'#778EE3',color:'white',cursor:'pointer',fontSize:10,fontWeight:700}}><Ico n="lucide:check" sz={10}/> Save</button>}
+            style={{padding:'4px 12px',borderRadius:7,border:'none',background:'#778EE3',color:'white',cursor:'pointer',fontSize:10,fontWeight:700}}>Save</button>}
           <div style={{width:1,height:'16px',background:'var(--border)',margin:'0 2px'}}/>
           <button type="button" onClick={()=>setPanelOpen(v=>!v)} title="Settings"
             style={{...kBtnSt,border:`1.5px solid ${panelOpen?'#778EE3':'var(--border)'}`,background:panelOpen?'var(--accent-soft)':'var(--bg-card)'}}>
@@ -4576,7 +4594,7 @@ function KnitPatternMaker({initialStitches,onStitchesChange,yarnColors,onSave,pa
 }
 
 /* ─── Color Grid ───────────────────────────────────────────────────────────── */
-function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave}){
+function ColorGrid({initialGrid,isNewGrid=false,onGridChange,initialRepeat,onRepeatChange,yarnColors,onSave}){
   const canvasRef=useRef(null);
   const containerRef=useRef(null);
   const gridRef=useRef(initialGrid?.length?initialGrid.map(r=>[...r]):makeGrid(20,20));
@@ -4611,18 +4629,29 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
   const[panelOpen,setPanelOpen]=useState(false);
   const[numRowDir,setNumRowDir]=useState("bottomToTop"); // "bottomToTop" | "topToBottom"
   const[numColDir,setNumColDir]=useState("leftToRight");  // "leftToRight" | "rightToLeft"
+  // Preview repeat — display-only, never touches undo history. Counts persist independently
+  // of the toggle so switching "Show Repeat" off doesn't lose Horizontal/Vertical.
+  const[repeatH,setRepeatH]=useState(initialRepeat?.h||1);
+  const[repeatV,setRepeatV]=useState(initialRepeat?.v||1);
+  const[showRepeat,setShowRepeat]=useState(initialRepeat?.show||false);
+  useEffect(()=>{onRepeatChange?.({h:repeatH,v:repeatV,show:showRepeat});},[repeatH,repeatV,showRepeat]);
   const[selMode,setSelMode]=useState(false);
   const[selRect,setSelRect]=useState(null);   // {x1,y1,x2,y2} grid coords
   const[placeMode,setPlaceMode]=useState(null); // 'move'|'duplicate'|null
+  const[panMode,setPanMode]=useState(false); // Pan/Cursor tool — single-finger/mouse drag on the canvas pans instead of painting
   const selModeRef=useRef(false);
+  const panModeRef=useRef(false);
   const selStartRef=useRef(null);
   const selStateRef=useRef({rect:null,clipboard:null,placeMode:null});
   const applyClipboardRef=useRef(null);
   // Mouse-drag panning — the existing pan/pinch support only handles touch (native
   // touch listeners below); desktop/mouse users had no way to pan the canvas at all.
-  // (Drag-to-pan works on the background area around the canvas at all times — see
-  // handleBgMouseDown — so no separate tool/mode toggle is needed.)
-  const mouseDragRef=useRef(null); // {sx,sy,px,py} while actively dragging to pan
+  // Drag-to-pan works on the background area around the canvas at all times (see
+  // handleBgMouseDown) regardless of tool — the Pan tool button (panMode below) is
+  // for panning while the cursor/finger is over the grid itself, where a plain drag
+  // would otherwise paint.
+  const mouseDragRef=useRef(null); // {sx,sy,px,py} while actively dragging to pan from the background area
+  const panStartRef=useRef(null); // {sx,sy,px,py} while actively dragging to pan from ON the canvas (Pan tool active)
   // Brand-new pattern (no saved grid yet) → ask for dimensions before the canvas is usable.
   // Reopening an existing pattern skips this entirely. Note: initialGrid is NOT a reliable
   // "is this new" signal on its own — the parent already seeds a default 20x20 grid before
@@ -4637,6 +4666,7 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
   eraserRef.current=eraser;
   brushSizeRef.current=brushSize;
   selModeRef.current=selMode;
+  panModeRef.current=panMode;
   const{t}=useLang();
   const{canvasBg="#FDFAF6"}=useSettings();
 
@@ -4700,8 +4730,8 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
     // Row numbers — right-aligned, vertically centered on each 5th row
     ctx.textAlign="right";ctx.textBaseline="middle";
     for(let yi=0;yi<rows;yi++){const rl=numRowDir==="topToBottom"?yi+1:rows-yi;if(rl%5===0)ctx.fillText(String(rl),ML-4,MT+(yi+0.5)*cellSize);}
-    // Brush preview highlight (only when not in select mode)
-    if(hoverCell&&!selModeRef.current){
+    // Brush preview highlight (only when not in select mode or pan mode)
+    if(hoverCell&&!selModeRef.current&&!panModeRef.current){
       const half=Math.floor(brushSize/2);
       if(eraser){
         ctx.fillStyle="rgba(239,68,68,0.22)";
@@ -5067,6 +5097,9 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
             selStateRef.current.rect=nr;setSelRect(nr);
             drawRef.current&&drawRef.current();
           }
+        } else if(panModeRef.current){
+          const t=e.touches[0];
+          panStartRef.current={sx:t.clientX,sy:t.clientY,px:kgPanLiveRef.current.x,py:kgPanLiveRef.current.y};
         } else {
           painting.current=true;pushUndo();
           paintBlockTouch(e.touches[0]);
@@ -5097,6 +5130,13 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
             selStateRef.current.rect=nr;setSelRect(nr);
           }
           drawRef.current&&drawRef.current();
+        } else if(panModeRef.current){
+          if(panStartRef.current){
+            e.preventDefault();
+            const t=e.touches[0],d=panStartRef.current;
+            const next={x:d.px+(t.clientX-d.sx),y:d.py+(t.clientY-d.sy)};
+            kgPanLiveRef.current=next;setKgPan(next);
+          }
         } else if(painting.current){
           e.preventDefault();
           paintBlockTouch(e.touches[0]);
@@ -5111,10 +5151,11 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
           if(c.x>=0&&c.y>=0)applyClipboardRef.current&&applyClipboardRef.current(c);
         }
         selStartRef.current=null;
+        panStartRef.current=null;
         if(painting.current){painting.current=false;const g=gridRef.current;if(typeof onGridChange==='function')onGridChange(g.map(r=>[...r]));}
       }
     };
-    const onTC=()=>{kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;painting.current=false;selStartRef.current=null;};
+    const onTC=()=>{kgPinchRef.current=null;kgPinchStateRef.current=null;kgPanRef.current=null;painting.current=false;selStartRef.current=null;panStartRef.current=null;};
     cv.addEventListener("touchstart",onTS,{passive:false});
     cv.addEventListener("touchmove",onTM,{passive:false});
     cv.addEventListener("touchend",onTE);
@@ -5172,18 +5213,25 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
       <div style={{background:"var(--bg-card)",borderBottom:"1px solid var(--border)",padding:"6px 10px",flexShrink:0,display:"flex",alignItems:"center",gap:4}}>
         {/* Brush size */}
         {[{s:1,label:"1×1"},{s:3,label:"3×3"}].map(({s,label})=>(
-          <button key={s} onClick={()=>{setBrushSize(s);setSelMode(false);clearSel();}} style={{padding:"3px 8px",borderRadius:7,border:"none",background:!selMode&&brushSize===s?"#778EE3":"var(--bg-subtle)",color:!selMode&&brushSize===s?"white":"var(--text-secondary)",fontSize:11,cursor:"pointer",fontWeight:600}}>{label}</button>
+          <button key={s} onClick={()=>{setBrushSize(s);setSelMode(false);setPanMode(false);clearSel();}} style={{padding:"3px 8px",borderRadius:7,border:"none",background:!selMode&&!panMode&&brushSize===s?"#778EE3":"var(--bg-subtle)",color:!selMode&&!panMode&&brushSize===s?"white":"var(--text-secondary)",fontSize:11,cursor:"pointer",fontWeight:600}}>{label}</button>
         ))}
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         {/* Eraser */}
-        <button onClick={()=>{setEraser(v=>!v);if(selMode){setSelMode(false);clearSel();}}} title={t.eraser}
+        <button onClick={()=>{setEraser(v=>!v);setPanMode(false);if(selMode){setSelMode(false);clearSel();}}} title={t.eraser}
           style={{width:26,height:26,borderRadius:6,border:eraser?"1.5px solid #EF4444":"1.5px solid var(--border)",background:eraser?"var(--bg-subtle)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={eraser?"#EF4444":"var(--text-secondary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16l11-11 7 7-1 8z"/><path d="M6.5 17.5l4-4"/></svg>
         </button>
         {/* Select tool */}
-        <button onClick={()=>{const ns=!selMode;setSelMode(ns);if(ns){setEraser(false);}else{clearSel();}}} title="Select"
+        <button onClick={()=>{const ns=!selMode;setSelMode(ns);setPanMode(false);if(ns){setEraser(false);}else{clearSel();}}} title="Select"
           style={{width:26,height:26,borderRadius:6,border:selMode?"1.5px solid #778EE3":"1.5px solid var(--border)",background:selMode?"var(--accent-soft)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={selMode?"#778EE3":"var(--text-secondary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+        {/* Pan tool — single-finger/mouse drag on the canvas pans instead of painting;
+            purpose-built so pinch-zoom's inevitable 2→1 finger transition can never
+            leave an accidental paint stroke behind. */}
+        <button onClick={()=>{const np=!panMode;setPanMode(np);if(np){setEraser(false);setSelMode(false);clearSel();}}} title="Pan"
+          style={{width:26,height:26,borderRadius:6,border:panMode?"1.5px solid #778EE3":"1.5px solid var(--border)",background:panMode?"var(--accent-soft)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={panMode?"#778EE3":"var(--text-secondary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
         </button>
         <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
         {/* Undo / Redo */}
@@ -5197,7 +5245,7 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
         </button>
         {/* Right side */}
         <div style={{marginLeft:"auto",display:"flex",gap:4,alignItems:"center"}}>
-          {onSave&&<button type="button" onClick={onSave} style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}><Ico n="lucide:check" sz={10}/> Save</button>}
+          {onSave&&<button type="button" onClick={onSave} style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}>Save</button>}
           <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
           <button type="button" onClick={()=>setPanelOpen(v=>!v)} title="Settings"
             style={{width:26,height:26,borderRadius:6,border:`1.5px solid ${panelOpen?"#778EE3":"var(--border)"}`,background:panelOpen?"var(--accent-soft)":"var(--bg-card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -5254,12 +5302,16 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
       {showImgTool&&<ImageToPatternModal initCols={cols} initRows={rows} initialState={imgState} yarnColors={yarnColors} onApply={handleImgApply} onClose={()=>setShowImgTool(false)}/>}
       <div style={{flex:1,minHeight:0,position:"relative",display:"flex",flexDirection:"column"}}>
         <div ref={containerRef} onMouseDown={handleBgMouseDown} style={{flex:1,minHeight:0,background:canvasBg,display:"flex",justifyContent:"center",alignItems:"center",overflow:"hidden",touchAction:"none",cursor:"grab"}}>
-          <canvas ref={canvasRef} style={{display:"block",cursor:selMode?(placeMode?"copy":"crosshair"):"none",transform:`translate(${kgPan.x}px,${kgPan.y}px) scale(${kgZoom})`,transformOrigin:"center center"}}
+          <canvas ref={canvasRef} style={{display:"block",cursor:panMode?"grab":selMode?(placeMode?"copy":"crosshair"):"none",transform:`translate(${kgPan.x}px,${kgPan.y}px) scale(${kgZoom})`,transformOrigin:"center center"}}
             onMouseDown={e=>{
               if(selModeRef.current){
                 if(selStateRef.current.placeMode&&selStateRef.current.clipboard){const c=getCell(e);if(c.x>=0&&c.y>=0)applyClipboard(c);}
                 else{const c=getCell(e);if(c.x<0||c.y<0)return;selStartRef.current=c;const nr={x1:c.x,y1:c.y,x2:c.x,y2:c.y};selStateRef.current.rect=nr;setSelRect(nr);draw();}
                 return;
+              }
+              if(panModeRef.current){
+                panStartRef.current={sx:e.clientX,sy:e.clientY,px:kgPanLiveRef.current.x,py:kgPanLiveRef.current.y};
+                return; // no pushUndo()/paintBlock() — panning never touches the grid
               }
               painting.current=true;pushUndo();paintBlock(e);
             }}
@@ -5275,10 +5327,18 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
                 }
                 return;
               }
+              if(panModeRef.current){
+                if(panStartRef.current){
+                  const d=panStartRef.current;
+                  const next={x:d.px+(e.clientX-d.sx),y:d.py+(e.clientY-d.sy)};
+                  kgPanLiveRef.current=next;setKgPan(next);
+                }
+                return;
+              }
               if(painting.current)paintBlock(e);
             }}
-            onMouseUp={e=>{if(mouseDragRef.current){mouseDragRef.current=null;return;}if(selModeRef.current){selStartRef.current=null;return;}painting.current=false;sync();}}
-            onMouseLeave={e=>{if(mouseDragRef.current){mouseDragRef.current=null;return;}if(selModeRef.current){selStartRef.current=null;setHoverCell(null);draw();return;}painting.current=false;setHoverCell(null);sync();}}/>
+            onMouseUp={e=>{if(mouseDragRef.current){mouseDragRef.current=null;return;}if(panStartRef.current){panStartRef.current=null;return;}if(selModeRef.current){selStartRef.current=null;return;}painting.current=false;sync();}}
+            onMouseLeave={e=>{if(mouseDragRef.current){mouseDragRef.current=null;return;}if(panStartRef.current){panStartRef.current=null;return;}if(selModeRef.current){selStartRef.current=null;setHoverCell(null);draw();return;}painting.current=false;setHoverCell(null);sync();}}/>
         </div>
         <div style={{flexShrink:0,paddingBottom:`${SAFE_BOTTOM}`}}/>
 
@@ -5293,7 +5353,7 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
             </div>
             <div style={{padding:"14px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto"}}>
               <div>
-                <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>{t.mkSecGridSize}</span>
+                <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>{t.mkSecGrid}</span>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:32,flexShrink:0}}>{t.mkCols}</span>
@@ -5310,6 +5370,27 @@ function ColorGrid({initialGrid,isNewGrid=false,onGridChange,yarnColors,onSave})
                   <div style={{fontSize:10,color:"#9CA3AF"}}>
                     {cols*rows>4000?<span style={{color:"#D97706"}}>{t.mkLargeGrid}</span>:null}
                     {cols}×{rows} · {cols*rows} {t.mkCells}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>{t.mkSecPreview}</span>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+                    <input type="checkbox" checked={showRepeat} onChange={e=>setShowRepeat(e.target.checked)} style={{width:16,height:16,cursor:"pointer",accentColor:"#778EE3"}}/>
+                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600}}>{t.mkShowRepeat}</span>
+                  </label>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:72,flexShrink:0}}>{t.mkRepeatH}</span>
+                    <button onClick={()=>setRepeatH(v=>Math.max(1,v-1))} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+                    <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",flex:1,textAlign:"center"}}>{repeatH}</span>
+                    <button onClick={()=>setRepeatH(v=>Math.min(8,v+1))} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:72,flexShrink:0}}>{t.mkRepeatV}</span>
+                    <button onClick={()=>setRepeatV(v=>Math.max(1,v-1))} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+                    <span style={{fontSize:13,fontWeight:700,color:"var(--text-primary)",flex:1,textAlign:"center"}}>{repeatV}</span>
+                    <button onClick={()=>setRepeatV(v=>Math.min(8,v+1))} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
                   </div>
                 </div>
               </div>
@@ -7214,7 +7295,7 @@ function CrochetBuilder({stitches,setStitches,layout,setLayout,yarnColors,onSave
         {/* Right actions */}
         <div style={{marginLeft:"auto",display:"flex",gap:4,alignItems:"center"}}>
           {onSave&&<button type="button" onClick={onSave}
-            style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}><Ico n="lucide:check" sz={10}/> Save</button>}
+            style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}>Save</button>}
           <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
           <button type="button" onClick={()=>{if(batchMode){setBatchMode(false);setBatchKeys(new Set());setLassoRect(null);setBatchSpacingOpen(false);setBatchColorOpen(false);setBatchAlignOpen(false);}setPanelOpen(v=>!v);}} title="Settings"
             style={{...ccPanelBtnSt,border:`1.5px solid ${panelOpen?"#778EE3":"var(--border)"}`,background:panelOpen?"var(--accent-soft)":"var(--bg-card)"}}>
@@ -7773,6 +7854,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
   const[crochetStitches,setCrochetStitches]=useState(initStitches);
   const[crochetLayout,setCrochetLayout]=useState(pattern?.crochetLayout||"rows");
   const crochetRoundsRef=useRef(pattern?.crochetRoundsData||null);
+  const repeatRef=useRef(pattern?.repeat||{h:1,v:1,show:false});
   const underlayRef=useRef(null);
   const resolvedUnderlay=useMemo(()=>{
     if(!pattern?.underlay)return null;
@@ -7795,7 +7877,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
   const handleSave=()=>{
     const u=underlayRef.current;
     const underlayToSave=u?{patternId:u.patternId,opacity:u.opacity,visible:u.visible,fitMode:u.fitMode??"preserve"}:null;
-    onSave({type,grid:knitRef.current,knitStitches:knitStRef.current,crochetStitches,crochetLayout,crochetRoundsData:crochetRoundsRef.current,underlay:underlayToSave});
+    onSave({type,grid:knitRef.current,knitStitches:knitStRef.current,crochetStitches,crochetLayout,crochetRoundsData:crochetRoundsRef.current,underlay:underlayToSave,repeat:repeatRef.current});
     isDirtyRef.current=false;
     setSaveFlash(true);
     setTimeout(()=>setSaveFlash(false),2000);
@@ -7838,7 +7920,7 @@ function PatternMaker({pattern,onSave,onClose,yarnColors,forcedType,forcedKnitMo
       {/* Content */}
       <div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
         {type==="knit"&&knitMode==="grid"
-          ?<ColorGrid key={knitKey} initialGrid={knitRef.current} isNewGrid={!pattern?.grid} onGridChange={g=>{knitRef.current=g;isDirtyRef.current=true;}} yarnColors={yarnColors} onSave={handleSave}/>
+          ?<ColorGrid key={knitKey} initialGrid={knitRef.current} isNewGrid={!pattern?.grid} onGridChange={g=>{knitRef.current=g;isDirtyRef.current=true;}} initialRepeat={repeatRef.current} onRepeatChange={r=>{repeatRef.current=r;isDirtyRef.current=true;}} yarnColors={yarnColors} onSave={handleSave}/>
           :type==="knit"&&knitMode==="symbols"
           ?<KnitPatternMaker key={knitKey} initialStitches={knitStRef.current} onStitchesChange={s=>{knitStRef.current=s;isDirtyRef.current=true;}} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
           :<CrochetBuilder stitches={crochetStitches} setStitches={setCrochetStitches} layout={crochetLayout} setLayout={setCrochetLayout} yarnColors={yarnColors} onSave={handleSave} patterns={patterns} initialUnderlay={resolvedUnderlay} onUnderlayChange={u=>{underlayRef.current=u;}}/>
@@ -7974,11 +8056,24 @@ function YarnLibPickerSheet({yarnLib,alreadyAdded,onPick,onClose}){
 }
 
 /* ─── Stitch Counter (shared across all read modes) ────────────────────────── */
-function StitchCounter() {
+// One-off probe to read env(safe-area-inset-bottom) as an actual px number —
+// needed here because the FAB's default position is computed in JS (top:y),
+// not written as a CSS calc() string like the rest of the app's safe-area handling.
+function _stitchCounterSafeBottomPx(){
+  const probe=document.createElement('div');
+  probe.style.cssText='position:fixed;bottom:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
+  document.body.appendChild(probe);
+  const px=parseFloat(getComputedStyle(probe).paddingBottom)||0;
+  document.body.removeChild(probe);
+  return px;
+}
+
+function StitchCounter({bottomOffset=120}) {
   const [rows, setRows]        = useState(0);
   const [stitches, setStiches] = useState(0);
   const [open, setOpen]        = useState(false);
-  // fabPos  = FAB top-left {x,y}  — null means "use default CSS bottom-right"
+  // fabPos  = FAB top-left {x,y}  — null means "use default: bottom-left, just
+  // above that read-mode screen's own bottom nav panel"
   // panelPos = panel top-left {x,y} — set fresh each time panel opens, then dragged directly
   const [fabPos,   setFabPos]   = useState(null);
   const [panelPos, setPanelPos] = useState(null);
@@ -7990,7 +8085,7 @@ function StitchCounter() {
 
   const getFabXY = () => fabPos ?? {
     x: 16,
-    y: 52,
+    y: window.innerHeight - FAB_H - bottomOffset - _stitchCounterSafeBottomPx(),
   };
 
   /* Initial panel placement when opening — near FAB, fully on screen */
@@ -8080,16 +8175,20 @@ function StitchCounter() {
     );
   };
 
-  /* ── Render ── */
+  /* ── Render ──
+     zIndex is intentionally far above anything else in the app (highest
+     in-app z-index elsewhere is 999999) — the counter's position is meant
+     to sit near the bottom nav bar, but it must always paint on top of
+     every nav bar and canvas regardless of position, never behind one. */
   const fabXY = getFabXY();
-  const fabStyle = {position:"fixed", left:fabXY.x, top:fabXY.y, zIndex:501};
+  const fabStyle = {position:"fixed", left:fabXY.x, top:fabXY.y, zIndex:1000001};
 
   return (
     <>
       {/* Panel — independent fixed element, dragged directly */}
       {open && panelPos && (
         <div style={{
-          position:"fixed", left:panelPos.x, top:panelPos.y, zIndex:500,
+          position:"fixed", left:panelPos.x, top:panelPos.y, zIndex:1000000,
           width:PANEL_W, boxSizing:"border-box",
           background:"var(--bg-card)", borderRadius:19, padding:"13px 15px 15px",
           boxShadow:"0 8px 32px rgba(0,0,0,0.18)", border:"1.5px solid #EEF0FD",
@@ -8348,7 +8447,10 @@ function KnitSymbolReader({stitches,onBack,progressMarker=null,onSaveProgress,ro
     const commitLiveTransform=()=>{
       if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${panRef.current.x}px,${panRef.current.y}px) scale(${pinchLiveScaleRef.current})`;
     };
-    const onTS=e=>{if(e.touches.length>=2){e.preventDefault();dragRef.current=null;pinchRef.current=0;pinchLiveScaleRef.current=1;}};
+    // Only (re)establish a fresh pinch baseline when one isn't already active — see
+    // the identical fix/comment in KnitReadChart for why an unconditional reset here
+    // causes "zooms in, then snaps back" on real devices.
+    const onTS=e=>{if(e.touches.length>=2){e.preventDefault();if(pinchRef.current===null){dragRef.current=null;pinchRef.current=0;pinchLiveScaleRef.current=1;}}};
     const onTM=e=>{
       if(e.touches.length===2&&pinchRef.current!==null){
         e.preventDefault();
@@ -8474,10 +8576,13 @@ function KnitSymbolReader({stitches,onBack,progressMarker=null,onSaveProgress,ro
   return(
     <>
       <div style={{position:"fixed",inset:0,background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
-        <StitchCounter/>
+        {/* bottomOffset measured against this screen's actual bottom nav panel (Step
+            Guide + row info + progress bar + row pills), not the smaller pinToast
+            constant reused elsewhere — that panel is taller than a toast. */}
+        <StitchCounter bottomOffset={205}/>
         <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
           <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
-          <button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}><Ico n="lucide:arrow-left" style={{fontSize:"inherit"}}/> Back</button>
+          <button onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
         <div ref={containerRef}
           style={{flex:1,minHeight:0,overflow:"hidden",background:canvasBg,position:"relative",
@@ -8727,12 +8832,17 @@ function PatternViewModal({pattern,notes,onClose,onEdit,onDesign,onSaveRowNotes,
   return createPortal(
     <>
     <div style={{position:"fixed",inset:0,zIndex:99999,background:"var(--bg-card)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <StitchCounter/>
+      {/* bottomOffset must clear this screen's actual bottom nav panel (Step Guide +
+          row info + progress bar + row pills, ~190px, not the smaller pinToast
+          constant reused elsewhere) — that panel also sits at zIndex:100000, well
+          above the counter's own 501, so any overlap doesn't just look bad, it
+          fully hides the counter behind the panel. */}
+      <StitchCounter bottomOffset={200}/>
 
       {/* Header — matches CPM_Preview */}
       <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
-        <button type="button" onClick={onClose} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}><Ico n="lucide:arrow-left" style={{fontSize:"inherit"}}/> Back</button>
+        <button type="button" onClick={onClose} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
 
           {/* Chart — flex:1, fills viewport with pan+zoom canvas */}
@@ -8928,7 +9038,7 @@ const SPARKLE_SHAPES = [
 ];
 
 
-function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRenamePart,onSavePartProgress,onDuplicate,onMarkComplete,onUpdateRows,onUpdatePattern,onUpdateLinkedProgress,onFinishedPhoto,onArchive,onToggleSaved,isArchived=false}){
+function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRenamePart,onSavePartLinkedProgress,onDuplicate,onMarkComplete,onUpdateRows,onUpdatePattern,onUpdateLinkedProgress,onFinishedPhoto,onArchive,onToggleSaved,isArchived=false}){
   const{lang,t}=useLang();
   const{canvasBg="#FDFAF6"}=useSettings();
   const[expanded,setExpanded]=useState(false);
@@ -9016,7 +9126,12 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
       const _lp=showLinkedPatView?(patterns||[]).find(p=>p.id===project.linkedPatternId):null;
       if(!_lp?.designData) return null;
       if(project.linkedPatternMode==='steps'&&_lp.designData.generatedSteps){
-        return <StepReader steps={_lp.designData.generatedSteps} patName={_lp.name} onBack={()=>setShowLinkedPatView(false)} progressMarker={_lp.designData.generatedProgressMarker??null}/>;
+        // Same project-scoped separation as the chart-mode branch below — reuses the
+        // same linkedPatternProgress.progressMarker field since a project's
+        // linkedPatternMode is exclusively 'chart' or 'steps', never both.
+        return <StepReader steps={_lp.designData.generatedSteps} patName={_lp.name} onBack={()=>setShowLinkedPatView(false)}
+          progressMarker={project.linkedPatternProgress?.progressMarker??null}
+          onSaveProgress={onUpdateLinkedProgress?(idx=>onUpdateLinkedProgress({progressMarker:idx})):undefined}/>;
       }
       // Project-scoped reading progress (pinned row/box, row notes) — kept separate from
       // _lp.designData itself, which is the shared library record. See onUpdateLinkedProgress.
@@ -9027,7 +9142,11 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
         onSaveRowNotes={onUpdateLinkedProgress?(rn=>onUpdateLinkedProgress({rowNotes:rn})):undefined}
         onSaveCurrentCell={onUpdateLinkedProgress?(cc=>onUpdateLinkedProgress({currentCell:cc})):undefined}/>;
     })()}
-    {viewingPartPattern&&<PatternViewModal pattern={viewingPartPattern.data} notes={""} onClose={()=>setViewingPartPattern(null)} onSaveProgress={onSavePartProgress?(idx=>onSavePartProgress(viewingPartPattern.partId,idx)):undefined}/>}
+    {viewingPartPattern&&<PatternViewModal pattern={viewingPartPattern.data} notes={""} onClose={()=>setViewingPartPattern(null)}
+      currentCell={viewingPartPattern.data.currentCell??null}
+      onSaveProgress={onSavePartLinkedProgress?(idx=>onSavePartLinkedProgress(viewingPartPattern.partId,{progressMarker:idx})):undefined}
+      onSaveRowNotes={onSavePartLinkedProgress?(rn=>onSavePartLinkedProgress(viewingPartPattern.partId,{rowNotes:rn})):undefined}
+      onSaveCurrentCell={onSavePartLinkedProgress?(cc=>onSavePartLinkedProgress(viewingPartPattern.partId,{currentCell:cc})):undefined}/>}
     {showAddPartPicker&&createPortal(<PickPatternModal patterns={patterns} onClose={()=>setShowAddPartPicker(false)} onPick={pat=>{setAddPartLinkedId(pat.id);setAddPartLinkedName(pat.name);setShowAddPartPicker(false);}}/>,document.body)}
     <div className="shadow-card" style={{background:"var(--bg-card)",borderRadius:24,overflow:"hidden",width:"100%"}}>
 
@@ -9108,7 +9227,11 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
                     const handleChipClick=e=>{
                       e.stopPropagation();
                       if(isActive&&canView){
-                        setViewingPartPattern({data:{...libPat.designData,progressMarker:part.progressMarker??libPat.designData.progressMarker},name:part.name,partId:part.id});
+                        // Never fall back to libPat.designData's own progressMarker/rowNotes/
+                        // currentCell here — those are the shared library record's state. A
+                        // part that hasn't pinned anything yet should start fresh, the same way
+                        // a project's own linked-pattern view does (see onUpdateLinkedProgress).
+                        setViewingPartPattern({data:{...libPat.designData,progressMarker:part.progressMarker??null,rowNotes:part.rowNotes||{},currentCell:part.currentCell??null},name:part.name,partId:part.id});
                       } else {
                         setActivePartIdx(i);
                       }
@@ -9603,10 +9726,10 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
         </div>
       </div>
     </div>
-    {showPatternPicker&&<PickPatternModal patterns={patterns} onClose={()=>setShowPatternPicker(false)} onPick={p=>{if(p.designData&&p.designData.generatedSteps){setPendingLinkedPat(p);setShowLinkedModeChoice(true);setShowPatternPicker(false);}else{setLinkedPattern({id:p.id,name:p.name,mode:p.designData?'chart':null});setShowPatternPicker(false);}}}/>}
+    {showPatternPicker&&<PickPatternModal patterns={patterns} onClose={()=>setShowPatternPicker(false)} onPick={p=>{if(p.designData&&p.designData.generatedSteps){setPendingLinkedPat(p);setShowLinkedModeChoice(true);setShowPatternPicker(false);}else{setLinkedPattern({id:p.id,name:p.name,mode:p.designData?'chart':null});const rc=patternRowCount(p.designData);if(rc)sf("totalRows",rc);setShowPatternPicker(false);}}}/>}
     {showPicker&&<PatternTypePicker onSelect={onPickerSelect} onClose={()=>setShowPicker(false)}/>}
-    {showPattern&&<PatternMaker pattern={pattern} forcedType={pattern?.type==="knit"?"knit":pattern?.type==="crochet"?"crochet":makerForced?.forcedType} forcedKnitMode={pattern?.knitStitches?.length?"symbols":makerForced?.forcedKnitMode} onSave={p=>{setPattern(p);setMakerForced(null);}} onClose={()=>{setShowPattern(false);setMakerForced(null);}} patterns={patterns}/>}
-    {showRounds&&(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}><CircularPatternMaker initialPattern={pattern?.type==="rounds"?pattern:null} onSave={design=>{setPattern({...design,type:"rounds"});setShowRounds(false);}} onClose={()=>setShowRounds(false)}/></div>)}
+    {showPattern&&<PatternMaker pattern={pattern} forcedType={pattern?.type==="knit"?"knit":pattern?.type==="crochet"?"crochet":makerForced?.forcedType} forcedKnitMode={pattern?.knitStitches?.length?"symbols":makerForced?.forcedKnitMode} onSave={p=>{setPattern(p);setMakerForced(null);const rc=patternRowCount(p);if(rc)sf("totalRows",rc);}} onClose={()=>{setShowPattern(false);setMakerForced(null);}} patterns={patterns}/>}
+    {showRounds&&(<div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}><CircularPatternMaker initialPattern={pattern?.type==="rounds"?pattern:null} onSave={design=>{const full={...design,type:"rounds"};setPattern(full);setShowRounds(false);const rc=patternRowCount(full);if(rc)sf("totalRows",rc);}} onClose={()=>setShowRounds(false)}/></div>)}
     {showCloseSheet&&(
       <ClosingActionSheet
         message={t.closeSaveProjectMsg}
@@ -9628,6 +9751,8 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
             .map(opt=>(
               <button key={opt.mode} onClick={()=>{
                 setLinkedPattern({id:pendingLinkedPat.id,name:pendingLinkedPat.name,mode:opt.mode});
+                const rc=opt.mode==='steps'?(pendingLinkedPat.designData?.generatedSteps?.length||null):patternRowCount(pendingLinkedPat.designData);
+                if(rc)sf("totalRows",rc);
                 setPendingLinkedPat(null);setShowLinkedModeChoice(false);
               }} style={{display:'block',width:'100%',textAlign:'left',padding:'12px 16px',
                         marginBottom:8,borderRadius:12,border:'1.5px solid #778EE3',background:'none',cursor:'pointer'}}>
@@ -10563,7 +10688,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
 }
 
 /* ── Color Grid Read Chart ── */
-function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,currentCell=null,onSaveCurrentCell,onSwitchToText}){
+function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes={},onSaveRowNotes,currentCell=null,onSaveCurrentCell}){
   const{t}=useLang();
   const{canvasBg="#FDFAF6"}=useSettings();
   const rows=grid.length;
@@ -10601,9 +10726,16 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     const onTS=e=>{
       if(e.touches.length>=2){
         e.preventDefault();
-        dragRef.current=null;
-        krcPinchRef.current=0; // sentinel: wait for first touchmove to init distance
-        krcPinchLiveScaleRef.current=1;
+        // Only (re)establish a fresh baseline when this is genuinely a new pinch —
+        // real devices can fire a spurious extra touchstart mid-gesture (e.g. while
+        // fingers are lifting and touch identities get renumbered). Resetting
+        // krcPinchLiveScaleRef in that case would wipe the zoom already accumulated
+        // this gesture, which is what caused "zooms in, then snaps back."
+        if(krcPinchRef.current===null){
+          dragRef.current=null;
+          krcPinchRef.current=0; // sentinel: wait for first touchmove to init distance
+          krcPinchLiveScaleRef.current=1;
+        }
       }
     };
     const onTM=e=>{
@@ -10782,7 +10914,10 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     const x=Math.floor((rx-ML)/cellSize);
     const y=Math.floor((ry-MT)/cellSize);
     if(y<0||y>=rows)return;
-    setActiveRow(prev=>prev===y?null:y);
+    // Always jump to the tapped row (no toggle-off) — mirrors what the ← / → nav
+    // buttons do, so tapping the chart is a real alternative to them, not just a
+    // way to highlight a box.
+    setActiveRow(y);
     if(x>=0&&x<cols)setTappedCell({x,y});
   },[cols,rows,scale]);
 
@@ -10800,16 +10935,11 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   return(
     <>
     <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
-      <StitchCounter/>
+      <StitchCounter bottomOffset={136}/>
       {/* Header */}
       <div style={{padding:`calc(9px + ${SAFE_TOP}) 12px 9px`,background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
-        {onSwitchToText&&(
-          <button onClick={onSwitchToText} title="Switch to full row-by-row text" style={{padding:"6px 12px",borderRadius:11,border:"1.5px solid #778EE3",background:"var(--bg-card)",color:"#778EE3",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
-            <Ico n="basil:clipboard-outline" sz={12}/>Read Text
-          </button>
-        )}
-        <button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}><Ico n="lucide:arrow-left" style={{fontSize:"inherit"}}/> Back</button>
+        <button onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       {/* Canvas area */}
       <div ref={containerRef}
@@ -11032,15 +11162,15 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   };
 
   if(!steps.length) return(
-    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+    <div className="swipe-back-page" style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
       <Ico n="basil:clipboard-outline" sz={48}/>
       <p style={{fontSize:16,color:"var(--text-secondary)",margin:0}}>No steps found.</p>
-      <button onClick={onBack} style={{padding:"10px 28px",borderRadius:12,background:"#778EE3",color:"white",border:"none",fontWeight:700,fontSize:14,cursor:"pointer"}}>Back</button>
+      <button data-close-trigger onClick={onBack} style={{padding:"10px 28px",borderRadius:12,background:"#778EE3",color:"white",border:"none",fontWeight:700,fontSize:14,cursor:"pointer"}}>Back</button>
     </div>
   );
 
   return(
-    <div style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
+    <div className="swipe-back-page" style={{position:"fixed",inset:0,minHeight:"100dvh",background:"var(--bg-card)",zIndex:100,display:"flex",flexDirection:"column"}}>
 
       <style>{`
         @keyframes sr-pop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
@@ -11050,7 +11180,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
       {/* ── Header ── */}
       <div style={{padding:`calc(12px + ${SAFE_TOP}) 16px 10px`,background:"var(--bg-card)",borderBottom:"1px solid #EFEFEF",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-          <button onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <button data-close-trigger onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
           <span style={{flex:1,fontSize:15,fontWeight:800,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{patName}</span>
@@ -11089,7 +11219,12 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
       </div>
 
       {/* ── Scrollable checklist ── */}
-      <div style={{flex:1,minHeight:0,overflowY:"auto",paddingBottom:`calc(80px + ${SAFE_BOTTOM})`}}>
+      {/* modal-in exempts this from the global background-scroll-lock (see
+          _preventBgScroll) — StepReader is portaled straight to document.body,
+          so without this class any touchmove here reads as "outside the modal"
+          and gets preventDefault()'d, blocking manual scroll entirely; only the
+          scrollIntoView() on check-off could move the list. */}
+      <div className="modal-in no-swipe-dismiss" style={{flex:1,minHeight:0,overflowY:"auto",paddingBottom:`calc(80px + ${SAFE_BOTTOM})`}}>
         {items.map((item,idx)=>{
 
           /* ── Section divider ── */
@@ -11119,9 +11254,9 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
                 display:"flex",alignItems:"flex-start",gap:10,
                 cursor:"default",
                 opacity:isDone?0.42:1,
-                background:isActive?"rgba(36,123,160,0.07)":"white",
+                background:isActive?"var(--step-active-bg)":"var(--bg-card)",
                 borderLeft:isActive?"3px solid #1A6A8A":"3px solid transparent",
-                borderBottom:"1px solid #F5F5F5",
+                borderBottom:"1px solid var(--border-soft)",
                 transition:"padding .2s ease,opacity .25s,background .2s",
               }}>
 
@@ -11149,7 +11284,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
                   margin:0,
                   fontSize:isDone?14:16,
                   lineHeight:1.65,
-                  color:isDone?"#6B7280":isActive?"#111":"#374151",
+                  color:isDone?"var(--text-secondary)":isActive?"var(--text-primary)":"var(--text-muted)",
                   fontWeight:isActive?600:400,
                   textDecoration:isDone?"line-through":"none",
                   whiteSpace:"pre-wrap",
@@ -11193,7 +11328,7 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
 
       {/* ── Stitch counter bar ── */}
       {!allDone&&(
-        <div style={{position:"fixed",bottom:0,left:0,right:0,borderTop:"2px solid #BBC7F1",background:"#EEF2FF",display:"flex",alignItems:"center",paddingTop:10,paddingBottom:`calc(10px + ${SAFE_BOTTOM})`,zIndex:200}}>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,borderTop:"2px solid var(--border)",background:"var(--bg-elevated)",display:"flex",alignItems:"center",paddingTop:10,paddingBottom:`calc(10px + ${SAFE_BOTTOM})`,zIndex:200}}>
           <button onClick={()=>setStitches(n=>n+1)}
             style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"0 18px",textAlign:"left"}}>
             <div style={{width:42,height:42,borderRadius:12,background:"#778EE3",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 8px rgba(119,142,227,0.35)"}}>
@@ -11201,12 +11336,12 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
             </div>
             <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",lineHeight:1}}>
               <span style={{fontSize:11,color:"#778EE3",fontWeight:700,marginBottom:3,textTransform:"uppercase",letterSpacing:"0.06em"}}>Stitches</span>
-              <span style={{fontSize:28,fontWeight:800,color:"#4C1D95",letterSpacing:"-0.5px"}}>{stitches}</span>
+              <span style={{fontSize:28,fontWeight:800,color:"var(--text-primary)",letterSpacing:"-0.5px"}}>{stitches}</span>
             </div>
-            <span style={{fontSize:11,color:"#A5B4FC",marginLeft:"auto",paddingRight:4}}>tap to count</span>
+            <span style={{fontSize:11,color:"var(--text-secondary)",marginLeft:"auto",paddingRight:4}}>tap to count</span>
           </button>
           <button onClick={()=>setStitches(0)}
-            style={{padding:"10px 20px",background:"none",border:"none",borderLeft:"1.5px solid #BBC7F1",cursor:"pointer",color:"#778EE3",fontSize:12,fontWeight:700,flexShrink:0}}>
+            style={{padding:"10px 20px",background:"none",border:"none",borderLeft:"1.5px solid var(--border)",cursor:"pointer",color:"#778EE3",fontSize:12,fontWeight:700,flexShrink:0}}>
             Reset
           </button>
         </div>
@@ -11493,6 +11628,17 @@ function generatePatternText(designData){
   return[];
 }
 
+// How many rows/rounds a design actually implies — reuses generatePatternText's
+// row-clustering logic (crochet foundation+rows, knit chart/grid rows, CPM
+// rounds) so this always agrees with what "Read Text" would show, rather than
+// re-deriving row-counting rules a second time.
+function patternRowCount(designData){
+  if(!designData)return null;
+  if(designData.type==="imported")return designData.steps?.length||null;
+  const n=generatePatternText(designData).length;
+  return n>0?n:null;
+}
+
 /* ── Pattern Detail Modal ── */
 function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],patterns=[]}){
   useBodyScrollLock();
@@ -11573,23 +11719,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
       rowNotes={pat.designData?.rowNotes||{}}
       onSaveRowNotes={rn=>onUpdate({...pat,designData:{...pat.designData,rowNotes:rn}})}
-      onSwitchToText={()=>{
-        const steps=generatePatternText(pat.designData);
-        setLocalGeneratedSteps(steps);
-        onUpdate({...pat,designData:{...pat.designData,generatedSteps:steps}});
-        setShowKnitRead(false);
-        setShowGeneratedRead(true);
-      }}
     />,document.body
-  );
-  if(showStepRead) return(
-    <StepReader
-      steps={pat.designData?.steps||[]}
-      patName={pat.name}
-      onBack={()=>setShowStepRead(false)}
-      progressMarker={pat.designData?.progressMarker??null}
-      onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
-    />
   );
   if(showGeneratedRead) return(
     <StepReader
@@ -11691,8 +11821,9 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                     </button>
                   </>)}
                   {/* Generate/Read Text — manual/on-demand for every design type EXCEPT color
-                      grid. Color grid text is only reachable via Read Chart's own "Read Text"
-                      button (onSwitchToText below) so it's never bypassed straight to text. */}
+                      grid. Color Grid's Read Chart mode had its own "Read Text" shortcut here
+                      that was removed by request, so plain color-grid designs currently have
+                      no text-reading entry point at all — intentional for now. */}
                   {!isColorGridDesign&&(
                   <button onClick={()=>{
                     const steps=generatePatternText(pat.designData);
@@ -11710,7 +11841,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
               ):pat.designData.type==="knit"&&pat.designData.knitStitches?.length?(
                 <PatternCardPreview patData={pat.designData} height={200}/>
               ):pat.designData.type==="knit"?(
-                <ReadOnlyColorGrid grid={pat.designData.grid} preview/>
+                <ReadOnlyColorGrid grid={pat.designData.grid} repeat={pat.designData.repeat} preview/>
               ):(
                 <ReadOnlyCrochetView crochetStitches={pat.designData.crochetStitches} crochetRows={pat.designData.crochetRows}/>
               )}
@@ -11848,6 +11979,24 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
       <div onClick={()=>setImgFull(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.92)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <img src={pat.image} alt="" style={{maxWidth:"95vw",maxHeight:"min(90vh, calc(100dvh - env(safe-area-inset-top, 0px) - 8px))",objectFit:"contain",borderRadius:12}}/>
         <button onClick={()=>setImgFull(false)} style={{position:"absolute",top:20,right:20,width:36,height:36,borderRadius:999,background:"rgba(255,255,255,.15)",border:"none",cursor:"pointer",color:"white",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}><Ico n="lucide:x" style={{fontSize:"inherit"}}/></button>
+      </div>
+    )}
+    {/* Rendered as an overlay on top of the still-mounted card above (not an
+        early-return replacing it) specifically so swiping back reveals the
+        actual Pattern Detail card underneath, dimmed — same swipe-back-backdrop
+        treatment the card itself uses, just one layer up. zIndex 600 (vs the
+        card's 500) keeps it on top regardless of StepReader's own internal
+        zIndex, since z-index only competes among true siblings in one
+        stacking context — StepReader's is scoped inside this wrapper. */}
+    {showStepRead&&(
+      <div className="swipe-back-backdrop" style={{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,.5)"}}>
+        <StepReader
+          steps={pat.designData?.steps||[]}
+          patName={pat.name}
+          onBack={()=>setShowStepRead(false)}
+          progressMarker={pat.designData?.progressMarker??null}
+          onSaveProgress={idx=>onUpdate({...pat,designData:{...pat.designData,progressMarker:idx}})}
+        />
       </div>
     )}
     </>
@@ -12270,7 +12419,7 @@ function PatternLibPage({patterns,setPatterns,projects=[],yarnLib=[]}){
 }
 
 /* ─── Read-only Pattern Previews ───────────────────────────────────────────── */
-function ReadOnlyColorGrid({grid,preview=false}){
+function ReadOnlyColorGrid({grid,preview=false,repeat}){
   const canvasRef=useRef(null);
   const[selRow,setSelRow]=useState(null);
   const CELL=16,ML=24,MT=18,MR=8,MB=8;
@@ -12279,7 +12428,13 @@ function ReadOnlyColorGrid({grid,preview=false}){
   const drawGrid=useCallback(()=>{
     const c=canvasRef.current;if(!c||!grid?.length)return;
     const cols=grid[0]?.length||0,rows=grid.length;
-    const gW=cols*CELL,gH=rows*CELL;
+    // Repeat is a read-mode-only preview setting (see ColorGrid's "Preview" section) — the
+    // edit canvas never tiles. Off (or absent, e.g. patterns saved before this existed)
+    // behaves exactly as a single 1×1 tile always did.
+    const repH=repeat?.show?Math.max(1,repeat.h||1):1;
+    const repV=repeat?.show?Math.max(1,repeat.v||1):1;
+    const tileW=cols*CELL,tileH=rows*CELL;
+    const gW=tileW*repH,gH=tileH*repV;
     const W=ML+gW+MR,H=MT+gH+MB;
     const dpr=window.devicePixelRatio||1;
     c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
@@ -12297,41 +12452,47 @@ function ReadOnlyColorGrid({grid,preview=false}){
     const ctx=c.getContext("2d");ctx.scale(dpr,dpr);
     // Background
     ctx.fillStyle=canvasBg;ctx.fillRect(0,0,W,H);
-    // Cell fills
-    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-      ctx.globalAlpha=(selRow!==null&&y!==selRow)?0.22:1;
-      ctx.fillStyle=grid[y]?.[x]||canvasBg;
-      ctx.fillRect(ML+x*CELL,MT+y*CELL,CELL,CELL);
+    for(let ty=0;ty<repV;ty++)for(let tx=0;tx<repH;tx++){
+      const ox=ML+tx*tileW,oy=MT+ty*tileH;
+      // Cell fills
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        ctx.globalAlpha=(selRow!==null&&y!==selRow)?0.22:1;
+        ctx.fillStyle=grid[y]?.[x]||canvasBg;
+        ctx.fillRect(ox+x*CELL,oy+y*CELL,CELL,CELL);
+      }
+      ctx.globalAlpha=1;
+      // Grid lines with visual hierarchy
+      for(let x=0;x<=cols;x++){
+        const maj10=x%10===0,maj5=x%5===0;
+        ctx.strokeStyle=maj10?"#9A8878":maj5?"#C4B4A8":"#D8D0C6";
+        ctx.lineWidth=maj10?1.5:maj5?1:0.5;
+        ctx.beginPath();ctx.moveTo(ox+x*CELL,oy);ctx.lineTo(ox+x*CELL,oy+tileH);ctx.stroke();
+      }
+      for(let y=0;y<=rows;y++){
+        const maj10=y%10===0,maj5=y%5===0;
+        ctx.strokeStyle=maj10?"#9A8878":maj5?"#C4B4A8":"#D8D0C6";
+        ctx.lineWidth=maj10?1.5:maj5?1:0.5;
+        ctx.beginPath();ctx.moveTo(ox,oy+y*CELL);ctx.lineTo(ox+tileW,oy+y*CELL);ctx.stroke();
+      }
+      // Outer border — drawn per tile so repeat seams stay visible
+      ctx.strokeStyle="#9A8878";ctx.lineWidth=1.5;ctx.strokeRect(ox,oy,tileW,tileH);
+      // Coordinate labels every 5 cells — only on the first tile, so a tiled
+      // preview doesn't repeat the same numbers across every copy
+      if(tx===0&&ty===0){
+        ctx.font=`bold ${Math.max(8,Math.min(10,CELL*0.55))}px -apple-system,sans-serif`;
+        ctx.fillStyle="#8A7A6A";
+        ctx.textAlign="center";ctx.textBaseline="middle";
+        for(let x=5;x<=cols;x+=5)ctx.fillText(String(x),ox+(x-0.5)*CELL,MT/2);
+        ctx.textAlign="right";ctx.textBaseline="middle";
+        for(let y=5;y<=rows;y+=5)ctx.fillText(String(y),ML-4,oy+(y-0.5)*CELL);
+      }
+      // Selected-row highlight border (only reachable in non-preview, single-tile mode)
+      if(selRow!==null){
+        ctx.strokeStyle="rgba(124,58,237,0.65)";ctx.lineWidth=1.5;
+        ctx.strokeRect(ox,oy+selRow*CELL,tileW,CELL);
+      }
     }
-    ctx.globalAlpha=1;
-    // Grid lines with visual hierarchy
-    for(let x=0;x<=cols;x++){
-      const maj10=x%10===0,maj5=x%5===0;
-      ctx.strokeStyle=maj10?"#9A8878":maj5?"#C4B4A8":"#D8D0C6";
-      ctx.lineWidth=maj10?1.5:maj5?1:0.5;
-      ctx.beginPath();ctx.moveTo(ML+x*CELL,MT);ctx.lineTo(ML+x*CELL,MT+gH);ctx.stroke();
-    }
-    for(let y=0;y<=rows;y++){
-      const maj10=y%10===0,maj5=y%5===0;
-      ctx.strokeStyle=maj10?"#9A8878":maj5?"#C4B4A8":"#D8D0C6";
-      ctx.lineWidth=maj10?1.5:maj5?1:0.5;
-      ctx.beginPath();ctx.moveTo(ML,MT+y*CELL);ctx.lineTo(ML+gW,MT+y*CELL);ctx.stroke();
-    }
-    // Outer border
-    ctx.strokeStyle="#9A8878";ctx.lineWidth=1.5;ctx.strokeRect(ML,MT,gW,gH);
-    // Coordinate labels every 5 cells
-    ctx.font=`bold ${Math.max(8,Math.min(10,CELL*0.55))}px -apple-system,sans-serif`;
-    ctx.fillStyle="#8A7A6A";
-    ctx.textAlign="center";ctx.textBaseline="middle";
-    for(let x=5;x<=cols;x+=5)ctx.fillText(String(x),ML+(x-0.5)*CELL,MT/2);
-    ctx.textAlign="right";ctx.textBaseline="middle";
-    for(let y=5;y<=rows;y+=5)ctx.fillText(String(y),ML-4,MT+(y-0.5)*CELL);
-    // Selected-row highlight border
-    if(selRow!==null){
-      ctx.strokeStyle="rgba(124,58,237,0.65)";ctx.lineWidth=1.5;
-      ctx.strokeRect(ML,MT+selRow*CELL,gW,CELL);
-    }
-  },[grid,selRow,canvasBg]);
+  },[grid,selRow,canvasBg,repeat]);
 
   useEffect(()=>{drawGrid();},[drawGrid]);
 
@@ -16379,7 +16540,7 @@ function CPM_Editor({pattern,setPattern,onPreview,onSave=null,themeColor="#11111
         {/* Right actions */}
         <div style={{marginLeft:"auto",display:"flex",gap:4,alignItems:"center"}}>
           {onPreview&&<button type="button" onClick={onPreview} style={{padding:"4px 10px",borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-card)",cursor:"pointer",fontSize:10,fontWeight:600,color:"#778EE3"}}>Read ›</button>}
-          {onSave&&<button type="button" onClick={()=>onSave({...pattern,type:"rounds",themeColor})} style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}><Ico n="lucide:check" sz={10}/> Save</button>}
+          {onSave&&<button type="button" onClick={()=>onSave({...pattern,type:"rounds",themeColor})} style={{padding:"4px 12px",borderRadius:7,border:"none",background:"#778EE3",color:"white",cursor:"pointer",fontSize:10,fontWeight:700}}>Save</button>}
           <div style={{width:1,height:16,background:"var(--border)",margin:"0 2px"}}/>
           {/* Panel toggle */}
           <button type="button" onClick={()=>setPanelOpen(v=>!v)} title="Settings"
@@ -16849,6 +17010,7 @@ function CPM_Preview({pattern,onBack,themeColor="#111111",notes}){
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <StitchCounter bottomOffset={32}/>
 
       {/* Preview header bar */}
       <div style={{padding:"9px 12px",background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
@@ -17036,11 +17198,11 @@ function CPM_RoundsReader({pattern,themeColor,onBack,notes,onSaveProgress,rowNot
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <StitchCounter/>
+      <StitchCounter bottomOffset={32}/>
       {/* Header */}
       <div style={{padding:onBack?`calc(9px + ${SAFE_TOP}) 12px 9px`:"9px 12px",background:"var(--accent-soft)",borderBottom:"1px solid #BBC7F1",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         <div style={{fontSize:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.07em",flex:1}}>READ CHART MODE</div>
-        {onBack&&<button onClick={onBack} style={{padding:"6px 14px",borderRadius:11,border:"none",background:"#778EE3",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}><Ico n="lucide:arrow-left" style={{fontSize:"inherit"}}/> Back</button>}
+        {onBack&&<button onClick={onBack} style={{width:32,height:32,borderRadius:999,background:"var(--bg-subtle)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>}
       </div>
       {pinToast&&(
         <div style={{position:"fixed",bottom:`calc(32px + ${SAFE_BOTTOM})`,left:"50%",transform:"translateX(-50%)",zIndex:999999,
@@ -17376,7 +17538,11 @@ function ProjectsView({projects, patterns=[], setProjects, setEditingProject, t,
     onEdit: () => setEditingProject(p),
     onAddPart: isArchived ? undefined : part => setProjects(prev => prev.map(x => x.id===p.id?{...x,parts:[...(x.parts||[]),part]}:x)),
     onRenamePart: isArchived ? undefined : (partId, name) => setProjects(prev => prev.map(x => x.id!==p.id?x:{...x,parts:(x.parts||[]).map(pt=>pt.id===partId?{...pt,name}:pt)})),
-    onSavePartProgress: isArchived ? undefined : (partId, markerIdx) => setProjects(prev => prev.map(x => x.id!==p.id?x:{...x,parts:(x.parts||[]).map(pt=>pt.id===partId?{...pt,progressMarker:markerIdx}:pt)})),
+    // Reading progress (pinned row/box, row notes, current cell) for a part's *linked*
+    // library pattern is kept on the part itself, not on the shared library record — same
+    // reasoning as onUpdateLinkedProgress below, just scoped to one part instead of the
+    // whole project (so two parts linking the same pattern also stay independent).
+    onSavePartLinkedProgress: isArchived ? undefined : (partId, patch) => setProjects(prev => prev.map(x => x.id!==p.id?x:{...x,parts:(x.parts||[]).map(pt=>pt.id===partId?{...pt,...patch}:pt)})),
     onRemovePart: isArchived ? undefined : partId => setProjects(prev => prev.map(x => {
       if(x.id!==p.id) return x;
       const parts=(x.parts||[]).filter(pt=>pt.id!==partId);
@@ -18940,7 +19106,11 @@ async function syncWidgetCurrentProject(allProjects){
   if(!window.Capacitor?.isNativePlatform?.()||!WidgetSync) return;
   const project=allProjects.find(p=>p.status==="In Progress");
   if(!project){
-    console.log("[WidgetSync] no in-progress project to sync for the Current Project widget");
+    // Explicitly clears the shared snapshot rather than leaving whatever was
+    // synced last (or nothing at all) — the widget shows a real "nothing in
+    // progress" state instead of stale or fabricated data.
+    console.log("[WidgetSync] no in-progress project — clearing Current Project widget");
+    try{ await WidgetSync.clearCurrentProject(); }catch(err){ console.error("[WidgetSync] clearCurrentProject failed:",err); }
     return;
   }
   const rowsCompleted=project.rowsCompleted||0;

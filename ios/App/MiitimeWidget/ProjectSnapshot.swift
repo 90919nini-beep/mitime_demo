@@ -27,13 +27,17 @@ struct ProjectSnapshot: Codable {
         nextRoundHint: "3 dc, 2 ch, repeat around"
     )
 
-    static func loadCurrent() -> ProjectSnapshot {
+    /// Returns nil when nothing has ever been synced (or the last sync was an
+    /// explicit "no project in progress" clear) — callers show a real empty
+    /// state rather than falling back to fake placeholder data. `.placeholder`
+    /// is only for Xcode canvas previews.
+    static func loadCurrent() -> ProjectSnapshot? {
         guard
             let defaults = WidgetAppGroup.sharedDefaults,
             let data = defaults.data(forKey: WidgetAppGroup.currentProjectKey),
             let snapshot = try? JSONDecoder().decode(ProjectSnapshot.self, from: data)
         else {
-            return .placeholder
+            return nil
         }
         return snapshot
     }

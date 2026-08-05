@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "進行中のプロジェクトなし";
+"widget.current.empty.subtitle" = "プロジェクトを開始するとここに表示されます！";
+
+/* Current Project widget — content */
+"widget.current.next" = "次へ";
+"widget.current.rows.short" = "%1$lld/%2$lld段";
+"widget.current.rows.long" = "%1$lld / %2$lld段・%3$lld%%完了";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "進行中のプロジェクト";
+"widget.current.description" = "編み物・かぎ針編みプロジェクトの進捗を確認できます。";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "完成プロジェクトはまだありません";
+"widget.finished.empty.subtitle" = "プロジェクトを完成させて写真を追加しましょう！";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "完成プロジェクト";
+"widget.finished.count.singular" = "%lld件のプロジェクト";
+"widget.finished.count.plural" = "%lld件のプロジェクト";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "完成プロジェクト";
+"widget.finished.description" = "完成した編み物・かぎ針編み作品をひと目で確認。";

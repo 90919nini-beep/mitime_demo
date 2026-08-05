@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "ไม่มีโปรเจกต์ที่กำลังดำเนินการ";
+"widget.current.empty.subtitle" = "เริ่มโปรเจกต์เพื่อดูที่นี่!";
+
+/* Current Project widget — content */
+"widget.current.next" = "ถัดไป";
+"widget.current.rows.short" = "%1$lld/%2$lld แถว";
+"widget.current.rows.long" = "%1$lld / %2$lld แถว · เสร็จแล้ว %3$lld%%";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "โปรเจกต์ปัจจุบัน";
+"widget.current.description" = "ติดตามความคืบหน้าของโปรเจกต์ถักหรือโครเชต์ที่กำลังทำอยู่";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "ยังไม่มีโปรเจกต์ที่เสร็จสมบูรณ์";
+"widget.finished.empty.subtitle" = "ทำโปรเจกต์ให้เสร็จแล้วเพิ่มรูปภาพ!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "โปรเจกต์ที่เสร็จแล้ว";
+"widget.finished.count.singular" = "%lld โปรเจกต์";
+"widget.finished.count.plural" = "%lld โปรเจกต์";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "โปรเจกต์ที่เสร็จแล้ว";
+"widget.finished.description" = "ดูผลงานถักและโครเชต์ที่คุณทำเสร็จแล้ว";

@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "Ningún proyecto en curso";
+"widget.current.empty.subtitle" = "¡Empieza un proyecto para verlo aquí!";
+
+/* Current Project widget — content */
+"widget.current.next" = "SIGUIENTE";
+"widget.current.rows.short" = "%1$lld/%2$lld filas";
+"widget.current.rows.long" = "%1$lld / %2$lld filas · %3$lld%% completado";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "Proyecto Actual";
+"widget.current.description" = "Sigue el progreso de tu proyecto de tejido o crochet activo.";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "Aún no hay proyectos terminados";
+"widget.finished.empty.subtitle" = "¡Termina un proyecto y añade una foto!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "PROYECTOS TERMINADOS";
+"widget.finished.count.singular" = "%lld proyecto";
+"widget.finished.count.plural" = "%lld proyectos";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "Proyectos Terminados";
+"widget.finished.description" = "Un vistazo a tus creaciones de tejido y crochet terminadas.";

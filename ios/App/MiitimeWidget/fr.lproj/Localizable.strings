@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "Aucun projet en cours";
+"widget.current.empty.subtitle" = "Commencez un projet pour le voir ici !";
+
+/* Current Project widget — content */
+"widget.current.next" = "SUIVANT";
+"widget.current.rows.short" = "%1$lld/%2$lld rangs";
+"widget.current.rows.long" = "%1$lld / %2$lld rangs · %3$lld %% terminé";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "Projet en cours";
+"widget.current.description" = "Suivez la progression de votre projet de tricot ou crochet en cours.";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "Aucun projet terminé pour l'instant";
+"widget.finished.empty.subtitle" = "Terminez un projet et ajoutez une photo !";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "PROJETS TERMINÉS";
+"widget.finished.count.singular" = "%lld projet";
+"widget.finished.count.plural" = "%lld projets";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "Projets terminés";
+"widget.finished.description" = "Un aperçu de vos réalisations en tricot et crochet.";

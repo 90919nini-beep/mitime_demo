@@ -71,11 +71,11 @@ private struct EmptyFinishedView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 20))
                 .foregroundStyle(miiGold)
-            Text("No finished projects yet")
+            Text("widget.finished.empty.title")
                 .font(.system(size: 12, weight: .semibold))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.primary)
-            Text("Complete a project and add a photo!")
+            Text("widget.finished.empty.subtitle")
                 .font(.system(size: 10))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -122,11 +122,11 @@ private struct SmallFinishedView: View {
         let latest = entry.manifest.items.first
 
         VStack(spacing: 6) {
-            Text("FINISHED PROJECTS")
+            Text("widget.finished.header")
                 .font(.system(size: 9, weight: .bold))
                 .foregroundStyle(miiGold)
-                .kerning(0.4)
                 .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
             Spacer(minLength: 0)
 
@@ -139,7 +139,7 @@ private struct SmallFinishedView: View {
                 .lineLimit(1)
                 .foregroundStyle(.primary)
 
-            Text("\(entry.manifest.totalCount) \(entry.manifest.totalCount == 1 ? "project" : "projects")")
+            Text(widgetLocalizedProjectCount(entry.manifest.totalCount))
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
         }
@@ -155,11 +155,11 @@ private struct MediumFinishedView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("FINISHED PROJECTS")
+                    Text("widget.finished.header")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(miiGold)
                         .kerning(0.4)
-                    Text("\(entry.manifest.totalCount) \(entry.manifest.totalCount == 1 ? "project" : "projects")")
+                    Text(widgetLocalizedProjectCount(entry.manifest.totalCount))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.primary)
                 }
@@ -189,8 +189,8 @@ struct FinishedProjectsWidget: Widget {
         StaticConfiguration(kind: kind, provider: FinishedProjectsProvider()) { entry in
             FinishedProjectsWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Finished Projects")
-        .description("A peek at your completed knit and crochet makes.")
+        .configurationDisplayName("widget.finished.displayName")
+        .description("widget.finished.description")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

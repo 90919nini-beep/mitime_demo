@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "Nothing in progress";
+"widget.current.empty.subtitle" = "Start a project to see it here!";
+
+/* Current Project widget — content */
+"widget.current.next" = "NEXT";
+"widget.current.rows.short" = "%1$lld/%2$lld rows";
+"widget.current.rows.long" = "%1$lld / %2$lld rows · %3$lld%% complete";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "Current Project";
+"widget.current.description" = "Track your active knit or crochet project's progress.";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "No finished projects yet";
+"widget.finished.empty.subtitle" = "Complete a project and add a photo!";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "FINISHED PROJECTS";
+"widget.finished.count.singular" = "%lld project";
+"widget.finished.count.plural" = "%lld projects";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "Finished Projects";
+"widget.finished.description" = "A peek at your completed knit and crochet makes.";

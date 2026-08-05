@@ -1,0 +1,25 @@
+/* Current Project widget — empty state */
+"widget.current.empty.title" = "目前没有进行中的项目";
+"widget.current.empty.subtitle" = "开始一个项目，即可在此查看！";
+
+/* Current Project widget — content */
+"widget.current.next" = "下一步";
+"widget.current.rows.short" = "%1$lld/%2$lld 行";
+"widget.current.rows.long" = "%1$lld / %2$lld 行．完成 %3$lld%%";
+
+/* Current Project widget — gallery metadata */
+"widget.current.displayName" = "进行中项目";
+"widget.current.description" = "追踪您目前编织或钩织项目的进度。";
+
+/* Finished Projects widget — empty state */
+"widget.finished.empty.title" = "尚无完成的项目";
+"widget.finished.empty.subtitle" = "完成一个项目并添加照片！";
+
+/* Finished Projects widget — content */
+"widget.finished.header" = "完成项目";
+"widget.finished.count.singular" = "%lld 个项目";
+"widget.finished.count.plural" = "%lld 个项目";
+
+/* Finished Projects widget — gallery metadata */
+"widget.finished.displayName" = "完成项目";
+"widget.finished.description" = "一览您已完成的编织与钩织作品。";
