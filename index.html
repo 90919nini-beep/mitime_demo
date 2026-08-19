@@ -13661,7 +13661,7 @@ function DashboardPage({projects,yarnLib,patterns,myPartyIds,setMyPartyIds,joine
           onLeave={async()=>{
             const entry=joinedParties.find(j=>j.partyId===dashDetail.id);
             if(!entry)return;
-            if(sb&&entry.signupId){try{await sb.from("party_signups").delete().eq("id",entry.signupId);}catch{}}
+            if(sb&&entry.signupId){try{const cs=getSignupCancelSecret(entry.signupId);if(cs)await sb.rpc("party_signup_cancel",{p_signup_id:entry.signupId,p_secret:cs});}catch{}}
             cancelPartyReminder(entry.signupId);
             setJoinedParties(j=>j.filter(j=>j.partyId!==dashDetail.id));
             setDashDetail(null);
@@ -17782,6 +17782,34 @@ function LocationInput({value,onChange,locationData,onLocationData,inputStyle}){
   );
 }
 
+// Party edit/cancel capability secrets -- kept in their own small local
+// stores, separate from myPartyIds/joinedParties (which stay plain id
+// lists so none of their many read sites need to change shape). Each
+// secret is handed back once, in the INSERT response of the row it
+// belongs to (see CreatePartyModal.submit / JoinPartyModal.confirm below),
+// and is required by the party_edit/party_delete/party_signup_cancel
+// RPCs -- see the parties_close_unrestricted_anon_write_access migration.
+function savePartyEditSecret(partyId,secret){
+  try{
+    const m=JSON.parse(localStorage.getItem("sc_party_edit_secrets")||"{}");
+    m[partyId]=secret;
+    localStorage.setItem("sc_party_edit_secrets",JSON.stringify(m));
+  }catch{}
+}
+function getPartyEditSecret(partyId){
+  try{return JSON.parse(localStorage.getItem("sc_party_edit_secrets")||"{}")[partyId]||null;}catch{return null;}
+}
+function saveSignupCancelSecret(signupId,secret){
+  try{
+    const m=JSON.parse(localStorage.getItem("sc_signup_cancel_secrets")||"{}");
+    m[signupId]=secret;
+    localStorage.setItem("sc_signup_cancel_secrets",JSON.stringify(m));
+  }catch{}
+}
+function getSignupCancelSecret(signupId){
+  try{return JSON.parse(localStorage.getItem("sc_signup_cancel_secrets")||"{}")[signupId]||null;}catch{return null;}
+}
+
 function CreatePartyModal({onClose,onCreated,settings}){
   useBodyScrollLock();
   const{t}=useLang();
@@ -17802,28 +17830,32 @@ function CreatePartyModal({onClose,onCreated,settings}){
     setLoading(true);setError("");
     try{
       const profileImg=await getProfileImage(settings);
-      const{data,error:err}=await sb.from("parties").insert({
-        host_name:settings?.profileName||"Anonymous",
-        host_country:settings?.profileCountry||null,
-        host_bio:settings?.profileBio||null,
-        host_photo:profileImg,
-        host_city:locationData?.city||null,
-        title:form.title.trim(),
-        description:form.description.trim()||null,
-        date:form.date||null,
-        time:form.time||null,
-        location:form.location.trim()||null,
-        craft_type:form.craft_type,
-        max_attendees:form.max_attendees?parseInt(form.max_attendees):null,
-        is_public:form.is_public,
-        latitude:locationData?.latitude||null,
-        longitude:locationData?.longitude||null,
-        place_name:form.place_name.trim()||locationData?.place_name||null,
-        formatted_address:locationData?.formatted_address||null,
-        icon:form.icon||null,
-        icon_color:form.icon?form.icon_color:null,
-      }).select().single();
+      // party_create (not a direct insert): the party's edit-capability
+      // secret is only ever handed back here, once, by this RPC -- see
+      // parties_route_creation_through_secret_returning_rpc.
+      const{data,error:err}=await sb.rpc("party_create",{
+        p_host_name:settings?.profileName||"Anonymous",
+        p_host_country:settings?.profileCountry||null,
+        p_host_bio:settings?.profileBio||null,
+        p_host_photo:profileImg,
+        p_host_city:locationData?.city||null,
+        p_title:form.title.trim(),
+        p_description:form.description.trim()||null,
+        p_date:form.date||null,
+        p_time:form.time||null,
+        p_location:form.location.trim()||null,
+        p_craft_type:form.craft_type,
+        p_max_attendees:form.max_attendees?parseInt(form.max_attendees):null,
+        p_is_public:form.is_public,
+        p_latitude:locationData?.latitude||null,
+        p_longitude:locationData?.longitude||null,
+        p_place_name:form.place_name.trim()||locationData?.place_name||null,
+        p_formatted_address:locationData?.formatted_address||null,
+        p_icon:form.icon||null,
+        p_icon_color:form.icon?form.icon_color:null,
+      }).single();
       if(err)throw err;
+      savePartyEditSecret(data.id,data.edit_secret);
       onCreated(data.id);
       setCreatedCode(data.id);
     }catch(e){setError(e.message||"Error creating party.");}
@@ -17957,11 +17989,15 @@ function JoinPartyModal({onClose,onJoined,settings,initialParty=null}){
     setLoading(true);setError("");
     try{
       const profileImg=await getProfileImage(settings);
-      const{data,error:err}=await sb.from("party_signups").insert({
-        party_id:party.id,attendee_name:name.trim(),attendee_country:country||null,
-        attendee_bio:settings?.profileBio||null,attendee_photo:profileImg,
-      }).select().single();
+      // party_signup_create (not a direct insert): the signup's own
+      // cancel-capability secret is only ever handed back here, once --
+      // see parties_route_creation_through_secret_returning_rpc.
+      const{data,error:err}=await sb.rpc("party_signup_create",{
+        p_party_id:party.id,p_attendee_name:name.trim(),p_attendee_country:country||null,
+        p_attendee_bio:settings?.profileBio||null,p_attendee_photo:profileImg,
+      }).single();
       if(err){console.error("party_signups insert error:",JSON.stringify(err));throw err;}
+      saveSignupCancelSecret(data.id,data.cancel_secret);
       onJoined({partyId:party.id,signupId:data.id});
       schedulePartyReminder(party,data.id);
       setStep("done");
@@ -18077,7 +18113,8 @@ function ManagePartyModal({partyId,onClose,onDeleted,settings}){
           // auto-sync host_photo to current profile image mode
           const freshImg=await getProfileImage(settings);
           if(freshImg!==p.host_photo){
-            await sb.from("parties").update({host_photo:freshImg}).eq("id",partyId);
+            const secret=getPartyEditSecret(partyId);
+            if(secret){await sb.rpc("party_set_host_photo",{p_id:partyId,p_secret:secret,p_host_photo:freshImg});}
             p.host_photo=freshImg;
           }
         }
@@ -18095,21 +18132,24 @@ function ManagePartyModal({partyId,onClose,onDeleted,settings}){
     setSaving(true);setError("");setSaveMsg("");
     try{
       const profileImg=await getProfileImage(settings);
-      const{error:err}=await sb.from("parties").update({
-        title:editForm.title.trim(),description:editForm.description.trim()||null,
-        date:editForm.date||null,time:editForm.time||null,
-        location:editForm.location.trim()||null,craft_type:editForm.craft_type,
-        max_attendees:editForm.max_attendees?parseInt(editForm.max_attendees):null,
-        is_public:editForm.is_public,
-        latitude:editLocationData?.latitude||null,
-        longitude:editLocationData?.longitude||null,
-        place_name:editForm.place_name?.trim()||editLocationData?.place_name||null,
-        formatted_address:editLocationData?.formatted_address||null,
-        host_city:editLocationData?.city||null,
-        host_photo:profileImg,
-        icon:editForm.icon||null,
-        icon_color:editForm.icon?editForm.icon_color:null,
-      }).eq("id",partyId);
+      const secret=getPartyEditSecret(partyId);
+      if(!secret)throw new Error("Missing edit permission for this party on this device.");
+      const{error:err}=await sb.rpc("party_edit",{
+        p_id:partyId,p_secret:secret,
+        p_title:editForm.title.trim(),p_description:editForm.description.trim()||null,
+        p_date:editForm.date||null,p_time:editForm.time||null,
+        p_location:editForm.location.trim()||null,p_craft_type:editForm.craft_type,
+        p_max_attendees:editForm.max_attendees?parseInt(editForm.max_attendees):null,
+        p_is_public:editForm.is_public,
+        p_latitude:editLocationData?.latitude||null,
+        p_longitude:editLocationData?.longitude||null,
+        p_place_name:editForm.place_name?.trim()||editLocationData?.place_name||null,
+        p_formatted_address:editLocationData?.formatted_address||null,
+        p_host_city:editLocationData?.city||null,
+        p_host_photo:profileImg,
+        p_icon:editForm.icon||null,
+        p_icon_color:editForm.icon?editForm.icon_color:null,
+      });
       if(err)throw err;
       setParty(p=>({...p,...editForm,max_attendees:editForm.max_attendees?parseInt(editForm.max_attendees):null,latitude:editLocationData?.latitude||p.latitude,longitude:editLocationData?.longitude||p.longitude,place_name:editLocationData?.place_name||p.place_name,formatted_address:editLocationData?.formatted_address||p.formatted_address}));
       setSaveMsg(t.partyEditSaved);setTimeout(()=>setSaveMsg(""),2500);
@@ -18123,7 +18163,9 @@ function ManagePartyModal({partyId,onClose,onDeleted,settings}){
     try{
       const newEntry={text:annText.trim(),ts:new Date().toISOString()};
       const updated=[newEntry,...announcements];
-      const{error:err}=await sb.from("parties").update({announcement:JSON.stringify(updated)}).eq("id",partyId);
+      const secret=getPartyEditSecret(partyId);
+      if(!secret)throw new Error("Missing edit permission for this party on this device.");
+      const{error:err}=await sb.rpc("party_post_announcement",{p_id:partyId,p_secret:secret,p_announcement:JSON.stringify(updated)});
       if(err)throw err;
       setAnnouncements(updated);
       setAnnText("");
@@ -18135,7 +18177,9 @@ function ManagePartyModal({partyId,onClose,onDeleted,settings}){
   const deleteParty=async()=>{
     setDeleting(true);
     try{
-      const{error:err}=await sb.from("parties").delete().eq("id",partyId);
+      const secret=getPartyEditSecret(partyId);
+      if(!secret)throw new Error("Missing edit permission for this party on this device.");
+      const{error:err}=await sb.rpc("party_delete",{p_id:partyId,p_secret:secret});
       if(err)throw err;
       onDeleted(partyId);onClose();
     }catch(e){setError(e.message||"Error deleting.");setDeleting(false);setConfirmDelete(false);}
@@ -18801,7 +18845,7 @@ function HostPartiesPage({myPartyIds,setMyPartyIds,joinedParties,setJoinedPartie
           onLeave={joinedParties.some(j=>j.partyId===detailTarget?.id)?async()=>{
             const entry=joinedParties.find(j=>j.partyId===detailTarget.id);
             if(!entry)return;
-            if(sb&&entry.signupId){try{await sb.from("party_signups").delete().eq("id",entry.signupId);}catch{}}
+            if(sb&&entry.signupId){try{const cs=getSignupCancelSecret(entry.signupId);if(cs)await sb.rpc("party_signup_cancel",{p_signup_id:entry.signupId,p_secret:cs});}catch{}}
             cancelPartyReminder(entry.signupId);
             setJoinedParties(j=>j.filter(j=>j.partyId!==detailTarget.id));
             setDetailTarget(null);
