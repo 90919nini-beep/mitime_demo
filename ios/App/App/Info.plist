@@ -22,10 +22,27 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GID_URL_SCHEME)</string>
+			</array>
+		</dict>
+	</array>
+	<key>GIDClientID</key>
+	<string>$(GID_CLIENT_ID)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Miiitime adds craft parties you join to your calendar so you don't miss them.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Miiitime adds craft parties you join to your calendar so you don't miss them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>mitime uses your camera to photograph your finished projects and in-progress work.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Used to detect your country for nearby yarn shops and local meetups.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>mitime accesses your photo library so you can attach project photos or import a pattern image.</string>
 	<key>UILaunchStoryboardName</key>

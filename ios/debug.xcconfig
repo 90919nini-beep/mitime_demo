@@ -1,1 +1,4 @@
 CAPACITOR_DEBUG = true
+
+// Optional (skipped silently if missing) — see App/GoogleAuth.xcconfig.example.
+#include? "App/GoogleAuth.xcconfig"

@@ -1,0 +1,10 @@
+// Template for ios/App/GoogleAuth.xcconfig (gitignored, not this file).
+// Copy this to GoogleAuth.xcconfig and fill in your own Google Cloud Console
+// values — see the "Phase 1 — Google Sign In" plan doc for exactly where
+// these come from (Google Cloud Console → APIs & Services → Credentials).
+//
+// GID_CLIENT_ID is your iOS OAuth client ID, in full (the "...apps.googleusercontent.com" form).
+// GID_URL_SCHEME is the *reversed* form of that same client ID — Google Cloud
+// Console shows this directly on the iOS client's detail page.
+GID_CLIENT_ID = YOUR_IOS_CLIENT_ID.apps.googleusercontent.com
+GID_URL_SCHEME = com.googleusercontent.apps.YOUR_IOS_CLIENT_ID

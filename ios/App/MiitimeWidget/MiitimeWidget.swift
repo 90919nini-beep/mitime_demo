@@ -60,7 +60,7 @@ private struct EmptyProjectView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 
@@ -84,8 +84,8 @@ private struct SmallProjectView: View {
                     .stroke(miiBrandGradient, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 Text("\(project.progress)%")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(miiGold)
+                    .font(.system(size: 15.75, weight: .bold))
+                    .foregroundStyle(miiBlueText)
             }
             .frame(width: 56, height: 56)
 
@@ -94,7 +94,7 @@ private struct SmallProjectView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(14)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 
@@ -105,8 +105,8 @@ private struct MediumProjectView: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(project.status.uppercased())
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(miiGold)
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(miiBlueText)
                     .kerning(0.5)
 
                 Text(project.title)
@@ -132,8 +132,8 @@ private struct MediumProjectView: View {
                 if let label = project.nextRoundLabel {
                     HStack(spacing: 4) {
                         Text("widget.current.next")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(miiGold)
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundStyle(miiBlueText)
                             .kerning(0.4)
                         Text(label)
                             .font(.system(size: 12, weight: .semibold))
@@ -149,7 +149,7 @@ private struct MediumProjectView: View {
             }
         }
         .padding(14)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 

@@ -44,10 +44,30 @@ Deno.serve(async (req: Request) => {
         after: { reason },
       });
     } catch (auditErr) {
-      // The suspension already took effect (Auth Admin API isn't
-      // transactional with a Postgres insert) -- surface this distinctly
-      // so it isn't mistaken for the suspension itself having failed.
-      return jsonResponse({ ok: true, warning: `Suspended, but audit log failed: ${(auditErr as Error).message}` }, 200);
+      // The Auth Admin API isn't transactional with a Postgres insert, so
+      // this can't be a single atomic operation -- but the action must
+      // still not be left "successfully" suspended without an audit
+      // record. Compensate by reversing the ban, and report failure
+      // either way (never a 200) so the caller never treats this as
+      // having succeeded.
+      const { error: compensateErr } = await adminClient.auth.admin.updateUserById(targetUserId, {
+        ban_duration: "none",
+      });
+      if (compensateErr) {
+        return jsonResponse(
+          {
+            error:
+              `Suspend failed: audit log write failed (${(auditErr as Error).message}), and the compensating ` +
+              `un-suspend also failed (${compensateErr.message}). This account may be suspended with no audit ` +
+              `record -- manual intervention required.`,
+          },
+          500,
+        );
+      }
+      return jsonResponse(
+        { error: `Suspend failed: audit log write failed, action was rolled back: ${(auditErr as Error).message}` },
+        500,
+      );
     }
 
     return jsonResponse({ ok: true }, 200);

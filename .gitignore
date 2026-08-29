@@ -15,3 +15,6 @@ ios/App/build/
 ios/DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# Google Sign-In credentials (local only — see ios/App/GoogleAuth.xcconfig.example)
+ios/App/GoogleAuth.xcconfig

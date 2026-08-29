@@ -10,12 +10,16 @@
 		00C0D2730EF1BCEDE5AEA4D5 /* ProjectSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */; };
 		0A632EA6FA1BA7270E0FB1DC /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06084193D21686D9E70979F9 /* WidgetKit.framework */; };
 		18C5BC0493F1F054E713C307 /* MiitimeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		19BA865A97461A79A3C208F3 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81449C5EB018B5084133B29 /* AppleSignInPlugin.swift */; };
 		2676653D731DFE2246FA2663 /* FinishedProjectsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */; };
 		2B0FF6395DA04DD0B441A4D4 /* ProjectSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */; };
 		2E3AD37B39D74CC1C357AC7D /* WidgetSharedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216BFA9252A53011C86B772F /* WidgetSharedModels.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		3461E48831B734D984224E54 /* MiitimeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6028CCA05267B8590A58C414 /* MiitimeWidget.swift */; };
+		3F2D00EC7628E65614611AB5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 462C2B7DB2C403029341B71D /* GoogleSignIn */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
+		8AC5C335059800E770BC100E /* GoogleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B813233D82C2E8D589FA8FAA /* GoogleSignInPlugin.swift */; };
+		7C1E4A904718F53A83141628 /* CalendarPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1AF7DC25A2BBC4CE1F19E3 /* CalendarPlugin.swift */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -69,7 +73,7 @@
 		432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSplashViewController.swift; sourceTree = "<group>"; };
 		4E870DA03150B20A0FECE53A /* FinishedProjectsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FinishedProjectsWidget.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
-		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		504EC3041FED79650016851F /* miiitime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = miiitime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -77,8 +81,10 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		509A12BA3DFD91852DB11EED /* WidgetSyncPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSyncPlugin.swift; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		53C9A0813024F0EB00F0B920 /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
 		53D37E09A6C6B699C251CCCF /* de */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57FF5C3260AD10B286C51EBB /* th */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
+		59784DECB1B8440F8928C40A /* GoogleAuthRelease.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = GoogleAuthRelease.xcconfig; sourceTree = SOURCE_ROOT; };
 		5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRemovalPlugin.swift; sourceTree = "<group>"; };
 		5E3379D662808F09ACD7ADE5 /* hi */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5F17AE8C9F8CC5DF4AB49A21 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -91,9 +97,12 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		99A9B60A8D483002268E056B /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B4689821B0F470578B4B3D49 /* ProjectSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProjectSnapshot.swift; sourceTree = "<group>"; };
+		B813233D82C2E8D589FA8FAA /* GoogleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInPlugin.swift; sourceTree = "<group>"; };
+		9A1AF7DC25A2BBC4CE1F19E3 /* CalendarPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPlugin.swift; sourceTree = "<group>"; };
 		B9FFD02F52FED1FAB1216616 /* WidgetLocalization.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetLocalization.swift; sourceTree = "<group>"; };
 		BB1377E466DB8E7A295BF7CE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C705476B9CB8E45433A29E0C /* MiitimeWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MiitimeWidget.entitlements; sourceTree = "<group>"; };
+		E81449C5EB018B5084133B29 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
 		EC1CCD30D91E4D85A494A75C /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		EE29C45E1BDFBDEAEF62A5F5 /* pt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EEF015B3DF16C52B2CB1CE90 /* zh-Hant */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -106,6 +115,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+				3F2D00EC7628E65614611AB5 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +171,7 @@
 			isa = PBXGroup;
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
+				59784DECB1B8440F8928C40A /* GoogleAuthRelease.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
 				0F9BFDE2E2953A404EC95D30 /* MiitimeWidget */,
@@ -172,7 +183,7 @@
 		504EC3051FED79650016851F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				504EC3041FED79650016851F /* App.app */,
+				504EC3041FED79650016851F /* miiitime.app */,
 				6E83F9EC6220DEE9D6784224 /* MiitimeWidget.appex */,
 			);
 			name = Products;
@@ -181,10 +192,14 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				53C9A0813024F0EB00F0B920 /* AppDebug.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				432C5013DA38A3E11D80B9F1 /* NativeSplashViewController.swift */,
 				5C9211973B9C1D35340AE4C2 /* BackgroundRemovalPlugin.swift */,
+				E81449C5EB018B5084133B29 /* AppleSignInPlugin.swift */,
+				B813233D82C2E8D589FA8FAA /* GoogleSignInPlugin.swift */,
+				9A1AF7DC25A2BBC4CE1F19E3 /* CalendarPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -201,7 +216,6 @@
 			children = (
 				216BFA9252A53011C86B772F /* WidgetSharedModels.swift */,
 			);
-			name = Shared;
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -225,9 +239,10 @@
 			name = App;
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
+				462C2B7DB2C403029341B71D /* GoogleSignIn */,
 			);
 			productName = App;
-			productReference = 504EC3041FED79650016851F /* App.app */;
+			productReference = 504EC3041FED79650016851F /* miiitime.app */;
 			productType = "com.apple.product-type.application";
 		};
 		EC8E123B343BCFD037303CCE /* MiitimeWidget */ = {
@@ -297,6 +312,7 @@
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 				5394F28B3013EFC3000D2011 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				653F65430FA2B854ECF083BF /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -341,6 +357,9 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				ECB8FFD6AD6DD75E52B73747 /* NativeSplashViewController.swift in Sources */,
 				5C7703C2F7EE587198B73156 /* BackgroundRemovalPlugin.swift in Sources */,
+				19BA865A97461A79A3C208F3 /* AppleSignInPlugin.swift in Sources */,
+				8AC5C335059800E770BC100E /* GoogleSignInPlugin.swift in Sources */,
+				7C1E4A904718F53A83141628 /* CalendarPlugin.swift in Sources */,
 				2E3AD37B39D74CC1C357AC7D /* WidgetSharedModels.swift in Sources */,
 				C4BDCF8354B4F605F0D599AD /* WidgetSyncPlugin.swift in Sources */,
 				00C0D2730EF1BCEDE5AEA4D5 /* ProjectSnapshot.swift in Sources */,
@@ -447,7 +466,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 22429V6CQ9;
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -511,7 +530,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 22429V6CQ9;
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -538,11 +557,11 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/AppDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 22429V6CQ9;
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = mitime;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
@@ -553,8 +572,8 @@
 				);
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.ios;
+				PRODUCT_NAME = miiitime;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
@@ -564,13 +583,14 @@
 		};
 		504EC3181FED79650016851F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 59784DECB1B8440F8928C40A /* GoogleAuthRelease.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = mitime;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
@@ -580,8 +600,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.ios;
+				PRODUCT_NAME = miiitime;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
@@ -596,12 +616,12 @@
 				CODE_SIGN_ENTITLEMENTS = MiitimeWidget/MiitimeWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 22429V6CQ9;
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MiitimeWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.MiitimeWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.ios.MiitimeWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -618,12 +638,12 @@
 				CODE_SIGN_ENTITLEMENTS = MiitimeWidget/MiitimeWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 22429V6CQ9;
+				DEVELOPMENT_TEAM = GNJWSMK424;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MiitimeWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.MiitimeWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miiitime.app.ios.MiitimeWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -680,6 +700,14 @@
 				minimumVersion = 1.2.1;
 			};
 		};
+		653F65430FA2B854ECF083BF /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -687,6 +715,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
+		};
+		462C2B7DB2C403029341B71D /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 653F65430FA2B854ECF083BF /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

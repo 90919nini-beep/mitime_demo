@@ -3,7 +3,7 @@ import Foundation
 /// Shared between the App target (writes) and the MiitimeWidget extension
 /// target (reads) — this file has target membership in both.
 enum WidgetAppGroup {
-    static let id = "group.com.miiitime.app"
+    static let id = "group.com.miiitime.app.shared"
     static let thumbsDirectoryName = "WidgetThumbs"
     static let currentProjectKey = "currentProjectSnapshot"
     static let finishedProjectsManifestKey = "finishedProjectsManifest"

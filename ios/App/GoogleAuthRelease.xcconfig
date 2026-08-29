@@ -1,0 +1,7 @@
+// Release counterpart to how ios/debug.xcconfig picks up GoogleAuth.xcconfig
+// for Debug — Release had no baseConfigurationReference at all before this,
+// so this file exists purely to carry the same optional include over to it.
+// "#include?" (vs "#include") is Xcode's syntax for "skip silently if the
+// file doesn't exist" — Google sign-in just won't be configured until
+// GoogleAuth.xcconfig (gitignored, see GoogleAuth.xcconfig.example) exists.
+#include? "GoogleAuth.xcconfig"

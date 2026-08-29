@@ -25,7 +25,28 @@ Deno.serve(async (req: Request) => {
         target_id: targetUserId,
       });
     } catch (auditErr) {
-      return jsonResponse({ ok: true, warning: `Restored, but audit log failed: ${(auditErr as Error).message}` }, 200);
+      // Same reasoning as admin-suspend-user: compensate by re-applying
+      // the ban rather than leaving a "successful" restore with no audit
+      // record, and never return a 200 in that case.
+      const BAN_DURATION = "876000h";
+      const { error: compensateErr } = await adminClient.auth.admin.updateUserById(targetUserId, {
+        ban_duration: BAN_DURATION,
+      });
+      if (compensateErr) {
+        return jsonResponse(
+          {
+            error:
+              `Restore failed: audit log write failed (${(auditErr as Error).message}), and the compensating ` +
+              `re-suspend also failed (${compensateErr.message}). This account may be restored with no audit ` +
+              `record -- manual intervention required.`,
+          },
+          500,
+        );
+      }
+      return jsonResponse(
+        { error: `Restore failed: audit log write failed, action was rolled back: ${(auditErr as Error).message}` },
+        500,
+      );
     }
 
     return jsonResponse({ ok: true }, 200);

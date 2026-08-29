@@ -70,7 +70,7 @@ private struct EmptyFinishedView: View {
         VStack(spacing: 6) {
             Image(systemName: "sparkles")
                 .font(.system(size: 20))
-                .foregroundStyle(miiGold)
+                .foregroundStyle(miiBlueText)
             Text("widget.finished.empty.title")
                 .font(.system(size: 12, weight: .semibold))
                 .multilineTextAlignment(.center)
@@ -82,7 +82,7 @@ private struct EmptyFinishedView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 
@@ -123,8 +123,8 @@ private struct SmallFinishedView: View {
 
         VStack(spacing: 6) {
             Text("widget.finished.header")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(miiGold)
+                .font(.system(size: 9.5, weight: .bold))
+                .foregroundStyle(miiBlueText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
@@ -144,7 +144,7 @@ private struct SmallFinishedView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(12)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 
@@ -153,32 +153,25 @@ private struct MediumFinishedView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("widget.finished.header")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(miiGold)
-                        .kerning(0.4)
-                    Text(widgetLocalizedProjectCount(entry.manifest.totalCount))
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-                Spacer(minLength: 0)
-            }
+            Text("widget.finished.header")
+                .font(.system(size: 10.5, weight: .bold))
+                .foregroundStyle(miiBlueText)
+                .kerning(0.4)
+                .offset(x: 10)
 
             Spacer(minLength: 0)
 
             HStack(spacing: 10) {
                 ForEach(0..<4, id: \.self) { index in
                     let item = index < entry.manifest.items.count ? entry.manifest.items[index] : nil
-                    StickerTile(entry: entry, item: item, size: 56)
-                        .frame(maxWidth: .infinity)
+                    StickerTile(entry: entry, item: item, size: 74)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .opacity(item == nil ? 0.35 : 1)
                 }
             }
         }
         .padding(14)
-        .widgetBackground(Color(uiColor: .systemBackground))
+        .widgetCardBackground()
     }
 }
 

@@ -1,6 +1,7 @@
 import UIKit
 import Capacitor
 import WebKit
+import GoogleSignIn
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -28,6 +29,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         guard let window = window else { return true }
 
+        // GID_CLIENT_ID is injected into Info.plist at build time from the
+        // (gitignored) ios/App/GoogleAuth.xcconfig — see GoogleAuth.xcconfig.example
+        // for the expected shape. Missing/empty just means Google sign-in isn't
+        // configured yet on this machine; GoogleSignInPlugin's own calls will
+        // fail with a clear error rather than this crashing anything.
+        if let clientID = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String, !clientID.isEmpty {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        } else {
+            print("[GoogleSignIn] GIDClientID missing from Info.plist — see ios/App/GoogleAuth.xcconfig.example to configure it.")
+        }
+
         // Start loading the web app now, off-screen, so it has time to finish
         // booting before it's actually shown. The frame must be set to the real
         // screen size *before* loadViewIfNeeded(), otherwise the WebView lays out
@@ -46,6 +58,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             // regenerated on every `cap sync`) since this is a local, non-npm plugin.
             capBridgeVC.bridge?.registerPluginInstance(BackgroundRemovalPlugin())
             capBridgeVC.bridge?.registerPluginInstance(WidgetSyncPlugin())
+            capBridgeVC.bridge?.registerPluginInstance(AppleSignInPlugin())
+            capBridgeVC.bridge?.registerPluginInstance(GoogleSignInPlugin())
+            capBridgeVC.bridge?.registerPluginInstance(CalendarPlugin())
         }
 
         let splash = NativeSplashViewController()
@@ -111,7 +126,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    // Required by @capacitor/push-notifications (see its README's iOS section) —
+    // without these two, PushNotifications.register() would call through to
+    // UIKit correctly, but the resulting APNs token (or failure) would never
+    // reach the plugin, so its 'registration'/'registrationError' JS events
+    // would simply never fire.
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        // GIDSignIn needs first look at any incoming URL matching its reversed-
+        // client-id scheme (standard part of GoogleSignIn-iOS's setup, even for
+        // the native/non-browser sign-in flow this app otherwise uses) — it
+        // returns false for anything that isn't its own callback, so this falls
+        // through to Capacitor's own handling exactly as before otherwise.
+        if GIDSignIn.sharedInstance.handle(url) {
+            return true
+        }
         // Called when the app was launched with a url. Feel free to add additional processing here,
         // but if you want the App API to support tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
