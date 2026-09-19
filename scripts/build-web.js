@@ -18,6 +18,12 @@ const filesToCopy = [
   "logo icon/Sec_logo_nobg.png",
   "logo icon/primary_logo.svg",
   "logo icon/yarn.png",
+  "empty_projects_folder.png",
+  "empty_patterns.png",
+  "empty_yarn.png",
+  "empty_tools.png",
+  "empty_parties_nearby.png",
+  "empty_parties_host.png",
 ];
 
 const dirsToCopy = ["avatar"];
