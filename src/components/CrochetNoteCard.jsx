@@ -138,23 +138,63 @@ function KnitGridFull({ grid = DEFAULT_GRID }) {
   );
 }
 
-// Mini thumbnail preview of the grid
+// Mini thumbnail preview of the grid — the whole pattern is rendered at its
+// native cell size, then scaled down by one uniform factor to fit the box.
+// Never crop, never stretch width/height independently: aspect ratio, relative
+// stitch positions, spacing, and stitch proportions all stay exactly as authored.
+const KNIT_THUMB_BOX_W = 100;
+const KNIT_THUMB_BOX_H = 56;
+const KNIT_THUMB_CELL = 6;
+const KNIT_THUMB_GAP = 1;
+
 function KnitGridThumb({ grid = DEFAULT_GRID }) {
-  const cols = grid[0]?.length ?? 0;
   const rows = grid.length;
-  const cell = 6;
+  const cols = grid[0]?.length ?? 0;
+  if (!rows || !cols) return null;
+
+  const naturalW = cols * KNIT_THUMB_CELL + (cols - 1) * KNIT_THUMB_GAP;
+  const naturalH = rows * KNIT_THUMB_CELL + (rows - 1) * KNIT_THUMB_GAP;
+  const scale = Math.min(KNIT_THUMB_BOX_W / naturalW, KNIT_THUMB_BOX_H / naturalH);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-      {grid.slice(0, Math.min(rows, 8)).map((row, r) => (
-        <div key={r} style={{ display: "flex", gap: "1px" }}>
-          {row.slice(0, Math.min(cols, 12)).map((color, c) => (
-            <div
-              key={c}
-              style={{ width: cell, height: cell, backgroundColor: color, borderRadius: "1px" }}
-            />
-          ))}
-        </div>
-      ))}
+    <div
+      style={{
+        width: KNIT_THUMB_BOX_W,
+        height: KNIT_THUMB_BOX_H,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: KNIT_THUMB_GAP,
+          width: naturalW,
+          height: naturalH,
+          flexShrink: 0,
+          transform: `scale(${scale})`,
+        }}
+      >
+        {grid.map((row, r) => (
+          <div key={r} style={{ display: "flex", gap: KNIT_THUMB_GAP, flexShrink: 0 }}>
+            {row.map((color, c) => (
+              <div
+                key={c}
+                style={{
+                  width: KNIT_THUMB_CELL,
+                  height: KNIT_THUMB_CELL,
+                  backgroundColor: color,
+                  borderRadius: "1px",
+                  flexShrink: 0,
+                }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

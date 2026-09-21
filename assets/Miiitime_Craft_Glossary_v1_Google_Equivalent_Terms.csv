@@ -1,0 +1,86 @@
+﻿en,fr,ja,zh-TW,ko,es,de,th,pt-BR,hi
+stitch,maille,編み目,針目,코,punto,Masche,ห่วง,ponto,फंदा
+stitches,mailles,編み目,針目,코,puntos,Maschen,ห่วง,pontos,फंदे
+row,rang,段,行,단,fila,Reihe,แถว,carreira,पंक्ति
+round,tour,段 / 周,圈,단 / 원,vuelta,Runde,รอบ,volta / carreira,राउंड
+repeat,répéter,繰り返す,重複,반복,repetir,wiederholen,ทำซ้ำ,repetir,दोहराना
+skip,sauter,飛ばす,跳過,건너뛰다,saltar,überspringen,ข้าม,pular,छोड़ना
+join,joindre,つなぐ,連接,연결하다,unir,verbinden,เชื่อม,unir,जोड़ना
+turn,tourner,編み地を返す,翻面,뒤집다,girar,wenden,พลิกงาน,virar,पलटना
+increase,augmentation,増し目,加針,늘리기,aumento,Zunahme,เพิ่มห่วง,aumento,늘리기 / बढ़ाना
+decrease,diminution,減らし目,減針,줄이기,disminución,Abnahme,ลดห่วง,diminuição,घटाना
+repeat across,répéter jusqu'à la fin,端まで繰り返す,重複至行末,끝까지 반복,repetir hasta el final,bis zum Ende wiederholen,ทำซ้ำจนจบแถว,repetir até o fim,अंत तक दोहराएँ
+in each stitch,dans chaque maille,各目に,每一針,각 코마다,en cada punto,in jede Masche,ในทุกห่วง,em cada ponto,हर फंदे में
+next stitch,maille suivante,次の目,下一針,다음 코,siguiente punto,nächste Masche,ห่วงถัดไป,próximo ponto,अगला फंदा
+space,espace,スペース / 空間,空間,공간,espacio,Zwischenraum,ช่อง,espaço,जगह
+gauge,échantillon / tension,ゲージ,密度,게이지,muestra / tensión,Maschenprobe,ความถี่ของห่วง,amostra / tensão,गेज
+swatch,échantillon,編み地見本,試織片,스와치,muestra,Maschenprobe,ชิ้นตัวอย่าง,amostra,स्वैच / नमूना
+right side,endroit,表側,正面,겉면,derecho,Vorderseite,ด้านถูก,lado direito,सामने की ओर
+wrong side,envers,裏側,反面,안쪽면,revés,Rückseite,ด้านผิด,lado avesso,पीछे की ओर
+edge,bord,端 / 縁,邊緣,가장자리,borde,Rand,ขอบ,borda,किनारा
+center,centre,中心,中心,중앙,centro,Mitte,ตรงกลาง,centro,केंद्र
+beginning,début,編み始め,開始,시작,comienzo,Anfang,จุดเริ่มต้น,início,शुरुआत
+end,fin,終わり,結尾,끝,final,Ende,จบ,fim,अंत
+yarn,fil,糸,毛線,실,hilo,Garn,ไหมพรม,fio,यार्न / ऊन
+yarn weight,grosseur de fil,糸の太さ,毛線粗細,실 굵기,grosor del hilo,Garnstärke,ขนาดเส้นไหมพรม,espessura do fio,यार्न की मोटाई
+fiber,fibre,繊維,纖維,섬유,fibra,Faser,เส้นใย,fibra,फाइबर
+needle size,taille d'aiguille,針のサイズ,針號,바늘 호수,tamaño de aguja,Nadelstärke,ขนาดเข็ม,tamanho da agulha,सुई का आकार
+tapestry needle,aiguille à laine,とじ針,毛線針,돗바늘,aguja lanera,Wollnadel,เข็มเย็บไหมพรม,agulha de tapeçaria,टेपेस्ट्री सुई
+stitch marker,marqueur de maille,目数リング / マーカー,記號圈,단수링 / 마커,marcador de puntos,Maschenmarkierer,ที่ทำเครื่องหมายห่วง,marcador de pontos,स्टिच मार्कर
+pattern,patron,編み図 / パターン,編織圖 / 說明,도안,patrón,Anleitung,แพตเทิร์น,receita / padrão,पैटर्न
+finished measurements,mesures finales,仕上がり寸法,完成尺寸,완성 치수,medidas finales,Fertigmaße,ขนาดสำเร็จ,medidas finais,तैयार माप
+width,largeur,幅,寬度,너비,ancho,Breite,ความกว้าง,largura,चौड़ाई
+length,longueur,長さ,長度,길이,largo,Länge,ความยาว,comprimento,लंबाई
+working yarn,fil de travail,編み糸,工作線,작업 실,hilo de trabajo,Arbeitsfaden,เส้นไหมที่กำลังใช้,fio de trabalho,काम करने वाला धागा
+tail,brin / bout de fil,糸端,線尾,실 꼬리,hebra sobrante,Fadenende,ปลายไหม,ponta do fio,धागे का सिरा
+fasten off,arrêter le fil,糸を切って始末する,收線,마무리,rematar,Faden abschneiden / abketten,ปิดงาน,arrematar,धागा बंद करना
+chain stitch,maille en l'air,鎖編み,鎖針,사슬뜨기,cadeneta,Luftmasche,โซ่,correntinha,चेन
+slip stitch,maille coulée,引き抜き編み,引拔針,빼뜨기,punto raso,Kettmasche,เลื่อนห่วง,ponto baixíssimo,स्लिप स्टिच
+single crochet,maille serrée,細編み,短針,짧은뜨기,punto bajo,feste Masche,ควักธรรมดา,ponto baixo,सिंगल क्रोशे
+half double crochet,demi-bride,中長編み,中長針,긴뜨기,medio punto alto,halbes Stäbchen,ครึ่งพ1ค,meio ponto alto,हाफ डबल क्रोशे
+double crochet,bride,長編み,長針,한길긴뜨기,punto alto,Stäbchen,พ1ค,ponto alto,डबल क्रोशे
+treble crochet,double bride,長々編み,長長針,두길긴뜨기,punto alto doble,Doppelstäbchen,พ2ค,ponto alto duplo,ट्रेबल क्रोशे
+double treble crochet,triple bride,長々々編み,長長長針,세길긴뜨기,punto alto triple,Dreifachstäbchen,พ3ค,ponto alto triplo,डबल ट्रेबल क्रोशे
+magic ring,cercle magique,マジックリング,魔法環 / 環形起針,매직링,anillo mágico,magischer Ring,ห่วงวงแหวนมหัศจรรย์,anel mágico,मैजिक रिंग
+front loop only,brin avant uniquement,前側のループのみ,只鉤前半針,앞고리만,solo hebra delantera,nur vorderes Maschenglied,เฉพาะห่วงด้านหน้า,somente alça da frente,केवल आगे का लूप
+back loop only,brin arrière uniquement,後ろ側のループのみ,只鉤後半針,뒷고리만,solo hebra trasera,nur hinteres Maschenglied,เฉพาะห่วงด้านหลัง,somente alça de trás,केवल पीछे का लूप
+front post,bride avant / relief avant,表引き上げ編み,前柱針,앞걸어뜨기,punto alto en relieve por delante,vorderes Reliefstäbchen,ถักเกาะด้านหน้า,ponto alto em relevo pela frente,फ्रंट पोस्ट
+back post,bride arrière / relief arrière,裏引き上げ編み,後柱針,뒤걸어뜨기,punto alto en relieve por detrás,hinteres Reliefstäbchen,ถักเกาะด้านหลัง,ponto alto em relevo por trás,बैक पोस्ट
+foundation chain,chaînette de base,作り目の鎖,起始鎖,기초 사슬,cadena base,Luftmaschenkette,โซ่ฐาน,correntinha inicial,फाउंडेशन चेन
+turning chain,maille en l'air de montée,立ち上がりの鎖編み,起立針,기둥코,cadena de subida,Wendeluftmasche,โซ่ขึ้นต้น,correntinha de subida,टर्निंग चेन
+working in the round,travailler en rond,輪編み,環狀編織,원형으로 뜨기,tejer en redondo,in Runden häkeln,ถักเป็นวงกลม,trabalhar em carreiras circulares,गोल में काम करना
+weave in ends,rentrer les fils,糸始末,藏線,실 정리하기,esconder las hebras,Fäden vernähen,เก็บปลายไหม,esconder as pontas,धागों के सिरों को छिपाना
+chain space,espace de mailles en l'air,鎖編みスペース,鎖針空間,사슬 공간,espacio de cadeneta,Luftmaschenraum,ช่องโซ่,espaço de correntinhas,चेन स्पेस
+repeat around,répéter tout autour,一周繰り返す,繞圈重複,한 바퀴 반복,repetir alrededor,rundherum wiederholen,ทำซ้ำรอบวง,repetir ao redor,पूरे राउंड में दोहराएँ
+extended single crochet,maille serrée allongée,ロング細編み,延長短針,긴짧은뜨기,punto bajo extendido,verlängerte feste Masche,ควักธรรมดายาว,ponto baixo estendido,एक्सटेंडेड सिंगल क्रोशे
+extended double crochet,bride allongée,ロング長編み,延長長針,긴한길긴뜨기,punto alto extendido,verlängertes Stäbchen,พ1คแบบยาว,ponto alto estendido,एक्सटेंडेड डबल क्रोशे
+knit stitch,maille endroit,表編み,下針,겉뜨기,punto derecho,rechte Masche,นิต,ponto meia,นิต / knit
+purl stitch,maille envers,裏編み,上針,안뜨기,punto revés,linke Masche,เพิร์ล,ponto tricô,พาร์ล / purl
+garter stitch,point mousse,ガーター編み,一行下針一行上針 / 搓板針,가터뜨기,punto bobo,kraus rechts,ลายการ์เตอร์,ponto tricô,การ์เตอร์สติทช์
+stockinette stitch,jersey endroit,メリヤス編み,平針 / 平織,메리야스뜨기,punto jersey,glatt rechts,ลายสต็อกกิ้ง,ponto meia,สต็อกกิ้งเน็ต
+reverse stockinette stitch,jersey envers,裏メリヤス編み,反面平針,메리야스 안뜨기,punto jersey del revés,glatt links,ลายสต็อกกิ้งกลับด้าน,ponto tricô do avesso,รีเวิร์ส สต็อกกิ้ง
+ribbing,côtes,ゴム編み,羅紋編,고무뜨기,elástico,Rippenmuster,ลายริบ,ponto canelado,ริบ
+seed stitch,point de riz,鹿の子編み,米粒針,멍석뜨기,punto arroz,Perlmuster,ลายเมล็ดข้าว,ponto arroz,ซีดสติทช์
+moss stitch,point de riz double,鹿の子編み（英式）,苔蘚針,고무단 변형 / 모스뜨기,punto musgo,Moosmuster,ลายมอส,ponto musgo,มอสสติทช์
+cast on,monter les mailles,作り目,起針,코잡기,montar puntos,Maschen anschlagen,ขึ้นห่วง,montar pontos,फंदे डालना
+long-tail cast on,montage à longue queue,指でかける作り目,長尾起針,롱테일 코잡기,montaje con hebra larga,Kreuzanschlag,ขึ้นห่วงแบบหางยาว,montagem com cauda longa,लॉन्ग-टेल कास्ट-ऑन
+bind off,rabattre les mailles,伏せ止め,收針,코막음,cerrar puntos,Maschen abketten,ปิดห่วง,arrematar pontos,फंदे बंद करना
+yarn over,jeté,かけ目,掛針,바늘비우기,lazada,Umschlag,พันไหม,laçada,धागा लपेटना
+knit two together,tricoter deux mailles ensemble à l'endroit,表編み2目一度,下針二針合一,겉뜨기 2코 모아뜨기,tejer dos puntos juntos del derecho,zwei Maschen rechts zusammenstricken,นิตสองห่วงพร้อมกัน,tricotar dois pontos juntos,दो फंदे साथ बुनना
+slip slip knit,glisser glisser tricoter,すべり目2目＋表編み1目,滑針滑針下針合一,겉뜨기 2코 빼서 모아뜨기,"deslizar, deslizar, tejer",zwei Maschen abheben und rechts zusammenstricken,เลื่อนสองห่วงแล้วนิตรวม,"deslizar, deslizar, tricotar",स्लिप स्लिप निट
+make one left,augmentation intercalaire gauche,左上1目増し,左加針,왼코 늘리기,aumento hacia la izquierda,Zunahme nach links,เพิ่มห่วงเอียงซ้าย,aumento à esquerda,बाएँ की ओर बढ़ाना
+make one right,augmentation intercalaire droite,右上1目増し,右加針,오른코 늘리기,aumento hacia la derecha,Zunahme nach rechts,เพิ่มห่วงเอียงขวา,aumento à direita,दाएँ की ओर बढ़ाना
+knit front and back,tricoter devant et derrière,表裏1目から2目編み出す,一針前後挑針,한 코 앞뒤로 늘리기,tejer por delante y por detrás,eine Masche rechts und links abstricken,นิตหน้าและหลังของห่วงเดียว,tricotar pela frente e por trás,एक फंदे के आगे और पीछे बुनना
+knit through back loop,tricoter dans le brin arrière,ねじり目,挑後半針,꼬아뜨기,tejer por la hebra trasera,durch das hintere Maschenglied stricken,นิตห่วงด้านหลัง,tricotar pela alça de trás,पीछे के लूप में बुनना
+purl through back loop,tricoter à l'envers dans le brin arrière,裏編みねじり目,反針挑後半針,안뜨기 꼬아뜨기,tejer del revés por la hebra trasera,durch das hintere Maschenglied links stricken,เพิร์ลห่วงด้านหลัง,tricotar em meia pelo fio de trás,पीछे के लूप में पर्ल
+slip stitch knitwise,glisser une maille à l'endroit,表目のようにすべり目,以下針方式滑針,겉뜨기처럼 걸러뜨기,deslizar un punto como si fuera del derecho,eine Masche rechts abheben,เลื่อนห่วงแบบนิต,deslizar como se fosse meia,निट की तरह स्लिप करना
+slip stitch purlwise,glisser une maille à l'envers,裏目のようにすべり目,以上針方式滑針,안뜨기처럼 걸러뜨기,deslizar un punto como si fuera del revés,eine Masche links abheben,เลื่อนห่วงแบบเพิร์ล,deslizar como se fosse tricô,पर्ल की तरह स्लिप करना
+short rows,rangs raccourcis,引き返し編み,短行編織,단축뜨기,vueltas cortas,verkürzte Reihen,แถวสั้น,carreiras encurtadas,शॉर्ट रो
+wrap and turn,enrouler et tourner,ラップ＆ターン,繞線翻面,감아 돌려뜨기,envolver y girar,Wickeln und Wenden,พันไหมแล้วพลิก,envolver e virar,रैप एंड टर्न
+straight knitting needle,aiguille à tricoter droite,棒針,直棒針,대바늘,aguja recta,Stricknadel,ไม้นิตตรง,agulha reta,सीधी बुनाई सुई
+circular needle,aiguille circulaire,輪針,環形針,줄바늘,aguja circular,Rundstricknadel,ไม้นิตวงกลม,agulha circular,सर्कुलर नीडल
+double-pointed needles,aiguilles à double pointe,輪針 / 5本針,雙頭針,장갑바늘 / 줄바늘,agujas de doble punta,Nadelspiel,ไม้นิตสองปลาย,agulhas de duas pontas,डबल-पॉइंटेड नीडल्स
+interchangeable needles,aiguilles interchangeables,付け替え式輪針,可換式環針,교체형 줄바늘,agujas intercambiables,Wechselstricknadeln,ไม้นิตเปลี่ยนได้,agulhas intercambiáveis,इंटरचेंजेबल नीडल्स
+cable needle,aiguille à torsades,なわ編み針,麻花針,케이블 바늘,aguja auxiliar para trenzas,Zopfnadel,ไม้นิตเคเบิล,agulha para tranças,केबल नीडल
+stitch holder,porte-mailles,目休め,針休,코걸이,sujeta puntos,Maschenhalter,ที่พักห่วง,porta-pontos,स्टिच होल्डर
+live stitches,mailles en attente,生きた目,活針,살아있는 코,puntos vivos,aktive Maschen,ห่วงที่ยังใช้งาน,pontos vivos,लाइव स्टिच
