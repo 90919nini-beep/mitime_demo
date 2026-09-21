@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["GNJWSMK424.com.miiitime.app.ios"],
+        "components": [
+          { "/": "/p/*", "comment": "Shared Patterns: https://miiitime.com/p/{uuid}" }
+        ]
+      }
+    ]
+  }
+}

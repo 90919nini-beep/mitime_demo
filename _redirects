@@ -1,0 +1,5 @@
+# Shared Pattern links (https://miiitime.com/p/{uuid}) are the same single-page
+# app as "/": serve index.html and let the app read the id from the URL.
+# Deliberately scoped to /p/* only -- not a catch-all -- so it can't shadow
+# /.well-known/apple-app-site-association or any real asset.
+/p/*  /index.html  200
