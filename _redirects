@@ -3,3 +3,9 @@
 # Deliberately scoped to /p/* only -- not a catch-all -- so it can't shadow
 # /.well-known/apple-app-site-association or any real asset.
 /p/*  /index.html  200
+
+# Party Join links (https://miiitime.com/join/{code}) -- same reasoning as
+# /p/* above. Previously these were built on miiitime.app, a domain with no
+# DNS at all, so no Party link could ever have opened a working page; this is
+# what makes the miiitime.com version actually resolve.
+/join/*  /index.html  200

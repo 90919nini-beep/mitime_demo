@@ -4,7 +4,8 @@
       {
         "appIDs": ["GNJWSMK424.com.miiitime.app.ios"],
         "components": [
-          { "/": "/p/*", "comment": "Shared Patterns: https://miiitime.com/p/{uuid}" }
+          { "/": "/p/*", "comment": "Shared Patterns: https://miiitime.com/p/{uuid}" },
+          { "/": "/join/*", "comment": "Party Join: https://miiitime.com/join/{code}" }
         ]
       }
     ]
