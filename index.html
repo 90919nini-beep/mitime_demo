@@ -1898,7 +1898,23 @@ const PRI_COLOR={High:"#EF4444",Medium:"#F59E0B",Low:"#6B7280"};
 // "no saved value" still means "the user never picked one".
 const LANG_STORAGE_KEY="sc_lang";
 function readSavedLang(){
-  try{const v=localStorage.getItem(LANG_STORAGE_KEY);return v&&T[v]?v:null;}catch(e){return null;}
+  try{const v=localStorage.getItem(LANG_STORAGE_KEY);return v&&T[v]?v:null;}
+  catch(e){return null;}
+}
+// The phone's language, as one of the app's own languages — the starting point
+// when the user hasn't picked one. Walks the phone's preference list in order
+// and takes the first language the app has; English if none match. Never
+// written to storage (see the note above LANG_STORAGE_KEY: "no saved value"
+// has to keep meaning "never picked"), so it keeps following the phone until
+// the user chooses something themselves. Every Chinese tag maps to `zh`,
+// since Traditional is the only Chinese table there is.
+function detectDeviceLang(){
+  const tags=typeof navigator!=="undefined"?(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language]):[];
+  for(const tag of tags){
+    const base=String(tag||"").toLowerCase().split(/[-_]/)[0];
+    if(Object.prototype.hasOwnProperty.call(T,base))return base;
+  }
+  return"en";
 }
 const LANGS={en:{code:"en",flag:"EN",label:"English"},fr:{code:"fr",flag:"FR",label:"Français"},ja:{code:"ja",flag:"JA",label:"日本語"},zh:{code:"zh",flag:"ZH",label:"繁體中文"},ko:{code:"ko",flag:"KO",label:"한국어"},es:{code:"es",flag:"ES",label:"Español"},de:{code:"de",flag:"DE",label:"Deutsch"},th:{code:"th",flag:"TH",label:"ไทย"},pt:{code:"pt",flag:"PT",label:"Português"},hi:{code:"hi",flag:"HI",label:"हिन्दी"}};
 const PATTERN_CATEGORIES=["Shawl","Hat","Sweater","Blanket","Amigurumi","Socks","Mittens","Bag","Scarf","Other"];
@@ -2063,6 +2079,65 @@ const T={
       {sec:"Batch Mode",items:["Round selector — choose which round to apply batch actions to","Select All — highlight every stitch in the chosen round","Delete — remove all selected stitches at once","Color — recolor all selected stitches to the active color","Round Spacing — adjust the radius gap between rounds"]},
       {sec:"Settings",items:["Color / Yarn — pick the active stitch color from your yarn palette or a custom color","Theme color — change the overall accent color of the maker UI","Clear all — remove every stitch and start the pattern from scratch"]},
     ],
+    obSkip:"Skip",
+    obContinue:"Continue",
+    obLetsGo:"Let's go",
+    obMaybeLater:"Maybe later",
+    obOptional:"Optional",
+    obDetected:"Detected from your device",
+    obYourLanguage:"Your language",
+    obLanguageSub:"Patterns, terms, the app — all in your language.",
+    obValueEyebrow:"A record of your work",
+    obValueH1:"Never lose your",
+    obValueH2:"place again.",
+    obValueSub:"Tap to count each row — miiitime remembers, even days later.",
+    obInProgress:"In progress",
+    obRowsUnit:"rows",
+    obMakeEyebrow:"Design your own",
+    obMakeH1:"Make patterns,",
+    obMakeH2:"not just follow them.",
+    obCrochetMaker:"Crochet Pattern Maker",
+    obRoundsRows:"Rounds & rows",
+    obRoundsRowsSub:"Tap a stitch, place it on the chart. Magic rings, rounds, rows — all supported.",
+    obKnitGrid:"Knit Grid Pattern",
+    obPixel:"Pixel colorwork",
+    obPixelSub:"Paint a grid, import a photo, or start from a size — yours to keep.",
+    obCols:"Cols",
+    obStepRead:"Step Read Mode",
+    obOneStep:"One step at a time",
+    obOneStepSub:"Import a written pattern, then tick off each step as you go.",
+    obSocialEyebrow:"Craft parties",
+    obSocialH1:"Stitch together,",
+    obSocialH2:"close to home.",
+    obSocialSub:"Find a meetup near you or host your own, then chat with everyone going.",
+    obLocalParties:"Local parties",
+    obMockParty1:"Sunday Stitch & Sip",
+    obMockHost:"Hosted by Mia",
+    obJoin:"Join",
+    obMockPlace1:"Riverside Café",
+    obMockTime1:"Sun · 2:00 PM",
+    obMockParty2:"Beginner Crochet Circle",
+    obMockLine2:"City Library · Sat · 11:00 AM",
+    obJoined:"Joined",
+    obNextQuestions:"Next, a few quick questions. Skip any you like.",
+    obCountryTitle:"Where are you based?",
+    obCountrySub:"So Social can show craft parties in your country. Change it anytime in Settings.",
+    obNoMatches:"No matches — try a different search.",
+    obSignInEyebrow:"Optional · do this later if you'd rather",
+    obSignInH1:"Keep your work",
+    obSignInH2:"safely in sync.",
+    obSignInSub:"Across devices. Private by default. You can do this later from settings.",
+    obRows:"Rows",
+    obRowN:"Row {n}",
+    obSkipForNow:"Skip for now",
+    obCompleted:"Completed",
+    obMockProj1:"scarf",
+    obMockProj2:"coasters",
+    obMockProj3:"shawl",
+    obGoing:"going",
+    obTerms:"By continuing you agree to our {terms}. See our {privacy} for how we handle your data.",
+    obTermsLink:"Terms of Service",
+    obPrivacyLink:"Privacy Policy",
   },
   fr:{
     appLabel:"Mes Projets",appTitle:"mitime",inProgress:"en cours",projects:"projets",
@@ -2219,6 +2294,65 @@ const T={
       {sec:"Mode groupé",items:["Sélecteur de tour — choisissez le tour cible des actions groupées","Tout sélectionner — sélectionnez toutes les mailles du tour choisi","Supprimer — retirez toutes les mailles sélectionnées d'un coup","Couleur — recolorez les mailles sélectionnées avec la couleur active","Espacement des tours — ajustez l'écart de rayon entre les tours"]},
       {sec:"Réglages",items:["Couleur / Laine — couleur active depuis votre palette de laines ou personnalisée","Couleur du thème — changez la couleur d'accent de l'interface","Tout effacer — supprimez toutes les mailles et repartez de zéro"]},
     ],
+    obSkip:"Passer",
+    obContinue:"Continuer",
+    obLetsGo:"C'est parti",
+    obMaybeLater:"Plus tard",
+    obOptional:"Facultatif",
+    obDetected:"Détectée depuis votre appareil",
+    obYourLanguage:"Votre langue",
+    obLanguageSub:"Patrons, termes, l'appli : tout dans votre langue.",
+    obValueEyebrow:"Le suivi de votre travail",
+    obValueH1:"Ne perdez plus jamais",
+    obValueH2:"votre rang.",
+    obValueSub:"Touchez pour compter chaque rang — miiitime s'en souvient, même des jours plus tard.",
+    obInProgress:"En cours",
+    obRowsUnit:"rangs",
+    obMakeEyebrow:"Créez les vôtres",
+    obMakeH1:"Créez des patrons,",
+    obMakeH2:"ne vous contentez pas de les suivre.",
+    obCrochetMaker:"Créateur de patrons crochet",
+    obRoundsRows:"Tours et rangs",
+    obRoundsRowsSub:"Touchez une maille, placez-la sur le diagramme. Cercles magiques, tours, rangs : tout est pris en charge.",
+    obKnitGrid:"Grille de tricot",
+    obPixel:"Jacquard en pixels",
+    obPixelSub:"Dessinez une grille, importez une photo ou partez d'une taille — c'est à vous.",
+    obCols:"Col.",
+    obStepRead:"Mode lecture pas à pas",
+    obOneStep:"Une étape à la fois",
+    obOneStepSub:"Importez un patron écrit, puis cochez chaque étape au fil de l'ouvrage.",
+    obSocialEyebrow:"Soirées tricot",
+    obSocialH1:"Tricotez ensemble,",
+    obSocialH2:"près de chez vous.",
+    obSocialSub:"Trouvez une rencontre près de chez vous ou organisez la vôtre, puis discutez avec tous les participants.",
+    obLocalParties:"Soirées près de chez vous",
+    obMockParty1:"Dimanche tricot & thé",
+    obMockHost:"Organisée par Mia",
+    obJoin:"Rejoindre",
+    obMockPlace1:"Café du Quai",
+    obMockTime1:"Dim · 14 h 00",
+    obMockParty2:"Cercle crochet débutants",
+    obMockLine2:"Bibliothèque municipale · Sam · 11 h 00",
+    obJoined:"Inscrit",
+    obNextQuestions:"Ensuite, quelques questions rapides. Passez celles que vous voulez.",
+    obCountryTitle:"Où vivez-vous ?",
+    obCountrySub:"Pour que Social affiche les soirées de votre pays. Modifiable à tout moment dans les Réglages.",
+    obNoMatches:"Aucun résultat — essayez une autre recherche.",
+    obSignInEyebrow:"Facultatif · à faire plus tard si vous préférez",
+    obSignInH1:"Gardez votre travail",
+    obSignInH2:"toujours synchronisé.",
+    obSignInSub:"Sur tous vos appareils. Privé par défaut. Vous pourrez le faire plus tard dans les réglages.",
+    obRows:"Rangs",
+    obRowN:"Rang {n}",
+    obSkipForNow:"Passer pour l'instant",
+    obCompleted:"Terminé",
+    obMockProj1:"écharpe",
+    obMockProj2:"dessous-de-verre",
+    obMockProj3:"châle",
+    obGoing:"participants",
+    obTerms:"En continuant, vous acceptez nos {terms}. Consultez notre {privacy} pour savoir comment nous traitons vos données.",
+    obTermsLink:"Conditions d'utilisation",
+    obPrivacyLink:"Politique de confidentialité",
   },
   ja:{
     appLabel:"マイプロジェクト",appTitle:"mitime",inProgress:"進行中",projects:"プロジェクト",
@@ -2375,6 +2509,65 @@ const T={
       {sec:"一括モード",items:["段セレクター — 一括操作の対象の段を選択","すべて選択 — 選んだ段のすべての目を選択","削除 — 選択した目を一括削除","色 — 選択した目をアクティブな色に変更","段間隔 — 段と段の半径の間隔を調整"]},
       {sec:"設定",items:["色 / 毛糸 — 毛糸パレットまたはカスタム色から選択","テーマカラー — メーカーUIのアクセント色を変更","すべて削除 — すべての目を削除して最初からやり直し"]},
     ],
+    obSkip:"スキップ",
+    obContinue:"続ける",
+    obLetsGo:"はじめる",
+    obMaybeLater:"あとで",
+    obOptional:"任意",
+    obDetected:"お使いのデバイスから検出",
+    obYourLanguage:"言語",
+    obLanguageSub:"パターンも用語もアプリも、すべてあなたの言語で。",
+    obValueEyebrow:"制作の記録",
+    obValueH1:"もう段数を",
+    obValueH2:"見失わない。",
+    obValueSub:"タップして段を数えるだけ。miiitimeが、何日後でも覚えています。",
+    obInProgress:"制作中",
+    obRowsUnit:"段",
+    obMakeEyebrow:"自分でデザイン",
+    obMakeH1:"パターンを作ろう、",
+    obMakeH2:"編むだけじゃなく。",
+    obCrochetMaker:"かぎ針パターンメーカー",
+    obRoundsRows:"輪編みと往復編み",
+    obRoundsRowsSub:"目をタップして、チャートに配置。わの作り目、輪編み、往復編みにも対応。",
+    obKnitGrid:"棒針グリッドパターン",
+    obPixel:"ピクセル配色",
+    obPixelSub:"グリッドに描く、写真を取り込む、サイズから始める。すべてあなたのもの。",
+    obCols:"列",
+    obStepRead:"ステップ閲覧モード",
+    obOneStep:"ひとつずつ進める",
+    obOneStepSub:"文章のパターンを取り込んで、進めながら各ステップにチェック。",
+    obSocialEyebrow:"編み物パーティー",
+    obSocialH1:"一緒に編もう、",
+    obSocialH2:"近くで。",
+    obSocialSub:"近くの集まりを探したり、自分で開いたり。参加者とチャットもできます。",
+    obLocalParties:"近くのパーティー",
+    obMockParty1:"日曜あみもの＆お茶会",
+    obMockHost:"主催：Mia",
+    obJoin:"参加",
+    obMockPlace1:"リバーサイドカフェ",
+    obMockTime1:"日 · 14:00",
+    obMockParty2:"かぎ針入門サークル",
+    obMockLine2:"市立図書館 · 土 · 11:00",
+    obJoined:"参加中",
+    obNextQuestions:"次に、いくつか簡単な質問です。スキップもできます。",
+    obCountryTitle:"どこにお住まいですか？",
+    obCountrySub:"お住まいの国の編み物パーティーをソーシャルに表示するためです。設定からいつでも変更できます。",
+    obNoMatches:"見つかりません。別のキーワードでお試しください。",
+    obSignInEyebrow:"任意 · あとからでもOK",
+    obSignInH1:"作品を安全に",
+    obSignInH2:"同期しよう。",
+    obSignInSub:"複数のデバイスで。初期設定は非公開。あとから設定でもできます。",
+    obRows:"段",
+    obRowN:"{n}段目",
+    obSkipForNow:"今はスキップ",
+    obCompleted:"完成",
+    obMockProj1:"マフラー",
+    obMockProj2:"コースター",
+    obMockProj3:"ショール",
+    obGoing:"人が参加",
+    obTerms:"続行すると、{terms}に同意したものとみなされます。データの取り扱いについては{privacy}をご覧ください。",
+    obTermsLink:"利用規約",
+    obPrivacyLink:"プライバシーポリシー",
   },
   zh:{
     appLabel:"我的專案",appTitle:"mitime",inProgress:"進行中",projects:"個專案",
@@ -2531,6 +2724,65 @@ const T={
       {sec:"批次模式",items:["圈選擇器 — 選擇要套用批次操作的圈","全選 — 選取該圈所有針目","刪除 — 一次移除所有選取的針目","顏色 — 將選取針目改為目前顏色","圈距 — 調整圈與圈之間的半徑間距"]},
       {sec:"設定",items:["顏色 / 毛線 — 從毛線色盤或自訂顏色選擇","主題色 — 更改編輯器介面的強調色","全部清除 — 移除所有針目並重新開始"]},
     ],
+    obSkip:"略過",
+    obContinue:"繼續",
+    obLetsGo:"開始吧",
+    obMaybeLater:"稍後再說",
+    obOptional:"選填",
+    obDetected:"依你的裝置偵測",
+    obYourLanguage:"你的語言",
+    obLanguageSub:"織圖、術語、整個 App，都用你的語言。",
+    obValueEyebrow:"你的作品紀錄",
+    obValueH1:"再也不會",
+    obValueH2:"忘記織到哪。",
+    obValueSub:"點一下就能計每一行，miiitime 會幫你記住，隔幾天再回來也一樣。",
+    obInProgress:"進行中",
+    obRowsUnit:"行",
+    obMakeEyebrow:"設計你自己的",
+    obMakeH1:"自己做織圖，",
+    obMakeH2:"不只是照著織。",
+    obCrochetMaker:"鉤針織圖製作",
+    obRoundsRows:"圈織與來回織",
+    obRoundsRowsSub:"點選針目，放到圖表上。魔術環、圈織、來回織，全都支援。",
+    obKnitGrid:"棒針方格織圖",
+    obPixel:"像素配色",
+    obPixelSub:"畫格子、匯入照片，或從尺寸開始，作品屬於你。",
+    obCols:"列",
+    obStepRead:"逐步閱讀模式",
+    obOneStep:"一次一步",
+    obOneStepSub:"匯入文字織圖，邊織邊勾選每個步驟。",
+    obSocialEyebrow:"編織聚會",
+    obSocialH1:"一起編織，",
+    obSocialH2:"就在你身邊。",
+    obSocialSub:"找找附近的聚會，或自己舉辦，再跟所有參加的人聊天。",
+    obLocalParties:"附近的聚會",
+    obMockParty1:"週日織物下午茶",
+    obMockHost:"主辦人：Mia",
+    obJoin:"加入",
+    obMockPlace1:"河岸咖啡館",
+    obMockTime1:"週日 · 下午 2:00",
+    obMockParty2:"鉤針新手圈",
+    obMockLine2:"市立圖書館 · 週六 · 上午 11:00",
+    obJoined:"已加入",
+    obNextQuestions:"接下來幾個簡單的問題，想跳過都可以。",
+    obCountryTitle:"你住在哪裡？",
+    obCountrySub:"讓「社群」顯示你所在國家的編織聚會。隨時可在設定中更改。",
+    obNoMatches:"找不到符合的結果，換個關鍵字試試。",
+    obSignInEyebrow:"選填 · 想晚點再做也可以",
+    obSignInH1:"讓你的作品",
+    obSignInH2:"安全同步。",
+    obSignInSub:"跨裝置同步，預設為私人。之後也可以在設定中進行。",
+    obRows:"行",
+    obRowN:"第 {n} 行",
+    obSkipForNow:"先略過",
+    obCompleted:"已完成",
+    obMockProj1:"圍巾",
+    obMockProj2:"杯墊",
+    obMockProj3:"披肩",
+    obGoing:"人參加",
+    obTerms:"繼續即表示你同意我們的{terms}。關於我們如何處理你的資料，請參閱{privacy}。",
+    obTermsLink:"服務條款",
+    obPrivacyLink:"隱私權政策",
   },
   ko:{
     appLabel:"내 프로젝트",appTitle:"mitime",inProgress:"진행 중",projects:"개 프로젝트",
@@ -2687,6 +2939,65 @@ const T={
       {sec:"일괄 모드",items:["단 선택기 — 일괄 작업을 적용할 단 선택","모두 선택 — 선택한 단의 모든 코 선택","삭제 — 선택한 코를 한 번에 제거","색상 — 선택한 코를 현재 색으로 변경","단 간격 — 단 사이의 반지름 간격 조절"]},
       {sec:"설정",items:["색상 / 실 — 실 팔레트 또는 사용자 지정 색상에서 선택","테마 색상 — 편집기 UI의 강조색 변경","모두 지우기 — 모든 코를 지우고 처음부터 시작"]},
     ],
+    obSkip:"건너뛰기",
+    obContinue:"계속",
+    obLetsGo:"시작하기",
+    obMaybeLater:"나중에",
+    obOptional:"선택",
+    obDetected:"기기 설정에서 감지됨",
+    obYourLanguage:"언어",
+    obLanguageSub:"도안, 용어, 앱 — 모두 내 언어로.",
+    obValueEyebrow:"나의 작업 기록",
+    obValueH1:"더 이상 단수를",
+    obValueH2:"잃어버리지 마세요.",
+    obValueSub:"탭해서 단을 세면, miiitime이 며칠 뒤에도 기억해요.",
+    obInProgress:"진행 중",
+    obRowsUnit:"단",
+    obMakeEyebrow:"직접 디자인",
+    obMakeH1:"도안을 만들어 보세요,",
+    obMakeH2:"따라 뜨기만 하지 말고.",
+    obCrochetMaker:"코바늘 도안 메이커",
+    obRoundsRows:"원형뜨기와 왕복뜨기",
+    obRoundsRowsSub:"코를 탭해서 차트에 놓으세요. 매직링, 원형, 단 뜨기 모두 지원해요.",
+    obKnitGrid:"대바늘 그리드 도안",
+    obPixel:"픽셀 배색",
+    obPixelSub:"그리드에 그리거나, 사진을 불러오거나, 크기부터 시작하세요. 모두 내 것이에요.",
+    obCols:"열",
+    obStepRead:"단계별 읽기 모드",
+    obOneStep:"한 번에 한 단계",
+    obOneStepSub:"글로 된 도안을 불러온 뒤, 진행하면서 단계마다 체크하세요.",
+    obSocialEyebrow:"뜨개질 파티",
+    obSocialH1:"함께 뜨개질해요,",
+    obSocialH2:"우리 동네에서.",
+    obSocialSub:"가까운 모임을 찾거나 직접 열고, 참가자들과 채팅해 보세요.",
+    obLocalParties:"우리 동네 파티",
+    obMockParty1:"일요일 뜨개 & 티타임",
+    obMockHost:"주최: Mia",
+    obJoin:"참여",
+    obMockPlace1:"리버사이드 카페",
+    obMockTime1:"일 · 오후 2:00",
+    obMockParty2:"코바늘 입문 모임",
+    obMockLine2:"시립 도서관 · 토 · 오전 11:00",
+    obJoined:"참여 중",
+    obNextQuestions:"이제 간단한 질문 몇 가지예요. 건너뛰어도 괜찮아요.",
+    obCountryTitle:"어디에 계신가요?",
+    obCountrySub:"소셜에서 내 나라의 뜨개질 파티를 보여 드리기 위해서예요. 설정에서 언제든 바꿀 수 있어요.",
+    obNoMatches:"결과가 없어요. 다른 검색어를 입력해 보세요.",
+    obSignInEyebrow:"선택 · 나중에 해도 괜찮아요",
+    obSignInH1:"내 작업을",
+    obSignInH2:"안전하게 동기화하세요.",
+    obSignInSub:"여러 기기에서. 기본은 비공개. 나중에 설정에서 해도 돼요.",
+    obRows:"단",
+    obRowN:"{n}단",
+    obSkipForNow:"지금은 건너뛰기",
+    obCompleted:"완료",
+    obMockProj1:"목도리",
+    obMockProj2:"코스터",
+    obMockProj3:"숄",
+    obGoing:"명 참여",
+    obTerms:"계속하면 {terms}에 동의하는 것으로 간주됩니다. 데이터 처리 방식은 {privacy}을(를) 확인하세요.",
+    obTermsLink:"이용약관",
+    obPrivacyLink:"개인정보 처리방침",
   },
   es:{
     appLabel:"Mis Proyectos",appTitle:"mitime",inProgress:"en curso",projects:"proyectos",
@@ -2844,6 +3155,65 @@ const T={
       {sec:"Modo por Lotes",items:["Selector de vuelta — elige a qué vuelta aplicar las acciones por lotes","Seleccionar Todo — resalta todos los puntos de la vuelta elegida","Eliminar — elimina todos los puntos seleccionados a la vez","Color — recolorea todos los puntos seleccionados con el color activo","Espaciado de Vueltas — ajusta el espacio radial entre vueltas"]},
       {sec:"Ajustes",items:["Color / Hilo — elige el color de punto activo de tu paleta de hilos o un color personalizado","Color de tema — cambia el color de acento general de la interfaz del creador","Borrar todo — elimina todos los puntos y empieza el patrón desde cero"]},
     ],
+    obSkip:"Omitir",
+    obContinue:"Continuar",
+    obLetsGo:"Vamos",
+    obMaybeLater:"Quizá más tarde",
+    obOptional:"Opcional",
+    obDetected:"Detectado desde tu dispositivo",
+    obYourLanguage:"Tu idioma",
+    obLanguageSub:"Patrones, términos, la app: todo en tu idioma.",
+    obValueEyebrow:"El registro de tu trabajo",
+    obValueH1:"No vuelvas a perder",
+    obValueH2:"tu vuelta.",
+    obValueSub:"Toca para contar cada vuelta; miiitime lo recuerda, incluso días después.",
+    obInProgress:"En curso",
+    obRowsUnit:"vueltas",
+    obMakeEyebrow:"Diseña los tuyos",
+    obMakeH1:"Crea patrones,",
+    obMakeH2:"no solo los sigas.",
+    obCrochetMaker:"Creador de patrones de crochet",
+    obRoundsRows:"Vueltas e hileras",
+    obRoundsRowsSub:"Toca un punto y colócalo en el gráfico. Anillos mágicos, vueltas, hileras: todo compatible.",
+    obKnitGrid:"Patrón de cuadrícula para tejer",
+    obPixel:"Jacquard en píxeles",
+    obPixelSub:"Pinta una cuadrícula, importa una foto o empieza desde un tamaño: es tuyo.",
+    obCols:"Col.",
+    obStepRead:"Modo lectura paso a paso",
+    obOneStep:"Un paso a la vez",
+    obOneStepSub:"Importa un patrón escrito y ve marcando cada paso mientras avanzas.",
+    obSocialEyebrow:"Quedadas de tejido",
+    obSocialH1:"Teje en compañía,",
+    obSocialH2:"cerca de casa.",
+    obSocialSub:"Encuentra una quedada cerca de ti u organiza la tuya, y chatea con todos los que vayan.",
+    obLocalParties:"Quedadas cercanas",
+    obMockParty1:"Domingo de punto y té",
+    obMockHost:"Organiza Mia",
+    obJoin:"Unirme",
+    obMockPlace1:"Café del Río",
+    obMockTime1:"Dom · 14:00",
+    obMockParty2:"Círculo de crochet para principiantes",
+    obMockLine2:"Biblioteca municipal · Sáb · 11:00",
+    obJoined:"Apuntado",
+    obNextQuestions:"Ahora, unas preguntas rápidas. Omite las que quieras.",
+    obCountryTitle:"¿Dónde vives?",
+    obCountrySub:"Para que Social muestre quedadas de tu país. Puedes cambiarlo cuando quieras en Ajustes.",
+    obNoMatches:"Sin resultados: prueba otra búsqueda.",
+    obSignInEyebrow:"Opcional · hazlo más tarde si prefieres",
+    obSignInH1:"Mantén tu trabajo",
+    obSignInH2:"sincronizado y a salvo.",
+    obSignInSub:"En todos tus dispositivos. Privado por defecto. Puedes hacerlo luego desde ajustes.",
+    obRows:"Vueltas",
+    obRowN:"Vuelta {n}",
+    obSkipForNow:"Omitir por ahora",
+    obCompleted:"Terminado",
+    obMockProj1:"bufanda",
+    obMockProj2:"posavasos",
+    obMockProj3:"chal",
+    obGoing:"apuntados",
+    obTerms:"Al continuar aceptas nuestros {terms}. Consulta nuestra {privacy} para saber cómo tratamos tus datos.",
+    obTermsLink:"Términos del servicio",
+    obPrivacyLink:"Política de privacidad",
   },
   de:{
     appLabel:"Meine Projekte",appTitle:"mitime",inProgress:"in Bearbeitung",projects:"Projekte",
@@ -3001,6 +3371,65 @@ const T={
       {sec:"Stapelmodus",items:["Rundenauswahl — wählen, auf welche Runde Stapelaktionen angewendet werden","Alle Auswählen — jede Masche der gewählten Runde hervorheben","Löschen — alle ausgewählten Maschen auf einmal entfernen","Farbe — alle ausgewählten Maschen in der aktiven Farbe neu einfärben","Rundenabstand — den radialen Abstand zwischen den Runden anpassen"]},
       {sec:"Einstellungen",items:["Farbe / Garn — die aktive Maschenfarbe aus deiner Garnpalette oder eine benutzerdefinierte Farbe wählen","Themenfarbe — die allgemeine Akzentfarbe der Editor-Oberfläche ändern","Alles löschen — alle Maschen entfernen und das Muster von vorne beginnen"]},
     ],
+    obSkip:"Überspringen",
+    obContinue:"Weiter",
+    obLetsGo:"Los geht's",
+    obMaybeLater:"Vielleicht später",
+    obOptional:"Optional",
+    obDetected:"Von deinem Gerät erkannt",
+    obYourLanguage:"Deine Sprache",
+    obLanguageSub:"Anleitungen, Begriffe, die App: alles in deiner Sprache.",
+    obValueEyebrow:"Ein Protokoll deiner Arbeit",
+    obValueH1:"Verliere nie wieder",
+    obValueH2:"deine Reihe.",
+    obValueSub:"Tippe, um jede Reihe zu zählen. miiitime merkt sich den Stand, auch Tage später.",
+    obInProgress:"In Arbeit",
+    obRowsUnit:"Reihen",
+    obMakeEyebrow:"Entwirf deine eigenen",
+    obMakeH1:"Erstelle Anleitungen,",
+    obMakeH2:"statt sie nur nachzuarbeiten.",
+    obCrochetMaker:"Häkelanleitungs-Editor",
+    obRoundsRows:"Runden & Reihen",
+    obRoundsRowsSub:"Tippe auf eine Masche und setze sie ins Diagramm. Magic Ring, Runden, Reihen: alles wird unterstützt.",
+    obKnitGrid:"Strick-Rasteranleitung",
+    obPixel:"Pixel-Farbmuster",
+    obPixelSub:"Male ein Raster, importiere ein Foto oder starte mit einer Größe: es gehört dir.",
+    obCols:"Sp.",
+    obStepRead:"Schritt-für-Schritt-Modus",
+    obOneStep:"Ein Schritt nach dem anderen",
+    obOneStepSub:"Importiere eine schriftliche Anleitung und hake jeden Schritt ab, während du arbeitest.",
+    obSocialEyebrow:"Handarbeitstreffen",
+    obSocialH1:"Gemeinsam stricken,",
+    obSocialH2:"ganz in deiner Nähe.",
+    obSocialSub:"Finde ein Treffen in deiner Nähe oder lade selbst ein und chatte mit allen, die kommen.",
+    obLocalParties:"Treffen in der Nähe",
+    obMockParty1:"Sonntags-Stricken & Tee",
+    obMockHost:"Veranstaltet von Mia",
+    obJoin:"Beitreten",
+    obMockPlace1:"Café am Fluss",
+    obMockTime1:"So · 14:00",
+    obMockParty2:"Häkelkreis für Anfänger",
+    obMockLine2:"Stadtbibliothek · Sa · 11:00",
+    obJoined:"Dabei",
+    obNextQuestions:"Als Nächstes ein paar kurze Fragen. Überspring, was du magst.",
+    obCountryTitle:"Wo lebst du?",
+    obCountrySub:"Damit Social Handarbeitstreffen in deinem Land anzeigen kann. Jederzeit in den Einstellungen änderbar.",
+    obNoMatches:"Keine Treffer. Versuch eine andere Suche.",
+    obSignInEyebrow:"Optional · gern auch später",
+    obSignInH1:"Halte deine Arbeit",
+    obSignInH2:"sicher synchron.",
+    obSignInSub:"Auf allen Geräten. Standardmäßig privat. Das geht auch später in den Einstellungen.",
+    obRows:"Reihen",
+    obRowN:"Reihe {n}",
+    obSkipForNow:"Vorerst überspringen",
+    obCompleted:"Fertig",
+    obMockProj1:"Schal",
+    obMockProj2:"Untersetzer",
+    obMockProj3:"Tuch",
+    obGoing:"dabei",
+    obTerms:"Mit dem Fortfahren stimmst du unseren {terms} zu. Wie wir mit deinen Daten umgehen, steht in unserer {privacy}.",
+    obTermsLink:"Nutzungsbedingungen",
+    obPrivacyLink:"Datenschutzerklärung",
   },
   th:{
     appLabel:"โปรเจกต์ของฉัน",appTitle:"mitime",inProgress:"กำลังดำเนินการ",projects:"โปรเจกต์",
@@ -3158,6 +3587,65 @@ const T={
       {sec:"โหมดกลุ่ม",items:["ตัวเลือกรอบ — เลือกว่าจะใช้การกระทำแบบกลุ่มกับรอบใด","เลือกทั้งหมด — ไฮไลต์ตะเข็บทุกอันในรอบที่เลือก","ลบ — ลบตะเข็บที่เลือกทั้งหมดพร้อมกัน","สี — เปลี่ยนสีตะเข็บที่เลือกทั้งหมดเป็นสีที่ใช้งานอยู่","ระยะห่างรอบ — ปรับระยะห่างของรัศมีระหว่างรอบ"]},
       {sec:"ตั้งค่า",items:["สี / ไหมพรม — เลือกสีตะเข็บที่ใช้งานจากจานสีไหมพรมของคุณหรือสีกำหนดเอง","สีธีม — เปลี่ยนสีเน้นโดยรวมของอินเทอร์เฟซตัวสร้าง","ล้างทั้งหมด — ลบตะเข็บทั้งหมดและเริ่มแพทเทิร์นใหม่ตั้งแต่ต้น"]},
     ],
+    obSkip:"ข้าม",
+    obContinue:"ต่อไป",
+    obLetsGo:"เริ่มเลย",
+    obMaybeLater:"ไว้ทีหลัง",
+    obOptional:"ไม่บังคับ",
+    obDetected:"ตรวจพบจากอุปกรณ์ของคุณ",
+    obYourLanguage:"ภาษาของคุณ",
+    obLanguageSub:"แพตเทิร์น ศัพท์เฉพาะ และแอป ทั้งหมดเป็นภาษาของคุณ",
+    obValueEyebrow:"บันทึกงานของคุณ",
+    obValueH1:"ไม่มีวันหลง",
+    obValueH2:"แถวอีกต่อไป",
+    obValueSub:"แตะเพื่อนับแต่ละแถว miiitime จะจำให้ แม้ผ่านไปหลายวัน",
+    obInProgress:"กำลังทำ",
+    obRowsUnit:"แถว",
+    obMakeEyebrow:"ออกแบบเอง",
+    obMakeH1:"สร้างแพตเทิร์นเอง",
+    obMakeH2:"ไม่ใช่แค่ทำตาม",
+    obCrochetMaker:"เครื่องมือสร้างแพตเทิร์นโครเชต์",
+    obRoundsRows:"ถักวงกลมและถักเป็นแถว",
+    obRoundsRowsSub:"แตะที่ลายถัก แล้ววางลงบนแผนภูมิ รองรับมายากลริง ถักวงกลม และถักเป็นแถว",
+    obKnitGrid:"แพตเทิร์นถักแบบตาราง",
+    obPixel:"ลายสีแบบพิกเซล",
+    obPixelSub:"ระบายตาราง นำเข้ารูปภาพ หรือเริ่มจากขนาด เป็นผลงานของคุณเอง",
+    obCols:"คอลัมน์",
+    obStepRead:"โหมดอ่านทีละขั้น",
+    obOneStep:"ทีละขั้นตอน",
+    obOneStepSub:"นำเข้าแพตเทิร์นที่เป็นข้อความ แล้วติ๊กแต่ละขั้นตอนไปเรื่อย ๆ",
+    obSocialEyebrow:"ปาร์ตี้งานฝีมือ",
+    obSocialH1:"ถักด้วยกัน",
+    obSocialH2:"ใกล้บ้านคุณ",
+    obSocialSub:"ค้นหาการนัดพบใกล้ตัว หรือจัดเอง แล้วแชตกับทุกคนที่มา",
+    obLocalParties:"ปาร์ตี้ใกล้คุณ",
+    obMockParty1:"ถักไหมวันอาทิตย์ & จิบชา",
+    obMockHost:"เจ้าภาพ: Mia",
+    obJoin:"เข้าร่วม",
+    obMockPlace1:"คาเฟ่ริมแม่น้ำ",
+    obMockTime1:"อา. · 14:00",
+    obMockParty2:"วงโครเชต์มือใหม่",
+    obMockLine2:"ห้องสมุดเมือง · ส. · 11:00",
+    obJoined:"เข้าร่วมแล้ว",
+    obNextQuestions:"ต่อไปเป็นคำถามสั้น ๆ ข้ามข้อไหนก็ได้",
+    obCountryTitle:"คุณอยู่ที่ไหน",
+    obCountrySub:"เพื่อให้โซเชียลแสดงปาร์ตี้งานฝีมือในประเทศของคุณ เปลี่ยนได้ตลอดในการตั้งค่า",
+    obNoMatches:"ไม่พบผลลัพธ์ ลองค้นหาด้วยคำอื่น",
+    obSignInEyebrow:"ไม่บังคับ · ไว้ทำทีหลังก็ได้",
+    obSignInH1:"เก็บงานของคุณ",
+    obSignInH2:"ให้ซิงก์อย่างปลอดภัย",
+    obSignInSub:"ใช้ได้ทุกอุปกรณ์ เป็นส่วนตัวโดยค่าเริ่มต้น ทำทีหลังได้จากการตั้งค่า",
+    obRows:"แถว",
+    obRowN:"แถวที่ {n}",
+    obSkipForNow:"ข้ามไปก่อน",
+    obCompleted:"เสร็จแล้ว",
+    obMockProj1:"ผ้าพันคอ",
+    obMockProj2:"ที่รองแก้ว",
+    obMockProj3:"ผ้าคลุมไหล่",
+    obGoing:"คนเข้าร่วม",
+    obTerms:"การดำเนินการต่อถือว่าคุณยอมรับ {terms} ของเรา ดู {privacy} เพื่อทราบว่าเราดูแลข้อมูลของคุณอย่างไร",
+    obTermsLink:"ข้อกำหนดการใช้บริการ",
+    obPrivacyLink:"นโยบายความเป็นส่วนตัว",
   },
   pt:{
     appLabel:"Meus Projetos",appTitle:"mitime",inProgress:"em andamento",projects:"projetos",
@@ -3315,6 +3803,65 @@ const T={
       {sec:"Modo em Lote",items:["Seletor de volta — escolha a qual volta aplicar as ações em lote","Selecionar Tudo — destaque todos os pontos da volta escolhida","Excluir — remove todos os pontos selecionados de uma vez","Cor — recolore todos os pontos selecionados com a cor ativa","Espaçamento de Voltas — ajusta o espaço radial entre as voltas"]},
       {sec:"Ajustes",items:["Cor / Fio — escolha a cor de ponto ativa da sua paleta de fios ou uma cor personalizada","Cor do tema — altere a cor de destaque geral da interface do criador","Limpar tudo — remove todos os pontos e comece o padrão do zero"]},
     ],
+    obSkip:"Pular",
+    obContinue:"Continuar",
+    obLetsGo:"Vamos lá",
+    obMaybeLater:"Talvez depois",
+    obOptional:"Opcional",
+    obDetected:"Detectado no seu dispositivo",
+    obYourLanguage:"Seu idioma",
+    obLanguageSub:"Receitas, termos, o app: tudo no seu idioma.",
+    obValueEyebrow:"O registro do seu trabalho",
+    obValueH1:"Nunca mais perca",
+    obValueH2:"a sua carreira.",
+    obValueSub:"Toque para contar cada carreira; o miiitime lembra, mesmo dias depois.",
+    obInProgress:"Em andamento",
+    obRowsUnit:"carreiras",
+    obMakeEyebrow:"Crie os seus",
+    obMakeH1:"Crie receitas,",
+    obMakeH2:"não só siga as dos outros.",
+    obCrochetMaker:"Criador de receitas de crochê",
+    obRoundsRows:"Voltas e carreiras",
+    obRoundsRowsSub:"Toque num ponto e coloque no gráfico. Anel mágico, voltas, carreiras: tudo é compatível.",
+    obKnitGrid:"Receita de tricô em grade",
+    obPixel:"Jacquard em pixels",
+    obPixelSub:"Pinte uma grade, importe uma foto ou comece por um tamanho: é seu.",
+    obCols:"Col.",
+    obStepRead:"Modo leitura passo a passo",
+    obOneStep:"Um passo de cada vez",
+    obOneStepSub:"Importe uma receita escrita e marque cada passo conforme avança.",
+    obSocialEyebrow:"Encontros de artesanato",
+    obSocialH1:"Tricotem juntos,",
+    obSocialH2:"pertinho de casa.",
+    obSocialSub:"Ache uma reunião perto de você ou crie a sua, e converse com todo mundo que vai.",
+    obLocalParties:"Encontros por perto",
+    obMockParty1:"Domingo de tricô e chá",
+    obMockHost:"Organizado por Mia",
+    obJoin:"Participar",
+    obMockPlace1:"Café da Beira-Rio",
+    obMockTime1:"Dom · 14:00",
+    obMockParty2:"Roda de crochê para iniciantes",
+    obMockLine2:"Biblioteca Municipal · Sáb · 11:00",
+    obJoined:"Participando",
+    obNextQuestions:"Agora, algumas perguntas rápidas. Pule as que quiser.",
+    obCountryTitle:"Onde você mora?",
+    obCountrySub:"Para o Social mostrar encontros de artesanato no seu país. Dá para mudar quando quiser em Ajustes.",
+    obNoMatches:"Nada encontrado. Tente outra busca.",
+    obSignInEyebrow:"Opcional · faça depois se preferir",
+    obSignInH1:"Mantenha seu trabalho",
+    obSignInH2:"sincronizado e seguro.",
+    obSignInSub:"Em todos os dispositivos. Privado por padrão. Dá para fazer depois, nos ajustes.",
+    obRows:"Carreiras",
+    obRowN:"Carreira {n}",
+    obSkipForNow:"Pular por enquanto",
+    obCompleted:"Concluído",
+    obMockProj1:"cachecol",
+    obMockProj2:"porta-copos",
+    obMockProj3:"xale",
+    obGoing:"confirmados",
+    obTerms:"Ao continuar, você concorda com os nossos {terms}. Veja a nossa {privacy} para saber como tratamos seus dados.",
+    obTermsLink:"Termos de Serviço",
+    obPrivacyLink:"Política de Privacidade",
   },
   hi:{
     appLabel:"मेरे प्रोजेक्ट",appTitle:"mitime",inProgress:"जारी है",projects:"प्रोजेक्ट",
@@ -3472,6 +4019,65 @@ const T={
       {sec:"बैच मोड",items:["राउंड चयनकर्ता — चुनें कि बैच क्रियाएं किस राउंड पर लागू करनी हैं","सभी चुनें — चुने गए राउंड के हर टांके को हाइलाइट करें","हटाएं — सभी चयनित टांके एक साथ हटाएं","रंग — सभी चयनित टांकों को सक्रिय रंग में फिर से रंगें","राउंड स्पेसिंग — राउंड के बीच की त्रिज्या गैप समायोजित करें"]},
       {sec:"सेटिंग्स",items:["रंग / धागा — अपने धागा पैलेट या कस्टम रंग से सक्रिय टांका रंग चुनें","थीम रंग — मेकर UI का समग्र एक्सेंट रंग बदलें","सभी साफ़ करें — सभी टांके हटाएं और पैटर्न को शुरू से शुरू करें"]},
     ],
+    obSkip:"छोड़ें",
+    obContinue:"जारी रखें",
+    obLetsGo:"चलिए शुरू करें",
+    obMaybeLater:"बाद में",
+    obOptional:"वैकल्पिक",
+    obDetected:"आपके डिवाइस से पता चला",
+    obYourLanguage:"आपकी भाषा",
+    obLanguageSub:"पैटर्न, शब्द, ऐप: सब आपकी भाषा में।",
+    obValueEyebrow:"आपके काम का रिकॉर्ड",
+    obValueH1:"अपनी जगह कभी",
+    obValueH2:"दोबारा न भूलें।",
+    obValueSub:"हर पंक्ति गिनने के लिए टैप करें; miiitime याद रखता है, कई दिन बाद भी।",
+    obInProgress:"जारी है",
+    obRowsUnit:"पंक्तियाँ",
+    obMakeEyebrow:"अपना खुद का डिज़ाइन करें",
+    obMakeH1:"पैटर्न बनाइए,",
+    obMakeH2:"सिर्फ़ फ़ॉलो मत कीजिए।",
+    obCrochetMaker:"क्रोशिया पैटर्न मेकर",
+    obRoundsRows:"राउंड और पंक्तियाँ",
+    obRoundsRowsSub:"स्टिच पर टैप करें और चार्ट पर रखें। मैजिक रिंग, राउंड, पंक्तियाँ: सब सपोर्टेड।",
+    obKnitGrid:"निट ग्रिड पैटर्न",
+    obPixel:"पिक्सेल कलरवर्क",
+    obPixelSub:"ग्रिड पर रंग भरें, फ़ोटो इम्पोर्ट करें, या साइज़ से शुरू करें, यह आपका अपना है।",
+    obCols:"कॉलम",
+    obStepRead:"स्टेप रीड मोड",
+    obOneStep:"एक बार में एक स्टेप",
+    obOneStepSub:"लिखा हुआ पैटर्न इम्पोर्ट करें, फिर आगे बढ़ते हुए हर स्टेप पर टिक करें।",
+    obSocialEyebrow:"क्राफ़्ट पार्टियाँ",
+    obSocialH1:"साथ मिलकर बुनें,",
+    obSocialH2:"अपने घर के पास।",
+    obSocialSub:"अपने पास कोई मीटअप खोजें या ख़ुद आयोजित करें, फिर जाने वाले सभी से चैट करें।",
+    obLocalParties:"आस-पास की पार्टियाँ",
+    obMockParty1:"रविवार बुनाई और चाय",
+    obMockHost:"मेज़बान: Mia",
+    obJoin:"जुड़ें",
+    obMockPlace1:"रिवरसाइड कैफ़े",
+    obMockTime1:"रवि · दोपहर 2:00",
+    obMockParty2:"शुरुआती क्रोशिया सर्कल",
+    obMockLine2:"सिटी लाइब्रेरी · शनि · सुबह 11:00",
+    obJoined:"जुड़े हुए",
+    obNextQuestions:"अब कुछ छोटे सवाल। जो चाहें छोड़ दें।",
+    obCountryTitle:"आप कहाँ रहते हैं?",
+    obCountrySub:"ताकि सोशल आपके देश की क्राफ़्ट पार्टियाँ दिखा सके। सेटिंग्स में कभी भी बदलें।",
+    obNoMatches:"कोई नतीजा नहीं। कोई और खोज आज़माएँ।",
+    obSignInEyebrow:"वैकल्पिक · चाहें तो बाद में करें",
+    obSignInH1:"अपना काम",
+    obSignInH2:"सुरक्षित सिंक में रखें।",
+    obSignInSub:"सभी डिवाइस पर। डिफ़ॉल्ट रूप से निजी। बाद में सेटिंग्स से भी कर सकते हैं।",
+    obRows:"पंक्तियाँ",
+    obRowN:"पंक्ति {n}",
+    obSkipForNow:"अभी छोड़ें",
+    obCompleted:"पूरा हुआ",
+    obMockProj1:"मफ़लर",
+    obMockProj2:"कोस्टर",
+    obMockProj3:"शॉल",
+    obGoing:"जा रहे हैं",
+    obTerms:"जारी रखने पर आप हमारी {terms} से सहमत होते हैं। हम आपके डेटा को कैसे संभालते हैं, यह जानने के लिए हमारी {privacy} देखें।",
+    obTermsLink:"सेवा की शर्तें",
+    obPrivacyLink:"गोपनीयता नीति",
   },
 };
 
@@ -7178,7 +7784,7 @@ function KnitLivePreview({gridRef,redrawRef,version,canvasBg,repH=1,repV=1}){
     const g=gridRef.current||[],rows=g.length,cols=g[0]?.length||0;if(!rows||!cols)return;
     const dpr=window.devicePixelRatio||1,PAD=14,aw=box.clientWidth-2*PAD,ah=box.clientHeight-2*PAD;if(aw<=0||ah<=0)return;
     // Fill the pane at the exact 4:3 shape (no grid lines to keep pixel-crisp, so the row height needn't be whole).
-    // Fits the whole repeated block (Settings → Preview → Show Repeat); one unit when repeat is off.
+    // Fits the whole repeated block (Settings → Preview → Horizontal/Vertical); one unit at 1×1.
     const tc=cols*repH,tr=rows*repV;
     const cellH=Math.max(1/dpr,Math.min(aw/(tc*COLORGRID_CELL_RATIO),ah/tr)),cellW=cellH*COLORGRID_CELL_RATIO;
     const W=tc*cellW,H=tr*cellH,bw=Math.round(W*dpr),bh=Math.round(H*dpr);
@@ -7333,11 +7939,12 @@ function ColorGrid({headerActionsEl=null,initialGrid,isNewGrid=false,onGridChang
   const[showRead,setShowRead]=useState(false);
   const[numRowDir,setNumRowDir]=useState("bottomToTop"); // "bottomToTop" | "topToBottom"
   const[numColDir,setNumColDir]=useState("leftToRight");  // "leftToRight" | "rightToLeft"
-  // Preview repeat — display-only, never touches undo history. Counts persist independently
-  // of the toggle so switching "Show Repeat" off doesn't lose Horizontal/Vertical.
+  // Preview repeat — display-only, never touches undo history. No on/off switch: the repeat shows
+  // (live preview, Read) whenever Horizontal or Vertical is above 1. `show` is still saved, derived
+  // from the counts, so older builds that read it agree.
   const[repeatH,setRepeatH]=useState(initialRepeat?.h||1);
   const[repeatV,setRepeatV]=useState(initialRepeat?.v||1);
-  const[showRepeat,setShowRepeat]=useState(initialRepeat?.show||false);
+  const showRepeat=repeatH>1||repeatV>1;
   useEffect(()=>{onRepeatChange?.({h:repeatH,v:repeatV,show:showRepeat});},[repeatH,repeatV,showRepeat]);
   // Color labels — e.g. blue → "01" — keyed by hex, shown in the "colors in use" strip
   // under the canvas and (opt-in) directly on the grid cells while painting.
@@ -8112,10 +8719,6 @@ function ColorGrid({headerActionsEl=null,initialGrid,isNewGrid=false,onGridChang
               <div>
                 <span style={{fontSize:9,fontWeight:800,color:"#BEBEBE",letterSpacing:"0.07em",marginBottom:8,display:"block"}}>{t.mkSecPreview}</span>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
-                    <input type="checkbox" checked={showRepeat} onChange={e=>setShowRepeat(e.target.checked)} style={{width:16,height:16,cursor:"pointer",accentColor:"#778EE3"}}/>
-                    <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600}}>{t.mkShowRepeat}</span>
-                  </label>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:600,width:72,flexShrink:0}}>{t.mkRepeatH}</span>
                     <button onClick={()=>setRepeatH(v=>Math.max(1,v-1))} style={{width:28,height:28,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",cursor:"pointer",fontSize:17,fontWeight:700,color:"var(--text-primary)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
@@ -21603,12 +22206,12 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
     for(let y=0;y<grid.length;y++)for(let x=0;x<(grid[y]?.length||0);x++){if(grid[y][x])set.add(grid[y][x]);}
     return[...set];
   },[grid]);
-  // Repeat context — same Show Repeat / Horizontal / Vertical settings saved from
-  // the Color Grid editor, but purely decorative here (dimmed, non-interactive).
+  // Repeat context — the Horizontal / Vertical counts saved from the Color Grid editor (on
+  // whenever either is above 1), but purely decorative here (dimmed, non-interactive).
   // The one real, trackable tile always sits at (tileIdxX,tileIdxY); row numbers,
   // progress, and Pin Box all stay keyed to it exactly as if repeat didn't exist.
-  const repH=repeat?.show?Math.max(1,repeat.h||1):1;
-  const repV=repeat?.show?Math.max(1,repeat.v||1):1;
+  const repH=Math.max(1,repeat?.h||1);
+  const repV=Math.max(1,repeat?.v||1);
   const tileIdxX=Math.floor((repH-1)/2);
   const tileIdxY=Math.floor((repV-1)/2);
   const[scale,setScale]=useState(1);
@@ -23289,7 +23892,7 @@ function buildGridKnitRowTokens(cells,colorLabelFn){
    leading note (no runs, not checkable) says how many times to work it. */
 function colorGridRunSteps(grid,repeat){
   const rows=grid?.length||0,out=[];
-  const h=repeat?.show?Math.max(1,repeat.h||1):1,v=repeat?.show?Math.max(1,repeat.v||1):1;
+  const h=Math.max(1,repeat?.h||1),v=Math.max(1,repeat?.v||1);
   if(h>1||v>1)out.push({id:"cg_repeat",text:["Repeat",h>1?`each row ${h}× across`:"",v>1?`all rows ${v}× up`:""].filter(Boolean).join(" · ").replace("Repeat · ","Repeat: ")});
   for(let y=rows-1;y>=0;y--){
     const row=grid[y]||[],runs=[];
@@ -25474,10 +26077,10 @@ function drawReadOnlyColorGrid(c,{grid,repeat,canvasBg,selRow=null,dpr=1,scale:S
   const CELLH=16*S,CELLW=CELLH*cellRatio,ML=24*S,MT=18*S,MR=8*S,MB=8*S;
     const cols=grid[0]?.length||0,rows=grid.length;
     // Repeat is a read-mode-only preview setting (see ColorGrid's "Preview" section) — the
-    // edit canvas never tiles. Off (or absent, e.g. patterns saved before this existed)
-    // behaves exactly as a single 1×1 tile always did.
-    const repH=repeat?.show?Math.max(1,repeat.h||1):1;
-    const repV=repeat?.show?Math.max(1,repeat.v||1):1;
+    // edit canvas never tiles. It's on whenever a count is above 1; 1×1 (or absent, e.g.
+    // patterns saved before this existed) behaves exactly as a single tile always did.
+    const repH=Math.max(1,repeat?.h||1);
+    const repV=Math.max(1,repeat?.v||1);
     const tileW=cols*CELLW,tileH=rows*CELLH;
     const gW=tileW*repH,gH=tileH*repV;
     const W=ML+gW+MR,H=MT+gH+MB;
@@ -28339,7 +28942,7 @@ function PaletteGeneratorModal({onClose,yarnLib=[]}){
 
 /* ─── Create Page ───────────────────────────────────────────────────────────── */
 function CreatePage({yarnLib,patterns,setPatterns,setPage}){
-  const{t}=useLang();
+  const{t,lang}=useLang();
   const[showPatternForm,setShowPatternForm]=useState(null);
   const[showColorPalette,setShowColorPalette]=useState(false);
   const[showGauge,setShowGauge]=useState(false);
@@ -28411,7 +29014,7 @@ function CreatePage({yarnLib,patterns,setPatterns,setPage}){
               earlier 36px pass — that read oversized next to the now-more-compact
               cards below it (~14% reduction, well within normal heading-size
               territory, not a blanket font shrink). */}
-          <div style={{fontFamily:"'Fraunces',-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif",fontStyle:"italic",fontSynthesis:"weight",fontSize:isDesktop?31:22,fontWeight:700,color:"var(--text-primary)",lineHeight:isDesktop?1.18:1.25,whiteSpace:"pre-line",marginTop:isDesktop?2:15,maxWidth:isDesktop?560:undefined}}>{t.createPageSubtitle}</div>
+          <div style={{fontFamily:(lang in OB_UNCASED_LANGS?"":"'Fraunces',")+"-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif",fontStyle:lang in OB_UNCASED_LANGS?"normal":"italic",fontSynthesis:"weight",fontSize:isDesktop?31:22,fontWeight:lang in OB_UNCASED_LANGS?800:700,color:"var(--text-primary)",lineHeight:isDesktop?1.18:1.25,whiteSpace:"pre-line",marginTop:isDesktop?2:15,maxWidth:isDesktop?560:undefined}}>{t.createPageSubtitle}</div>
         </div>
       </div>
 
@@ -34122,12 +34725,22 @@ function exploreLangKey(code){
 // Any Chinese preference searches both scripts (people mix them freely).
 function exploreDisplayLang(appLang){
   const ak=exploreLangKey(appLang);
-  if(ak!=="en")return ak==="zh"?"zh-Hant":ak; // app language is an explicit in-app choice
+  if(ak!=="en"){
+    // An app language taken from the phone rather than picked in-app: a
+    // Simplified phone should keep getting Simplified here, not the
+    // Traditional the app's single Chinese table implies.
+    if(ak==="zh"&&!readSavedLang()){
+      const dk=exploreLangKey((navigator.languages&&navigator.languages[0])||navigator.language);
+      if(dk.startsWith("zh")&&dk!=="zh-Hant")return"zh-Hans";
+    }
+    return ak==="zh"?"zh-Hant":ak; // app language is an explicit in-app choice
+  }
   if(readSavedLang())return"en"; // English was chosen on purpose — don't second-guess it from the phone
   // App still on its English default: follow the phone's primary language, so a
   // Mandarin phone gets Mandarin here without the user re-picking a language
-  // (the app has no device-language detection of its own). An English-first
-  // phone stays English.
+  // (a non-English phone normally already lands here via detectDeviceLang, so
+  // this is mostly the English-first case, or a language the app lacks). An
+  // English-first phone stays English.
   const dev=typeof navigator!=="undefined"?((navigator.languages&&navigator.languages[0])||navigator.language):"";
   const dk=exploreLangKey(dev);
   if(dk.startsWith("zh"))return dk==="zh-Hant"?"zh-Hant":"zh-Hans";
@@ -35836,6 +36449,7 @@ function OBIconArrowLeft({ size = 18, color = "var(--text-primary)" }) {
 
 // ── Shared UI bits (straight port, restyled to var(--*) theme tokens) ──────
 function OnboardingTopBar({ onBack, onSkip, step, total }) {
+  const{t}=useLang();
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -35877,7 +36491,7 @@ function OnboardingTopBar({ onBack, onSkip, step, total }) {
           padding: "6px 10px", minWidth: 40,
         }}
       >
-        {onSkip ? "Skip" : ""}
+        {onSkip ? t.obSkip : ""}
       </button>
     </div>
   );
@@ -35918,11 +36532,15 @@ function OnboardingGhostBtn({ children, onClick }) {
   );
 }
 
+// Scripts with no upper case, where wide tracking reads as gaps between
+// characters (CJK) or fights the shaping of joined letters (Thai, Devanagari).
+const OB_UNCASED_LANGS={zh:0.5,ja:0.5,ko:0.5,th:0,hi:0};
 function OnboardingEyebrow({ children, color = "var(--accent)" }) {
+  const{lang}=useLang();
   return (
     <div style={{
       fontFamily: ob_sans, fontSize: 11, fontWeight: 800,
-      letterSpacing: 1.4, textTransform: "uppercase", color,
+      letterSpacing: lang in OB_UNCASED_LANGS ? OB_UNCASED_LANGS[lang] : 1.4, textTransform: "uppercase", color,
     }}>
       {children}
     </div>
@@ -35936,10 +36554,17 @@ function OnboardingEyebrow({ children, color = "var(--accent)" }) {
 // it and OnboardingSub's 14px stay well under the 28px before each screen's
 // content, keeping eyebrow/headline/sub reading as one group.
 function OnboardingHeadline({ children, size = 30 }) {
+  const{lang}=useLang();
   return (
     <h1 style={{
-      fontFamily: `'Fraunces',${ob_sans}`, fontStyle: "italic", fontWeight: 700,
-      fontSize: size, lineHeight: 1.2, color: "var(--text-primary)", margin: "12px 0 0",
+      // Fraunces is Latin-only and italic is a Latin idea: CJK/Thai/Devanagari
+      // have no italic, so in those languages the browser would fake a slant on
+      // the fallback font (font-synthesis alone didn't stop it for Thai). They
+      // get upright system type instead, with more leading to suit.
+      fontFamily: lang in OB_UNCASED_LANGS ? ob_sans : `'Fraunces',${ob_sans}`,
+      fontStyle: lang in OB_UNCASED_LANGS ? "normal" : "italic", fontWeight: lang in OB_UNCASED_LANGS ? 800 : 700,
+      fontSynthesis: "weight",
+      fontSize: size, lineHeight: lang in OB_UNCASED_LANGS ? 1.35 : 1.2, color: "var(--text-primary)", margin: "12px 0 0",
     }}>
       {children}
     </h1>
@@ -35959,6 +36584,7 @@ function OnboardingSub({ children, style = {} }) {
 
 // ── Screen 1: Value — pattern-card preview (static/illustrative) ───────────
 function OnboardingValue({ onNext }) {
+  const{t}=useLang();
   return (
     <div style={{
       height: "100%", width: "100%", background: "var(--bg-page)",
@@ -35970,17 +36596,17 @@ function OnboardingValue({ onNext }) {
 
       <div style={{ padding: "34px 22px 0" }}>
         <div className="anim-fade-up" style={{ animationDelay: "0.1s" }}>
-          <OnboardingEyebrow>A record of your work</OnboardingEyebrow>
+          <OnboardingEyebrow>{t.obValueEyebrow}</OnboardingEyebrow>
         </div>
         <div className="anim-fade-up" style={{ animationDelay: "0.18s" }}>
           <OnboardingHeadline size={30}>
-            <span style={{ display: "block" }}>Never lose your</span>
-            <span style={{ display: "block" }}>place again.</span>
+            <span style={{ display: "block" }}>{t.obValueH1}</span>
+            <span style={{ display: "block" }}>{t.obValueH2}</span>
           </OnboardingHeadline>
         </div>
         <div className="anim-fade-up" style={{ animationDelay: "0.28s" }}>
           <OnboardingSub style={{ maxWidth: 280 }}>
-            Tap to count each row — miiitime remembers, even days later.
+            {t.obValueSub}
           </OnboardingSub>
         </div>
       </div>
@@ -36004,7 +36630,7 @@ function OnboardingValue({ onNext }) {
                   background: "var(--accent-soft)", padding: "3px 10px", borderRadius: 99,
                 }}>
                   <div className="anim-dot-pulse" style={{ width: 6, height: 6, borderRadius: 3, background: "var(--accent)" }}/>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>In progress</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>{t.obInProgress}</span>
                 </div>
               </div>
               <div className="anim-twinkle">
@@ -36016,7 +36642,7 @@ function OnboardingValue({ onNext }) {
               display: "flex", justifyContent: "space-between", alignItems: "baseline",
               marginTop: 16, fontSize: 13, fontWeight: 600, color: "var(--text-secondary)",
             }}>
-              <span>126 / 300 rows</span>
+              <span>126 / 300 {t.obRowsUnit}</span>
               <span style={{ color: "var(--text-primary)", fontWeight: 800 }}>42%</span>
             </div>
             <div style={{
@@ -36060,7 +36686,7 @@ function OnboardingValue({ onNext }) {
                   fontWeight: r.state === "current" ? 700 : 500,
                   flex: 1,
                 }}>
-                  Row {r.n} · {r.t}
+                  {t.obRowN.replace("{n}", r.n)} · {r.t}
                 </span>
               </div>
             ))}
@@ -36069,7 +36695,7 @@ function OnboardingValue({ onNext }) {
       </div>
 
       <div className="anim-fade-up" style={{ padding: "20px 22px 24px", animationDelay: "0.9s" }}>
-        <OnboardingPrimaryBtn onClick={onNext}>Continue</OnboardingPrimaryBtn>
+        <OnboardingPrimaryBtn onClick={onNext}>{t.obContinue}</OnboardingPrimaryBtn>
       </div>
     </div>
   );
@@ -36077,6 +36703,7 @@ function OnboardingValue({ onNext }) {
 
 // ── Screen 2: Make — Pattern Maker + Grid Maker preview (static) ───────────
 function OnboardingMake({ onNext, onBack }) {
+  const{t}=useLang();
   const OBGlyph = ({ type, x, y, rot = 0 }) => {
     const common = { stroke: "var(--text-primary)", strokeWidth: 1.4, fill: "none", strokeLinecap: "round" };
     return (
@@ -36145,12 +36772,12 @@ function OnboardingMake({ onNext, onBack }) {
 
       <div style={{ padding: "28px 22px 0" }}>
         <div className="anim-fade-up" style={{ animationDelay: "0.1s" }}>
-          <OnboardingEyebrow>Design your own</OnboardingEyebrow>
+          <OnboardingEyebrow>{t.obMakeEyebrow}</OnboardingEyebrow>
         </div>
         <div className="anim-fade-up" style={{ animationDelay: "0.18s" }}>
           <OnboardingHeadline size={28}>
-            <span style={{ display: "block" }}>Make patterns,</span>
-            <span style={{ display: "block" }}>not just follow them.</span>
+            <span style={{ display: "block" }}>{t.obMakeH1}</span>
+            <span style={{ display: "block" }}>{t.obMakeH2}</span>
           </OnboardingHeadline>
         </div>
         {/* No OnboardingSub here: the three cards below say it themselves, and
@@ -36168,7 +36795,7 @@ function OnboardingMake({ onNext, onBack }) {
           <div style={{ height: 4, background: "var(--accent)" }}/>
           <div style={{ padding: "12px 16px 8px", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: "var(--accent)", textTransform: "uppercase" }}>
-              Crochet Pattern Maker
+              {t.obCrochetMaker}
             </div>
             <div style={{ flex: 1 }}/>
             {/* Stitch palette sits up here (in the sparkle's old spot), like
@@ -36210,9 +36837,9 @@ function OnboardingMake({ onNext, onBack }) {
               </svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>Rounds & rows</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>{t.obRoundsRows}</div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 3, lineHeight: 1.4, fontWeight: 500 }}>
-                Tap a stitch, place it on the chart. Magic rings, rounds, rows — all supported.
+                {t.obRoundsRowsSub}
               </div>
             </div>
           </div>
@@ -36228,7 +36855,7 @@ function OnboardingMake({ onNext, onBack }) {
           <div style={{ height: 4, background: OB_MINT }}/>
           <div style={{ padding: "12px 16px 8px", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: OB_SAGE, textTransform: "uppercase" }}>
-              Knit Grid Pattern
+              {t.obKnitGrid}
             </div>
             <div style={{ flex: 1 }}/>
             <div style={{ display: "flex", gap: 3 }}>
@@ -36256,12 +36883,12 @@ function OnboardingMake({ onNext, onBack }) {
               </svg>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>Pixel colorwork</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>{t.obPixel}</div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 3, lineHeight: 1.4, fontWeight: 500 }}>
-                Paint a grid, import a photo, or start from a size — yours to keep.
+                {t.obPixelSub}
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.6, textTransform: "uppercase" }}>Cols</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: 0.6, textTransform: "uppercase" }}>{t.obCols}</div>
                 <div style={{ flex: 1, height: 4, background: "var(--bg-subtle)", borderRadius: 2, overflow: "hidden" }}>
                   <div className="anim-fill" style={{ width: "65%", height: "100%", background: "var(--accent)", animationDelay: "1s" }}/>
                 </div>
@@ -36283,7 +36910,7 @@ function OnboardingMake({ onNext, onBack }) {
           <div style={{ height: 4, background: OB_TEAL }}/>
           <div style={{ padding: "12px 16px 8px", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: OB_TEAL, textTransform: "uppercase" }}>
-              Step Read Mode
+              {t.obStepRead}
             </div>
             <div style={{ flex: 1 }}/>
             <div style={{
@@ -36342,9 +36969,9 @@ function OnboardingMake({ onNext, onBack }) {
               ))}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>One step at a time</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.1 }}>{t.obOneStep}</div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 3, lineHeight: 1.4, fontWeight: 500 }}>
-                Import a written pattern, then tick off each step as you go.
+                {t.obOneStepSub}
               </div>
             </div>
           </div>
@@ -36352,7 +36979,7 @@ function OnboardingMake({ onNext, onBack }) {
       </div>
 
       <div className="anim-fade-up" style={{ padding: "20px 22px 24px", animationDelay: "0.9s" }}>
-        <OnboardingPrimaryBtn onClick={onNext}>Continue</OnboardingPrimaryBtn>
+        <OnboardingPrimaryBtn onClick={onNext}>{t.obContinue}</OnboardingPrimaryBtn>
       </div>
     </div>
   );
@@ -36366,6 +36993,7 @@ function OnboardingMake({ onNext, onBack }) {
 // PARTY_ICON_COLORS. This screen also carries the old "quick questions"
 // lead-in as a small line above the button.
 function OnboardingSocial({ onStart, onBack }) {
+  const{t}=useLang();
   const avatars = [
     { i: "A", c: OB_GOLD }, { i: "J", c: OB_CORAL }, { i: "K", c: OB_SAGE },
   ];
@@ -36387,17 +37015,17 @@ function OnboardingSocial({ onStart, onBack }) {
 
       <div style={{ padding: "28px 22px 0" }}>
         <div className="anim-fade-up" style={{ animationDelay: "0.1s" }}>
-          <OnboardingEyebrow>Craft parties</OnboardingEyebrow>
+          <OnboardingEyebrow>{t.obSocialEyebrow}</OnboardingEyebrow>
         </div>
         <div className="anim-fade-up" style={{ animationDelay: "0.18s" }}>
           <OnboardingHeadline size={28}>
-            <span style={{ display: "block" }}>Stitch together,</span>
-            <span style={{ display: "block" }}>close to home.</span>
+            <span style={{ display: "block" }}>{t.obSocialH1}</span>
+            <span style={{ display: "block" }}>{t.obSocialH2}</span>
           </OnboardingHeadline>
         </div>
         <div className="anim-fade-up" style={{ animationDelay: "0.28s" }}>
           <OnboardingSub style={{ maxWidth: 300 }}>
-            Find a meetup near you or host your own, then chat with everyone going.
+            {t.obSocialSub}
           </OnboardingSub>
         </div>
       </div>
@@ -36405,7 +37033,7 @@ function OnboardingSocial({ onStart, onBack }) {
       <div style={{ ...OB_SCROLL_FADE, padding: "28px 22px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="anim-fade-up" style={{ display: "flex", alignItems: "center", gap: 5, animationDelay: "0.34s" }}>
           <OBIconPin size={13} color="var(--text-muted)"/>
-          <OnboardingEyebrow color="var(--text-muted)">Local parties</OnboardingEyebrow>
+          <OnboardingEyebrow color="var(--text-muted)">{t.obLocalParties}</OnboardingEyebrow>
         </div>
 
         {/* Open party — the one you could join */}
@@ -36424,15 +37052,15 @@ function OnboardingSocial({ onStart, onBack }) {
                 <LucideIco name="sun" size={20} style={{ color: PARTY_ICON_COLORS[1] }}/>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Sunday Stitch & Sip</div>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1 }}>Hosted by Mia</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{t.obMockParty1}</div>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1 }}>{t.obMockHost}</div>
               </div>
               <div className="anim-pop" style={{
                 color: "#FFFFFF", background: "var(--accent)", padding: "5px 14px", borderRadius: 999,
                 fontSize: 11, fontWeight: 700, letterSpacing: "0.02em", flexShrink: 0,
                 animationDelay: "0.8s", animationFillMode: "backwards",
               }}>
-                Join
+                {t.obJoin}
               </div>
             </div>
             <div style={{
@@ -36440,10 +37068,10 @@ function OnboardingSocial({ onStart, onBack }) {
               fontSize: 11, color: "var(--text-secondary)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <OBIconPin size={12} color="currentColor"/><span>Riverside Café</span>
+                <OBIconPin size={12} color="currentColor"/><span>{t.obMockPlace1}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <LucideIco name="clock" size={12}/><span>Sun · 2:00 PM</span>
+                <LucideIco name="clock" size={12}/><span>{t.obMockTime1}</span>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
@@ -36460,7 +37088,7 @@ function OnboardingSocial({ onStart, onBack }) {
                   </div>
                 ))}
               </div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)" }}>7 / 10 going</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)" }}>7 / 10 {t.obGoing}</span>
               <div style={{ flex: 1, height: 4, borderRadius: 999, background: "var(--bg-subtle)", overflow: "hidden" }}>
                 <div className="anim-fill" style={{
                   width: "70%", height: "100%", borderRadius: 999,
@@ -36486,14 +37114,14 @@ function OnboardingSocial({ onStart, onBack }) {
               <LucideIco name="heart" size={20} style={{ color: PARTY_ICON_COLORS[2] }}/>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Beginner Crochet Circle</div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1 }}>City Library · Sat · 11:00 AM</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{t.obMockParty2}</div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1 }}>{t.obMockLine2}</div>
             </div>
             <span style={{
               fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
               background: "var(--accent-soft)", color: "var(--accent)", flexShrink: 0,
             }}>
-              Joined
+              {t.obJoined}
             </span>
           </div>
         </div>
@@ -36501,9 +37129,9 @@ function OnboardingSocial({ onStart, onBack }) {
 
       <div className="anim-fade-up" style={{ padding: "12px 22px 24px", animationDelay: "0.75s" }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-muted)", textAlign: "center", marginBottom: 12 }}>
-          Next, a few quick questions. Skip any you like.
+          {t.obNextQuestions}
         </div>
-        <OnboardingPrimaryBtn onClick={onStart}>Let's go</OnboardingPrimaryBtn>
+        <OnboardingPrimaryBtn onClick={onStart}>{t.obLetsGo}</OnboardingPrimaryBtn>
       </div>
     </div>
   );
@@ -36511,6 +37139,7 @@ function OnboardingSocial({ onStart, onBack }) {
 
 // ── Setup 1: Language — real LANGS table, real setLang ──────────────────────
 function OnboardingLanguage({ onNext, onBack, lang, setLang, step, total }) {
+  const{t}=useLang();
   return (
     <div style={{
       height: "100%", width: "100%", background: "var(--bg-page)",
@@ -36519,10 +37148,10 @@ function OnboardingLanguage({ onNext, onBack, lang, setLang, step, total }) {
       <OnboardingTopBar onBack={onBack} step={step} total={total}/>
 
       <div style={{ padding: "22px 22px 0" }}>
-        <OnboardingEyebrow>Detected from your device</OnboardingEyebrow>
-        <OnboardingHeadline size={28}>Your language</OnboardingHeadline>
+        <OnboardingEyebrow>{t.obDetected}</OnboardingEyebrow>
+        <OnboardingHeadline size={28}>{t.obYourLanguage}</OnboardingHeadline>
         <OnboardingSub style={{ maxWidth: 280 }}>
-          Patterns, terms, the app — all in your language.
+          {t.obLanguageSub}
         </OnboardingSub>
       </div>
 
@@ -36573,7 +37202,7 @@ function OnboardingLanguage({ onNext, onBack, lang, setLang, step, total }) {
       </div>
 
       <div style={{ padding: "20px 22px 24px" }}>
-        <OnboardingPrimaryBtn onClick={onNext}>Continue</OnboardingPrimaryBtn>
+        <OnboardingPrimaryBtn onClick={onNext}>{t.obContinue}</OnboardingPrimaryBtn>
       </div>
     </div>
   );
@@ -36629,7 +37258,14 @@ function obDeviceCountry(){
 }
 
 function OnboardingCountry({ onNext, onBack, country, setCountry, step, total }) {
-  const{t}=useLang();
+  const{t,lang}=useLang();
+  // The saved value stays the English name (Social matches parties on it) —
+  // only what's drawn, sorted and searched follows the app language.
+  const dispLang = lang === "zh" ? "zh-Hant" : lang;
+  const rows = React.useMemo(() => {
+    const r = COUNTRIES.map(c => ({ c, label: exploreCountryName(c, dispLang) }));
+    return dispLang === "en" ? r : r.sort((a, b) => a.label.localeCompare(b.label, dispLang));
+  }, [dispLang]);
   // Pre-selected from the phone's region when nothing is saved yet, and kept
   // local until Continue, so Skip never saves a country the user didn't confirm.
   const [picked, setPicked] = React.useState(() => country || obDeviceCountry());
@@ -36638,9 +37274,10 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
   // The pre-selected row can be far down the A–Z list; bring it into view.
   React.useEffect(() => { pickedRef.current?.scrollIntoView({ block: "center" }); }, []);
 
-  const filtered = query.trim()
-    ? COUNTRIES.filter(c=>c.toLowerCase().includes(query.trim().toLowerCase()))
-    : COUNTRIES;
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? rows.filter(({ c, label }) => c.toLowerCase().includes(q) || label.toLowerCase().includes(q))
+    : rows;
   const next = () => { if (picked) setCountry(picked); onNext(); };
 
   return (
@@ -36651,10 +37288,10 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
       <OnboardingTopBar onBack={onBack} onSkip={onNext} step={step} total={total}/>
 
       <div style={{ padding: "22px 22px 0" }}>
-        <OnboardingEyebrow>Optional</OnboardingEyebrow>
-        <OnboardingHeadline size={28}>Where are you based?</OnboardingHeadline>
+        <OnboardingEyebrow>{t.obOptional}</OnboardingEyebrow>
+        <OnboardingHeadline size={28}>{t.obCountryTitle}</OnboardingHeadline>
         <OnboardingSub style={{ maxWidth: 300 }}>
-          So Social can show craft parties in your country. Change it anytime in Settings.
+          {t.obCountrySub}
         </OnboardingSub>
       </div>
 
@@ -36668,7 +37305,7 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
 
       <div style={{ padding: "10px 22px 0", flex: 1, overflowY: "auto" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {filtered.map((c) => {
+          {filtered.map(({ c, label }) => {
             const active = picked === c;
             return (
               <button
@@ -36686,7 +37323,7 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
                   fontFamily: ob_sans,
                 }}
               >
-                <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{c}</div>
+                <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{label}</div>
                 <div style={{
                   width: 20, height: 20, borderRadius: 10,
                   border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
@@ -36700,14 +37337,14 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
           })}
           {filtered.length===0 && (
             <div style={{ padding: "16px 4px", fontSize: 13, color: "var(--text-secondary)", textAlign: "center" }}>
-              No matches — try a different search.
+              {t.obNoMatches}
             </div>
           )}
         </div>
       </div>
 
       <div style={{ padding: "20px 22px 24px" }}>
-        <OnboardingPrimaryBtn onClick={next}>{picked ? "Continue" : "Skip for now"}</OnboardingPrimaryBtn>
+        <OnboardingPrimaryBtn onClick={next}>{picked ? t.obContinue : t.obSkipForNow}</OnboardingPrimaryBtn>
       </div>
     </div>
   );
@@ -36716,6 +37353,7 @@ function OnboardingCountry({ onNext, onBack, country, setCountry, step, total })
 // ── Setup 3: Sign in — real Apple/Google/Email auth, reusing the app's
 //    existing SignInModal/EmailAuthModal exactly as Settings already does ──
 function OnboardingSignIn({ onFinish, onBack, step, total }) {
+  const{t}=useLang();
   const [modalProvider, setModalProvider] = React.useState(null); // "google" | "apple" | null
   const [showEmail, setShowEmail] = React.useState(false);
 
@@ -36727,13 +37365,13 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
       <OnboardingTopBar onBack={onBack} step={step} total={total}/>
 
       <div style={{ padding: "16px 22px 0" }}>
-        <OnboardingEyebrow>Optional · do this later if you'd rather</OnboardingEyebrow>
+        <OnboardingEyebrow>{t.obSignInEyebrow}</OnboardingEyebrow>
         <OnboardingHeadline size={28}>
-          <span style={{ display: "block" }}>Keep your work</span>
-          <span style={{ display: "block" }}>safely in sync.</span>
+          <span style={{ display: "block" }}>{t.obSignInH1}</span>
+          <span style={{ display: "block" }}>{t.obSignInH2}</span>
         </OnboardingHeadline>
         <OnboardingSub style={{ maxWidth: 280 }}>
-          Across devices. Private by default. You can do this later from settings.
+          {t.obSignInSub}
         </OnboardingSub>
       </div>
 
@@ -36741,9 +37379,9 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 22px", position: "relative" }}>
         <div style={{ position: "relative", width: 240, height: 160 }}>
           {[
-            { x: -34, y: 14, r: -6, op: 0.55, strip: OB_MINT,  title: "scarf", pct: 72 },
-            { x: 0,   y: 6,  r: 0,  op: 0.85, strip: OB_GOLD, title: "coasters", pct: 40 },
-            { x: 34,  y: -2, r: 5,  op: 1,    strip: "var(--accent)",  title: "shawl", pct: 14 },
+            { x: -34, y: 14, r: -6, op: 0.55, strip: OB_MINT,  title: t.obMockProj1, pct: 72 },
+            { x: 0,   y: 6,  r: 0,  op: 0.85, strip: OB_GOLD, title: t.obMockProj2, pct: 40 },
+            { x: 34,  y: -2, r: 5,  op: 1,    strip: "var(--accent)",  title: t.obMockProj3, pct: 14 },
           ].map((c, i) => (
             <div key={i} style={{
               position: "absolute", top: "50%", left: "50%",
@@ -36762,13 +37400,13 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
                 }}>
                   <div style={{ width: 5, height: 5, borderRadius: 3, background: c.strip === OB_MINT ? OB_SAGE : "var(--accent)" }}/>
                   <span style={{ fontSize: 9, fontWeight: 700, color: c.strip === OB_MINT ? OB_SAGE : "var(--accent)" }}>
-                    {c.strip === OB_MINT ? "Completed" : "In progress"}
+                    {c.strip === OB_MINT ? t.obCompleted : t.obInProgress}
                   </span>
                 </div>
               </div>
               <div style={{ marginTop: "auto", padding: "0 14px 12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>
-                  <span>Rows</span><span>{c.pct}%</span>
+                  <span>{t.obRows}</span><span>{c.pct}%</span>
                 </div>
                 <div style={{ marginTop: 4, height: 4, borderRadius: 2, background: "var(--bg-subtle)" }}>
                   <div style={{ width: `${c.pct}%`, height: "100%", background: OB_SAGE, borderRadius: 2 }}/>
@@ -36793,7 +37431,7 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF">
             <path d="M17.05 12.04c-.03-2.68 2.19-3.97 2.29-4.03-1.25-1.82-3.19-2.07-3.88-2.1-1.65-.17-3.22.97-4.06.97-.84 0-2.13-.95-3.5-.92-1.8.03-3.46 1.04-4.39 2.65-1.87 3.24-.48 8.04 1.35 10.67.9 1.29 1.96 2.73 3.36 2.68 1.35-.05 1.86-.87 3.49-.87 1.63 0 2.09.87 3.52.84 1.45-.02 2.37-1.3 3.26-2.6.67-1 1.19-2.02 1.48-2.97-.03-.02-2.87-1.1-2.92-4.32zM14.4 4.4c.74-.9 1.24-2.14 1.1-3.4-1.06.04-2.36.71-3.12 1.6-.68.8-1.28 2.07-1.12 3.28 1.18.09 2.4-.6 3.14-1.48z"/>
           </svg>
-          Continue with Apple
+          {t.continueWithApple}
         </button>
         <button
           onClick={() => setModalProvider("google")}
@@ -36810,7 +37448,7 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
             <path fill="#4CAF50" d="M24 44c5.4 0 10.3-2.1 14-5.4l-6.5-5.5c-2 1.4-4.6 2.3-7.5 2.3-5.1 0-9.5-3.2-11.2-7.9l-6.5 5C9.2 39.4 16.1 44 24 44z"/>
             <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.5 5.5C41 35.7 44 30.5 44 24c0-1.3-.1-2.7-.4-3.9z"/>
           </svg>
-          Continue with Google
+          {t.continueWithGoogle}
         </button>
         <button
           onClick={() => setShowEmail(true)}
@@ -36825,18 +37463,22 @@ function OnboardingSignIn({ onFinish, onBack, step, total }) {
             <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/>
             <rect x="2" y="4" width="20" height="16" rx="2"/>
           </svg>
-          Continue with Email
+          {t.continueWithEmail}
         </button>
-        <OnboardingGhostBtn onClick={onFinish}>Maybe later</OnboardingGhostBtn>
+        <OnboardingGhostBtn onClick={onFinish}>{t.obMaybeLater}</OnboardingGhostBtn>
       </div>
 
       <div style={{ padding: "6px 22px 18px", textAlign: "center" }}>
         <div style={{ fontFamily: ob_sans, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, fontWeight: 500 }}>
-          By continuing you agree to our{" "}
-          <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-secondary)", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 2 }}>Terms of Service</a>.
-          {" "}See our{" "}
-          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-secondary)", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 2 }}>Privacy Policy</a>
-          {" "}for how we handle your data.
+          {/* One template string per language, with {terms}/{privacy} where the
+              links go — word order differs too much between languages to
+              stitch the sentence together from fixed pieces. */}
+          {t.obTerms.split(/(\{terms\}|\{privacy\})/).map((part, i) => {
+            const linkStyle = { color: "var(--text-secondary)", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 2 };
+            if (part === "{terms}") return <a key={i} href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>{t.obTermsLink}</a>;
+            if (part === "{privacy}") return <a key={i} href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>{t.obPrivacyLink}</a>;
+            return part;
+          })}
         </div>
       </div>
 
@@ -37005,12 +37647,19 @@ function App(){
   const[settingsExiting,setSettingsExiting]=useState(false);
   const[showAdd,setShowAdd]=useState(false);
   const[editingProject,setEditingProject]=useState(null);
-  const[lang,setLangState]=useState(()=>readSavedLang()||"en");
+  const[lang,setLangState]=useState(()=>readSavedLang()||detectDeviceLang());
   const setLang=useCallback(code=>{
     setLangState(code);
     try{localStorage.setItem(LANG_STORAGE_KEY,code);}catch(e){}
   },[]);
   const t=T[lang]||T.en;
+  // Tells the browser which language the text is in. The page ships as
+  // <html lang="en">, and for Chinese/Japanese/Korean text that decides which
+  // regional glyph forms get drawn (the same Han characters differ between
+  // Traditional Chinese, Simplified and Japanese) and which system CJK font is
+  // picked, so the tag has to follow the app language. The zh table is
+  // Traditional, hence zh-Hant.
+  useEffect(()=>{document.documentElement.lang=lang==="zh"?"zh-Hant":lang;},[lang]);
   const[settings,setSettings]=useState(()=>{try{const s=localStorage.getItem("sc_settings");return s?JSON.parse(s):DEFAULT_SETTINGS;}catch{return DEFAULT_SETTINGS;}});
   useEffect(()=>{try{localStorage.setItem("sc_settings",JSON.stringify(settings));}catch{};},[settings]);
   useCloudPush('settings',settings,cloudSkipRef,session,cloudSyncEnabled);

@@ -41,6 +41,8 @@
 	<string>Miiitime adds craft parties you join to your calendar so you don't miss them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>mitime uses your camera to photograph your finished projects and in-progress work.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Used to show craft parties and meetups near you.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Used to show craft parties and meetups near you.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
