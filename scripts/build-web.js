@@ -22,8 +22,10 @@ const filesToCopy = [
   "empty_patterns.png",
   "empty_yarn.png",
   "empty_tools.png",
+  "empty_swatches.png",
   "empty_parties_nearby.png",
   "empty_parties_host.png",
+  "knit_stitch.png", // Color Grid "Realistic" preview: the one neutral stitch texture, recoloured at runtime
 ];
 
 const dirsToCopy = ["avatar"];
