@@ -26,6 +26,48 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // APNS_TEAM_ID, optional APNS_ENVIRONMENT).
 
 const APNS_BUNDLE_ID = "com.miiitime.app.ios";
+
+// APNs has two servers, and a device token only works on the one matching
+// how the app was signed: builds run from Xcode get sandbox tokens, while
+// TestFlight and App Store builds get production tokens (Xcode rewrites
+// aps-environment to "production" when exporting for distribution, whatever
+// App.entitlements says). Both kinds end up in the same push_token columns,
+// so try APNS_ENVIRONMENT's server first (sandbox by default) and, only if it
+// rejects the token as BadDeviceToken, retry once on the other one. The same
+// JWT is valid for both.
+const APNS_HOSTS = { production: "api.push.apple.com", sandbox: "api.sandbox.push.apple.com" };
+
+function apnsHostOrder(): string[] {
+  const environment = (Deno.env.get("APNS_ENVIRONMENT") || "sandbox").toLowerCase();
+  return environment === "production"
+    ? [APNS_HOSTS.production, APNS_HOSTS.sandbox]
+    : [APNS_HOSTS.sandbox, APNS_HOSTS.production];
+}
+
+async function sendApns(
+  token: string,
+  jwt: string,
+  payload: unknown,
+): Promise<{ ok: true } | { ok: false; status: number; body: string }> {
+  let result: { ok: false; status: number; body: string } = { ok: false, status: 0, body: "" };
+  for (const host of apnsHostOrder()) {
+    const res = await fetch(`https://${host}/3/device/${token}`, {
+      method: "POST",
+      headers: {
+        "authorization": `bearer ${jwt}`,
+        "apns-topic": APNS_BUNDLE_ID,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return { ok: true };
+    result = { ok: false, status: res.status, body: await res.text() };
+    if (!(res.status === 400 && result.body.includes("BadDeviceToken"))) break;
+  }
+  return result;
+}
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // old_when / old_location are the only client-supplied text that reaches a
 // push. Only the host can send them now, but keep them to a sane length.
@@ -226,9 +268,6 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ ok: true, skipped: "APNs not configured" }), { status: 200, headers: corsHeaders });
   }
 
-  const environment = (Deno.env.get("APNS_ENVIRONMENT") || "sandbox").toLowerCase();
-  const host = environment === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
-
   const key = await importApnsKey(apnsKeyRaw);
   const jwt = await buildApnsJwt(apnsTeamId, apnsKeyId, key);
   const payload = {
@@ -240,17 +279,7 @@ Deno.serve(async (req: Request) => {
 
   const results = await Promise.all(tokens.map(async (token) => {
     try {
-      const res = await fetch(`https://${host}/3/device/${token}`, {
-        method: "POST",
-        headers: {
-          "authorization": `bearer ${jwt}`,
-          "apns-topic": APNS_BUNDLE_ID,
-          "apns-push-type": "alert",
-          "apns-priority": "10",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await sendApns(token, jwt, payload);
       if (!res.ok) {
         console.warn(`notify-attendees: APNs responded ${res.status} for a token`);
         return { ok: false, status: res.status };
