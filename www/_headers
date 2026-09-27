@@ -1,0 +1,4 @@
+# Apple fetches this (extensionless) file directly and expects JSON; without
+# an explicit type Netlify would guess from the missing extension.
+/.well-known/apple-app-site-association
+  Content-Type: application/json

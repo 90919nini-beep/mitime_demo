@@ -19,15 +19,70 @@
     if(/^\/(p|join)\//.test(location.pathname))document.write('<base href="/">');
   </script>
   <meta name="viewport"content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <title>mitime</title>
+  <title>Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter</title>
+  <meta name="description" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <!-- SEO / link-preview tags. This one index.html is also served, unchanged,
+       at /p/{uuid} (Shared Pattern) and /join/{code} (Party Join) — see the
+       base-href script above and _redirects — so a single hardcoded canonical/
+       og:url would wrongly tell search engines every shared-pattern or
+       party-join page is a duplicate of the homepage. The tiny script below
+       makes them self-referential instead. Note this only helps Google's own
+       rendered index (it does execute this JS): chat-app / social link
+       previews (iMessage, Slack, Discord, X, Facebook) fetch raw HTML only
+       and never run JS, so they still show this generic description, not a
+       given pattern's or party's own — fixing that needs a small server/edge
+       function to inject real per-page meta tags, which this file, being a
+       static SPA, can't do on its own. -->
+  <meta name="robots" content="index, follow" id="seo-robots"/>
+  <link rel="canonical" id="seo-canonical" href="https://miiitime.com/"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Miiitime"/>
+  <meta property="og:title" id="seo-og-title" content="Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter"/>
+  <meta property="og:description" id="seo-og-desc" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <meta property="og:url" id="seo-og-url" content="https://miiitime.com/"/>
+  <meta property="og:image" id="seo-og-image" content="https://miiitime.com/app_icon.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" id="seo-tw-title" content="Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter"/>
+  <meta name="twitter:description" id="seo-tw-desc" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <meta name="twitter:image" id="seo-tw-image" content="https://miiitime.com/app_icon.png"/>
+  <meta name="theme-color" content="#778EE3"/>
+  <script>
+    (function(){
+      try{
+        var here=location.origin+location.pathname;
+        var c=document.getElementById('seo-canonical'); if(c)c.href=here;
+        var u=document.getElementById('seo-og-url'); if(u)u.content=here;
+        // Party Join pages carry a real host name and real-world meeting
+        // location for a specific date — not something that should turn up
+        // in a Google search for that person's name. Shared Pattern pages
+        // are the opposite: sharing one is opt-in publishing of the pattern
+        // itself, so those stay indexable.
+        if(/^\/join\//.test(location.pathname)){
+          var r=document.getElementById('seo-robots'); if(r)r.content='noindex, follow';
+        }
+      }catch(e){}
+    })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"SoftwareApplication",
+    "name":"Miiitime",
+    "url":"https://miiitime.com/",
+    "description":"Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you.",
+    "applicationCategory":"LifestyleApplication",
+    "operatingSystem":"iOS, Web",
+    "featureList":["Crochet and knitting pattern maker","Row and round counter","Step-by-step pattern reading mode","Pattern and project library","Image to pattern conversion","Craft parties and meetups"]
+  }
+  </script>
   <link rel="icon" type="image/svg+xml" href="app_icon_rounded.svg"/>
   <link rel="icon" type="image/png" href="app_icon.png"/>
   <link rel="apple-touch-icon" href="app_icon_rounded.svg"/>
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22mitime%22%2C%22short_name%22%3A%22mitime%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22app_icon_rounded.svg%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22start_url%22%3A%22.%2Fpreview.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F2F2F7%22%2C%22theme_color%22%3A%22%23778EE3%22%7D"/>
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Miiitime%22%2C%22short_name%22%3A%22Miiitime%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22app_icon_rounded.svg%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22start_url%22%3A%22.%2Fpreview.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F2F2F7%22%2C%22theme_color%22%3A%22%23778EE3%22%7D"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="mitime"/>
+  <meta name="apple-mobile-web-app-title" content="Miiitime"/>
   <link rel="stylesheet" href="tailwind.css"/>
   <script src="vendor/react.production.min.js"></script>
   <script src="vendor/react-dom.production.min.js"></script>
@@ -330,7 +385,7 @@
 </head>
 <body>
 <div id="splash">
-  <img class="sp-logo" src="primary_logo.svg" alt="mitime"/>
+  <img class="sp-logo" src="primary_logo.svg" alt="Miiitime"/>
   <div class="sp-tagline" id="sp-tagline">
     <span id="sp-text"></span>
     <span class="sp-dots-wrap">

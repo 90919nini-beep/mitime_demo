@@ -1,6 +1,6 @@
 {
-  "name": "mitime",
-  "short_name": "mitime",
+  "name": "Miiitime",
+  "short_name": "Miiitime",
   "icons": [
     { "src": "app_icon_rounded.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],

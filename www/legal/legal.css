@@ -1,0 +1,132 @@
+/* Shared styles for miiitime.com/privacy and /terms. Same palette as the app
+   (periwinkle accent, warm off-white page, flat border-only boxes, no glows)
+   and the same Fraunces Soft italic the app uses for its page titles. Long-form
+   reading: one ~68ch column, 17px body, generous line height. */
+
+/* Fraunces Bold Italic, Soft (Undercase Type, SIL Open Font License 1.1) —
+   the same Latin subset index.html embeds, served as a file here. */
+@font-face{
+  font-family:'Fraunces';font-style:italic;font-weight:700;font-display:swap;
+  src:url(fraunces-soft-bold-italic.woff2) format('woff2');
+}
+
+:root{
+  color-scheme:light dark;
+  --bg:#FDFAF6;
+  --surface:#FFFFFF;
+  --text:#1F2937;
+  --heading:#111111;
+  --muted:#5B6270;
+  --border:#E7E2D8;
+  --accent:#778EE3;
+  --link:#3850A6;
+  --ph-bg:#FFF4D6;
+  --ph-text:#6B4E00;
+  --focus:#778EE3;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161519;
+    --surface:#1F1D24;
+    --text:#D9D4E4;
+    --heading:#EDE9F4;
+    --muted:#A39BB5;
+    --border:#34303D;
+    --link:#AEBBF2;
+    --ph-bg:#3A2F12;
+    --ph-text:#F5D98A;
+  }
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:16px;}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;
+  font-size:17px;line-height:1.65;
+}
+
+.skip{position:absolute;left:-9999px;top:0;}
+.skip:focus{left:16px;top:12px;z-index:10;background:var(--surface);color:var(--link);
+  padding:8px 12px;border:1px solid var(--border);border-radius:10px;}
+
+a{color:var(--link);text-underline-offset:2px;}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px;}
+
+.site-header,.site-footer,main{max-width:720px;margin:0 auto;padding:0 16px;}
+.site-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:20px;padding-bottom:20px;}
+.site-header img{height:28px;width:auto;display:block;}
+.site-header nav a{font-size:15px;font-weight:600;text-decoration:none;margin-left:16px;}
+.site-header nav a[aria-current="page"]{color:var(--heading);}
+
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:24px 0 10px;}
+h1{
+  font-family:'Fraunces',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-style:italic;font-weight:700;font-size:40px;line-height:1.15;
+  color:var(--heading);margin:0 0 12px;
+}
+.meta{font-size:14px;color:var(--muted);margin:0 0 24px;}
+
+.notice{border:1px solid var(--border);border-left:4px solid var(--accent);background:var(--surface);
+  border-radius:12px;padding:14px 16px;font-size:15px;margin:0 0 28px;}
+.notice strong{color:var(--heading);}
+
+.toc{border:1px solid var(--border);background:var(--surface);border-radius:16px;padding:16px 20px;margin:0 0 36px;}
+.toc h2{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;}
+.toc ol{margin:0;padding-left:22px;font-size:15px;line-height:1.9;}
+
+h2{font-size:24px;line-height:1.3;color:var(--heading);margin:44px 0 12px;}
+h3{font-size:18px;line-height:1.4;color:var(--heading);margin:28px 0 8px;}
+p,ul,ol{margin:0 0 14px;}
+li{margin:4px 0;}
+.lead{font-size:18px;}
+
+.summary{border:1px solid var(--border);background:var(--surface);border-radius:16px;padding:16px 20px;margin:0 0 14px;}
+.summary ul{margin:0;}
+
+/* Tables scroll sideways inside their own box on narrow screens, never the page. */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;margin:0 0 16px;background:var(--surface);}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px;line-height:1.5;}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:0;}
+th{font-size:13px;font-weight:700;color:var(--muted);background:transparent;}
+caption{text-align:left;padding:12px 14px 0;font-size:13px;color:var(--muted);}
+
+/* Operator-supplied facts that aren't known yet. Deliberately loud. */
+.ph{background:var(--ph-bg);color:var(--ph-text);border-radius:4px;padding:0 4px;font-weight:600;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;}
+
+.back{font-size:15px;margin:36px 0 0;}
+.site-footer{border-top:1px solid var(--border);margin-top:48px;padding-top:20px;padding-bottom:40px;font-size:14px;color:var(--muted);}
+.site-footer a{margin-right:16px;}
+
+@media (max-width:520px){
+  body{font-size:16px;}
+  h1{font-size:32px;}
+  h2{font-size:21px;}
+  .site-header nav a{margin-left:12px;}
+}
+@media print{
+  .skip,.site-header nav,.toc,.back{display:none;}
+  body{background:#fff;color:#000;font-size:11pt;}
+  a{color:#000;}
+  .table-wrap{overflow:visible;border-color:#999;}
+  table{min-width:0;}
+}
+
+/* Phones: each table row becomes a stacked block, with its column label shown
+   above each cell (from data-label), so nothing hides off the right edge.
+   The role attributes in the markup keep table semantics for screen readers
+   once display is changed. */
+@media (max-width:600px){
+  .table-wrap{overflow:visible;}
+  table{min-width:0;}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  tbody tr{display:block;padding:12px 14px;border-bottom:1px solid var(--border);}
+  tbody tr:last-child{border-bottom:0;}
+  td{display:block;border:0;padding:2px 0;}
+  td[data-label]::before{content:attr(data-label);display:block;font-size:12px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+  td:first-child[data-label]::before{margin-top:0;}
+  td:first-child{font-weight:600;color:var(--heading);}
+}

@@ -26,9 +26,20 @@ const filesToCopy = [
   "empty_parties_nearby.png",
   "empty_parties_host.png",
   "knit_stitch.png", // Color Grid "Realistic" preview: the one neutral stitch texture, recoloured at runtime
+  // Netlify-only site config + the two public policy pages. www/ is only
+  // ever used as Capacitor's native webDir today (the public miiitime.com
+  // deploy currently serves the repo root directly, unbuilt) — these are
+  // copied anyway so www/ is a complete, deployable site root in its own
+  // right, should that ever change: without them, switching the Netlify
+  // publish directory to www/ would silently drop the /p/* and /join/*
+  // rewrites, the Apple Universal Links file, and the Terms/Privacy pages.
+  "_headers",
+  "_redirects",
+  "robots.txt",
+  "sitemap.xml",
 ];
 
-const dirsToCopy = ["avatar"];
+const dirsToCopy = ["avatar", ".well-known", "legal", "privacy", "terms"];
 
 fs.mkdirSync(wwwDir, { recursive: true });
 

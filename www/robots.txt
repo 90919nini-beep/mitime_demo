@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+# Party Join pages carry a real host name and real-world meeting location for
+# a specific date (see the noindex meta tag index.html sets on these paths at
+# runtime) — kept out of crawl budget here too, not just noindex'd, since a
+# page can still get crawled (and briefly appear) before a crawler notices a
+# noindex tag that only exists after JS runs.
+Disallow: /join/
+
+Sitemap: https://miiitime.com/sitemap.xml

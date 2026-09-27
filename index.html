@@ -19,15 +19,70 @@
     if(/^\/(p|join)\//.test(location.pathname))document.write('<base href="/">');
   </script>
   <meta name="viewport"content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <title>mitime</title>
+  <title>Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter</title>
+  <meta name="description" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <!-- SEO / link-preview tags. This one index.html is also served, unchanged,
+       at /p/{uuid} (Shared Pattern) and /join/{code} (Party Join) — see the
+       base-href script above and _redirects — so a single hardcoded canonical/
+       og:url would wrongly tell search engines every shared-pattern or
+       party-join page is a duplicate of the homepage. The tiny script below
+       makes them self-referential instead. Note this only helps Google's own
+       rendered index (it does execute this JS): chat-app / social link
+       previews (iMessage, Slack, Discord, X, Facebook) fetch raw HTML only
+       and never run JS, so they still show this generic description, not a
+       given pattern's or party's own — fixing that needs a small server/edge
+       function to inject real per-page meta tags, which this file, being a
+       static SPA, can't do on its own. -->
+  <meta name="robots" content="index, follow" id="seo-robots"/>
+  <link rel="canonical" id="seo-canonical" href="https://miiitime.com/"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Miiitime"/>
+  <meta property="og:title" id="seo-og-title" content="Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter"/>
+  <meta property="og:description" id="seo-og-desc" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <meta property="og:url" id="seo-og-url" content="https://miiitime.com/"/>
+  <meta property="og:image" id="seo-og-image" content="https://miiitime.com/app_icon.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" id="seo-tw-title" content="Miiitime: Crochet &amp; Knitting Pattern Maker and Row Counter"/>
+  <meta name="twitter:description" id="seo-tw-desc" content="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you."/>
+  <meta name="twitter:image" id="seo-tw-image" content="https://miiitime.com/app_icon.png"/>
+  <meta name="theme-color" content="#778EE3"/>
+  <script>
+    (function(){
+      try{
+        var here=location.origin+location.pathname;
+        var c=document.getElementById('seo-canonical'); if(c)c.href=here;
+        var u=document.getElementById('seo-og-url'); if(u)u.content=here;
+        // Party Join pages carry a real host name and real-world meeting
+        // location for a specific date — not something that should turn up
+        // in a Google search for that person's name. Shared Pattern pages
+        // are the opposite: sharing one is opt-in publishing of the pattern
+        // itself, so those stay indexable.
+        if(/^\/join\//.test(location.pathname)){
+          var r=document.getElementById('seo-robots'); if(r)r.content='noindex, follow';
+        }
+      }catch(e){}
+    })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"SoftwareApplication",
+    "name":"Miiitime",
+    "url":"https://miiitime.com/",
+    "description":"Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you.",
+    "applicationCategory":"LifestyleApplication",
+    "operatingSystem":"iOS, Web",
+    "featureList":["Crochet and knitting pattern maker","Row and round counter","Step-by-step pattern reading mode","Pattern and project library","Image to pattern conversion","Craft parties and meetups"]
+  }
+  </script>
   <link rel="icon" type="image/svg+xml" href="app_icon_rounded.svg"/>
   <link rel="icon" type="image/png" href="app_icon.png"/>
   <link rel="apple-touch-icon" href="app_icon_rounded.svg"/>
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22mitime%22%2C%22short_name%22%3A%22mitime%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22app_icon_rounded.svg%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22start_url%22%3A%22.%2Fpreview.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F2F2F7%22%2C%22theme_color%22%3A%22%23778EE3%22%7D"/>
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Miiitime%22%2C%22short_name%22%3A%22Miiitime%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22app_icon_rounded.svg%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22start_url%22%3A%22.%2Fpreview.html%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F2F2F7%22%2C%22theme_color%22%3A%22%23778EE3%22%7D"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="mitime"/>
+  <meta name="apple-mobile-web-app-title" content="Miiitime"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -333,7 +388,7 @@
 </head>
 <body>
 <div id="splash">
-  <img class="sp-logo" src="primary_logo.svg" alt="mitime"/>
+  <img class="sp-logo" src="primary_logo.svg" alt="Miiitime"/>
   <div class="sp-tagline" id="sp-tagline">
     <span id="sp-text"></span>
     <span class="sp-dots-wrap">
@@ -704,6 +759,21 @@ const WEB_APP_URL="https://miiitime.com";
 // the Universal Link paths in .well-known only claim /p/* and /join/*.
 const PRIVACY_URL=`${WEB_APP_URL}/privacy/`;
 const TERMS_URL=`${WEB_APP_URL}/terms/`;
+// Mirrors the default <title>/og:*/twitter:* text hardcoded in index.html's
+// <head> (can't share a literal with those — they're plain HTML, parsed and
+// shown to crawlers/link-preview bots before this script ever runs). Used
+// only to restore the head tags to their default once a page that overrides
+// them (SharedPatternPage) unmounts.
+const SEO_DEFAULT_TITLE="Miiitime: Crochet & Knitting Pattern Maker and Row Counter";
+const SEO_DEFAULT_DESC="Design crochet and knitting patterns, count rows and rounds without losing your place, import written patterns to follow step by step, and find craft parties near you.";
+// Real listing URL, once there is one — checked the whole repo (code, Info.plist,
+// xcconfigs, pbxproj, migrations, Edge Functions) for an apps.apple.com link, an
+// App Store numeric id, or a testflight.apple.com join link: none exist yet.
+// null is a deliberate, honest state (see the homepage's iOS section below),
+// not a placeholder — set this the day the App Store listing goes live and the
+// same section switches itself over to a real download link, no other change
+// needed.
+const APP_STORE_URL=null;
 
 /* ─── Pattern Sharing: shared-pattern URL + auth-return helpers ─────────────
    A shared Pattern is addressed by https://miiitime.com/p/{uuid}. That one URL
@@ -1222,9 +1292,9 @@ function notifIdForSignup(signupId){
 function notificationsEnabled(){
   try{return JSON.parse(localStorage.getItem("sc_settings")||"{}").notifications!==false;}catch{return true;}
 }
-// Turning the switch off also drops reminders that are already scheduled.
-// Party reminders are the only local notifications the app schedules, so
-// clearing everything pending is exactly "clear the party reminders".
+// Turning the switch off also drops reminders that are already scheduled --
+// everything pending, which covers the project catch-up reminders below too
+// (their own resync then finds the switch off and schedules nothing).
 async function cancelAllPartyReminders(){
   try{
     const LocalNotifications=window.Capacitor?.Plugins?.LocalNotifications;
@@ -1233,16 +1303,25 @@ async function cancelAllPartyReminders(){
     if(notifications?.length)await LocalNotifications.cancel({notifications});
   }catch(e){console.warn("cancelAllPartyReminders failed:",e);}
 }
-async function schedulePartyReminder(party,signupId){
+// signupId is really just the reminder's key: an attendee's signup id, or
+// hostReminderKey(partyId) for the host's own party. Scheduling again under
+// the same key replaces the earlier reminder, so this doubles as "move it"
+// after a time change; a party with no date, or whose reminder time has
+// passed, has any earlier reminder removed instead. ask:false never shows the
+// permission prompt (for background resyncs), it only schedules if already
+// allowed.
+async function schedulePartyReminder(party,signupId,{ask=true}={}){
   if(!notificationsEnabled())return;
   const start=partyDateTimeToDate(party);
-  if(!start)return;
-  const at=new Date(start.getTime()-60*60*1000); // 1 hour before
-  if(at.getTime()<=Date.now())return; // already past the reminder window
+  const at=start&&new Date(start.getTime()-60*60*1000); // 1 hour before
   try{
     const LocalNotifications=window.Capacitor?.Plugins?.LocalNotifications;
     if(!LocalNotifications)return;
-    const perm=await LocalNotifications.requestPermissions();
+    if(!at||at.getTime()<=Date.now()){
+      await LocalNotifications.cancel({notifications:[{id:notifIdForSignup(signupId)}]});
+      return;
+    }
+    const perm=ask?await LocalNotifications.requestPermissions():await LocalNotifications.checkPermissions();
     if(perm.display!=="granted")return;
     const where=party.place_name||party.formatted_address||"";
     await LocalNotifications.schedule({notifications:[{
@@ -1253,6 +1332,36 @@ async function schedulePartyReminder(party,signupId){
     }]});
   }catch(e){console.warn("schedulePartyReminder failed:",e);}
 }
+function hostReminderKey(partyId){return`host:${partyId}`;}
+// Re-applies the 1-hour reminders from freshly fetched party rows: the host's
+// own parties, and the ones this device joined. That's what moves a guest's
+// reminder when the host changes the time (the guest's device only learns
+// about it on its next fetch), and what gives parties hosted before host
+// reminders existed one too. A joined party missing from a successful fetch
+// was deleted by its host, so its reminder goes. Never prompts.
+function resyncPartyReminders(parties,hostIds,joined){
+  const byId=new Map((parties||[]).map(p=>[p.id,p]));
+  for(const p of byId.values()){
+    if(hostIds?.includes(p.id))schedulePartyReminder(p,hostReminderKey(p.id),{ask:false});
+  }
+  for(const j of joined||[]){
+    if(!j.signupId)continue;
+    const p=byId.get(j.partyId);
+    if(p)schedulePartyReminder(p,j.signupId,{ask:false});
+    else cancelPartyReminder(j.signupId);
+  }
+}
+// Leaving a party: tell the host first, then cancel. Same order as the
+// "cancelled" notice before party_delete -- notify-host checks the caller's
+// cancel secret against the signup row and reads the guest's name from it,
+// and party_signup_cancel removes that row. Awaited for the same reason.
+async function leavePartySignup(partyId,signupId){
+  const cs=getSignupCancelSecret(signupId);
+  if(!sb||!cs)return;
+  try{await sb.functions.invoke("notify-host",{body:{party_id:partyId,signup_id:signupId,secret:cs,kind:"left"}});}
+  catch(e){console.warn("notify-host (left) failed:",e);}
+  await sb.rpc("party_signup_cancel",{p_signup_id:signupId,p_secret:cs});
+}
 async function cancelPartyReminder(signupId){
   if(!signupId)return;
   try{
@@ -1260,6 +1369,138 @@ async function cancelPartyReminder(signupId){
     if(!LocalNotifications)return;
     await LocalNotifications.cancel({notifications:[{id:notifIdForSignup(signupId)}]});
   }catch(e){console.warn("cancelPartyReminder failed:",e);}
+}
+
+/* ─── Project reminders ──────────────────────────────────────────────────────
+   Two kinds, both local notifications scheduled together below: due-date
+   reminders (3 days before a project's dueDate, and on the day), and
+   catch-up reminders. For catch-up, an "In Progress" project nobody has
+   touched for PROJECT_REMINDER_DAYS gets one notification ("It's been a
+   month…"). Projects have no updatedAt
+   field, so the last time each one changed is kept separately, keyed by
+   project id, in sc_project_activity -- written by noteProjectActivity from
+   App's projects effect, which sees every edit (row counter, notes, status…)
+   in one place. A project seen for the first time counts as touched now, so
+   existing projects get a full month's grace after this ships instead of a
+   burst of reminders.
+   Reminders are fully rescheduled (cancel ours, schedule fresh) on every
+   change, debounced, rather than patched one project at a time -- there are
+   only ever a handful, and a full resync can't drift. Each lands on the next
+   30-day mark after the last activity that's still ahead, so a project left
+   alone keeps getting one nudge a month for as long as the app is opened
+   now and then, and never more than that. */
+const PROJECT_REMINDER_DAYS=30;
+// iOS keeps at most 64 pending local notifications per app; stay well under
+// so party reminders always have room.
+const PROJECT_REMINDER_MAX=20;
+const PROJECT_ACTIVITY_KEY="sc_project_activity";
+const PROJECT_REMINDER_IDS_KEY="sc_project_reminder_ids";
+function readJsonStore(key,fallback){
+  try{const v=JSON.parse(localStorage.getItem(key)||"null");return v??fallback;}catch{return fallback;}
+}
+// Key-order-insensitive, so a cloud pull that hands back the same project
+// with its keys reordered (jsonb does that) doesn't count as activity.
+function stableStringify(v){
+  if(Array.isArray(v))return`[${v.map(stableStringify).join(",")}]`;
+  if(v&&typeof v==="object")return`{${Object.keys(v).sort().map(k=>`${JSON.stringify(k)}:${stableStringify(v[k])}`).join(",")}}`;
+  return JSON.stringify(v)??"null";
+}
+// Returns true when `next` has exactly one project `prev` didn't -- the user
+// just started one, the moment worth asking for notification permission. (A
+// cloud pull landing several at once on a new device isn't that moment.)
+function noteProjectActivity(prev,next){
+  try{
+    const activity=readJsonStore(PROJECT_ACTIVITY_KEY,{});
+    const now=new Date().toISOString();
+    const prevById=new Map((prev||[]).map(p=>[p.id,p]));
+    let added=0;
+    const kept={};
+    for(const p of next||[]){
+      if(!p?.id)continue;
+      const before=prevById.get(p.id);
+      if(prev&&!before)added++;
+      const changed=before&&before!==p&&stableStringify(before)!==stableStringify(p);
+      kept[p.id]=!activity[p.id]||changed?now:activity[p.id];
+    }
+    localStorage.setItem(PROJECT_ACTIVITY_KEY,JSON.stringify(kept));
+    return added===1;
+  }catch(e){console.warn("noteProjectActivity failed:",e);return false;}
+}
+// Serialized so two overlapping syncs can't interleave their cancel/schedule.
+let projectReminderChain=Promise.resolve();
+function syncProjectReminders({ask=false}={}){
+  projectReminderChain=projectReminderChain.then(()=>doSyncProjectReminders(ask));
+  return projectReminderChain;
+}
+async function doSyncProjectReminders(ask){
+  try{
+    const LocalNotifications=window.Capacitor?.Plugins?.LocalNotifications;
+    if(!LocalNotifications)return;
+    // Cancelled by the ids we scheduled last time (kept in localStorage), not
+    // via getPending(), so party reminders are never touched.
+    const oldIds=readJsonStore(PROJECT_REMINDER_IDS_KEY,[]);
+    if(oldIds.length)await LocalNotifications.cancel({notifications:oldIds.map(id=>({id}))});
+    localStorage.setItem(PROJECT_REMINDER_IDS_KEY,"[]");
+    if(!notificationsEnabled())return;
+    let perm=await LocalNotifications.checkPermissions();
+    // Only ever prompts right after the user starts a new project -- never
+    // out of the blue on launch.
+    if(ask&&String(perm.display).startsWith("prompt"))perm=await LocalNotifications.requestPermissions();
+    if(perm.display!=="granted")return;
+    const projects=readJsonStore("sc_projects",[]);
+    const activity=readJsonStore(PROJECT_ACTIVITY_KEY,{});
+    const t=T[readSavedLang()||detectDeviceLang()]||T.en;
+    const period=PROJECT_REMINDER_DAYS*24*60*60*1000;
+    const soonest=Date.now()+60*1000;
+    const title=p=>`\u{1F9F6} ${p.title||""}`.trim();
+    const catchUp=projects
+      .filter(p=>p?.id&&p.status==="In Progress"&&activity[p.id])
+      .map(p=>{
+        const last=new Date(activity[p.id]).getTime();
+        if(isNaN(last))return null;
+        const k=Math.max(1,Math.ceil((soonest-last)/period));
+        return{
+          id:notifIdForSignup(`project:${p.id}`),
+          title:title(p),
+          body:t.projectReminderBody,
+          schedule:{at:new Date(last+k*period)},
+          extra:{kind:"projectReminder",projectId:p.id},
+        };
+      });
+    // Due-date reminders: 3 days before and on the day, both at 10:00 local
+    // (dueDate is a plain YYYY-MM-DD from the date field). Any status but
+    // Completed -- a gift that's "Not Started" three days out needs it most.
+    // Whichever of the two is already past is simply skipped.
+    const due=projects
+      .filter(p=>p?.id&&p.status!=="Completed"&&/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate||""))
+      .flatMap(p=>{
+        const day=new Date(`${p.dueDate}T10:00:00`);
+        if(isNaN(day.getTime()))return[];
+        const soon=new Date(day);soon.setDate(soon.getDate()-3);
+        return[
+          {id:notifIdForSignup(`projectDue3:${p.id}`),title:title(p),body:t.projectDueSoonBody,schedule:{at:soon},extra:{kind:"projectDueSoon",projectId:p.id}},
+          {id:notifIdForSignup(`projectDue0:${p.id}`),title:title(p),body:t.projectDueTodayBody,schedule:{at:day},extra:{kind:"projectDueToday",projectId:p.id}},
+        ];
+      });
+    const notifications=[...catchUp,...due]
+      .filter(n=>n&&n.schedule.at.getTime()>=soonest)
+      .sort((a,b)=>a.schedule.at-b.schedule.at)
+      .slice(0,PROJECT_REMINDER_MAX);
+    if(!notifications.length)return;
+    await LocalNotifications.schedule({notifications});
+    localStorage.setItem(PROJECT_REMINDER_IDS_KEY,JSON.stringify(notifications.map(n=>n.id)));
+  }catch(e){console.warn("syncProjectReminders failed:",e);}
+}
+// Row-counter taps change projects many times a minute; resync once things
+// settle. `ask` sticks until the pending sync runs.
+let projectReminderTimer=null,projectReminderAsk=false;
+function scheduleProjectReminderSync(ask=false){
+  projectReminderAsk=projectReminderAsk||ask;
+  clearTimeout(projectReminderTimer);
+  projectReminderTimer=setTimeout(()=>{
+    const a=projectReminderAsk;projectReminderAsk=false;
+    syncProjectReminders({ask:a});
+  },3000);
 }
 // Minimal iCalendar export — floating local time (no TZID), matching the
 // no-stored-timezone assumption above. Default 2-hour duration since parties
@@ -1929,7 +2170,9 @@ const PATTERN_DIFFICULTIES=["Beginner","Intermediate","Advanced"];
 /* ─── Translations ─────────────────────────────────────────────────────────── */
 const T={
   en:{
-    appLabel:"My Projects",appTitle:"mitime",inProgress:"in progress",projects:"projects",
+    projectReminderBody:"It's been a month since you last worked on this. Ready to pick it back up?",
+    projectDueSoonBody:"Due in 3 days. Time for the final stretch!",projectDueTodayBody:"Due today. You've got this!",
+    appLabel:"My Projects",appTitle:"Miiitime",inProgress:"in progress",projects:"projects",
     hook:"Hook",weight:"Weight",balls:"Balls",rows:"Rows",notes:"Notes",noNotes:"No notes added.",tags:"Tags",
     edit:"Edit",share:"Share",more:"More",patternBtn:"Pattern",
     addProject:"New Project",editProject:"Edit Project",addSubtitle:"Add a crochet or knitting project",
@@ -2147,7 +2390,9 @@ const T={
     obPrivacyLink:"Privacy Policy",
   },
   fr:{
-    appLabel:"Mes Projets",appTitle:"mitime",inProgress:"en cours",projects:"projets",
+    projectReminderBody:"Cela fait un mois que vous n'avez pas avancé ce projet. Prêt à le reprendre ?",
+    projectDueSoonBody:"À terminer dans 3 jours. C'est la dernière ligne droite !",projectDueTodayBody:"À terminer aujourd'hui. Vous y êtes presque !",
+    appLabel:"Mes Projets",appTitle:"Miiitime",inProgress:"en cours",projects:"projets",
     hook:"Aiguille",weight:"Épaisseur",balls:"Pelotes",rows:"Rangs",notes:"Notes",noNotes:"Aucune note.",tags:"Étiquettes",
     edit:"Modifier",share:"Partager",more:"Plus",patternBtn:"Patron",
     addProject:"Nouveau Projet",editProject:"Modifier le projet",addSubtitle:"Ajouter un projet",
@@ -2364,7 +2609,9 @@ const T={
     obPrivacyLink:"Politique de confidentialité",
   },
   ja:{
-    appLabel:"マイプロジェクト",appTitle:"mitime",inProgress:"進行中",projects:"プロジェクト",
+    projectReminderBody:"最後に作業してから1か月が経ちました。そろそろ続きを始めませんか？",
+    projectDueSoonBody:"期限まであと3日。ラストスパートです！",projectDueTodayBody:"今日が期限です。あと少し！",
+    appLabel:"マイプロジェクト",appTitle:"Miiitime",inProgress:"進行中",projects:"プロジェクト",
     hook:"針",weight:"太さ",balls:"玉数",rows:"段",notes:"メモ",noNotes:"メモなし",tags:"タグ",
     edit:"編集",share:"共有",more:"もっと",patternBtn:"パターン",
     addProject:"新しいプロジェクト",editProject:"プロジェクトを編集",addSubtitle:"プロジェクトを追加",
@@ -2581,7 +2828,9 @@ const T={
     obPrivacyLink:"プライバシーポリシー",
   },
   zh:{
-    appLabel:"我的專案",appTitle:"mitime",inProgress:"進行中",projects:"個專案",
+    projectReminderBody:"距離上次編織已經一個月了，要不要繼續完成它？",
+    projectDueSoonBody:"距離截止日還有 3 天，最後衝刺吧！",projectDueTodayBody:"今天就是截止日，加油！",
+    appLabel:"我的專案",appTitle:"Miiitime",inProgress:"進行中",projects:"個專案",
     hook:"針",weight:"線重",balls:"球數",rows:"行數",notes:"備註",noNotes:"尚無備註",tags:"標籤",
     edit:"編輯",share:"分享",more:"更多",patternBtn:"花樣",
     addProject:"新增專案",editProject:"編輯專案",addSubtitle:"新增鉤針或棒針專案",
@@ -2798,7 +3047,9 @@ const T={
     obPrivacyLink:"隱私權政策",
   },
   ko:{
-    appLabel:"내 프로젝트",appTitle:"mitime",inProgress:"진행 중",projects:"개 프로젝트",
+    projectReminderBody:"마지막으로 작업한 지 한 달이 지났어요. 다시 이어서 해볼까요?",
+    projectDueSoonBody:"마감까지 3일 남았어요. 마지막 스퍼트!",projectDueTodayBody:"오늘이 마감일이에요. 힘내세요!",
+    appLabel:"내 프로젝트",appTitle:"Miiitime",inProgress:"진행 중",projects:"개 프로젝트",
     hook:"바늘",weight:"굵기",balls:"볼 수",rows:"단",notes:"메모",noNotes:"메모 없음",tags:"태그",
     edit:"편집",share:"공유",more:"더 보기",patternBtn:"패턴",
     addProject:"새 프로젝트",editProject:"프로젝트 편집",addSubtitle:"코바늘 또는 대바늘 프로젝트 추가",
@@ -3015,7 +3266,9 @@ const T={
     obPrivacyLink:"개인정보 처리방침",
   },
   es:{
-    appLabel:"Mis Proyectos",appTitle:"mitime",inProgress:"en curso",projects:"proyectos",
+    projectReminderBody:"Ha pasado un mes desde la última vez que trabajaste en esto. ¿Lo retomamos?",
+    projectDueSoonBody:"Vence en 3 días. ¡Último empujón!",projectDueTodayBody:"Vence hoy. ¡Tú puedes!",
+    appLabel:"Mis Proyectos",appTitle:"Miiitime",inProgress:"en curso",projects:"proyectos",
     hook:"Aguja",weight:"Grosor",balls:"Ovillos",rows:"Filas",notes:"Notas",noNotes:"No se han añadido notas.",tags:"Etiquetas",
     edit:"Editar",share:"Compartir",more:"Más",patternBtn:"Patrón",
     addProject:"Nuevo Proyecto",editProject:"Editar Proyecto",addSubtitle:"Añade un proyecto de crochet o punto",
@@ -3233,7 +3486,9 @@ const T={
     obPrivacyLink:"Política de privacidad",
   },
   de:{
-    appLabel:"Meine Projekte",appTitle:"mitime",inProgress:"in Bearbeitung",projects:"Projekte",
+    projectReminderBody:"Du hast seit einem Monat nicht mehr daran gearbeitet. Lust, weiterzumachen?",
+    projectDueSoonBody:"Fällig in 3 Tagen. Zeit für den Endspurt!",projectDueTodayBody:"Heute fällig. Du schaffst das!",
+    appLabel:"Meine Projekte",appTitle:"Miiitime",inProgress:"in Bearbeitung",projects:"Projekte",
     hook:"Nadel",weight:"Stärke",balls:"Knäuel",rows:"Reihen",notes:"Notizen",noNotes:"Keine Notizen vorhanden.",tags:"Tags",
     edit:"Bearbeiten",share:"Teilen",more:"Mehr",patternBtn:"Muster",
     addProject:"Neues Projekt",editProject:"Projekt Bearbeiten",addSubtitle:"Füge ein Häkel- oder Strickprojekt hinzu",
@@ -3451,7 +3706,9 @@ const T={
     obPrivacyLink:"Datenschutzerklärung",
   },
   th:{
-    appLabel:"โปรเจกต์ของฉัน",appTitle:"mitime",inProgress:"กำลังดำเนินการ",projects:"โปรเจกต์",
+    projectReminderBody:"ผ่านมาหนึ่งเดือนแล้วตั้งแต่คุณทำชิ้นนี้ครั้งล่าสุด กลับมาทำต่อกันไหม?",
+    projectDueSoonBody:"อีก 3 วันจะถึงกำหนดส่ง ช่วงโค้งสุดท้ายแล้ว!",projectDueTodayBody:"ครบกำหนดวันนี้ สู้ ๆ นะ!",
+    appLabel:"โปรเจกต์ของฉัน",appTitle:"Miiitime",inProgress:"กำลังดำเนินการ",projects:"โปรเจกต์",
     hook:"ไซซ์เข็ม",weight:"ขนาดไหม",balls:"ไจ",rows:"แถว",notes:"บันทึก",noNotes:"ยังไม่มีบันทึก",tags:"แท็ก",
     edit:"แก้ไข",share:"แชร์",more:"เพิ่มเติม",patternBtn:"แพทเทิร์น",
     addProject:"โปรเจกต์ใหม่",editProject:"แก้ไขโปรเจกต์",addSubtitle:"เพิ่มโปรเจกต์โครเชต์หรือถักไหมพรม",
@@ -3669,7 +3926,9 @@ const T={
     obPrivacyLink:"นโยบายความเป็นส่วนตัว",
   },
   pt:{
-    appLabel:"Meus Projetos",appTitle:"mitime",inProgress:"em andamento",projects:"projetos",
+    projectReminderBody:"Já faz um mês desde a última vez que você trabalhou nisto. Vamos retomar?",
+    projectDueSoonBody:"Vence em 3 dias. Hora da reta final!",projectDueTodayBody:"Vence hoje. Você consegue!",
+    appLabel:"Meus Projetos",appTitle:"Miiitime",inProgress:"em andamento",projects:"projetos",
     hook:"Agulha",weight:"Espessura",balls:"Novelos",rows:"Fileiras",notes:"Notas",noNotes:"Nenhuma nota adicionada.",tags:"Etiquetas",
     edit:"Editar",share:"Compartilhar",more:"Mais",patternBtn:"Padrão",
     addProject:"Novo Projeto",editProject:"Editar Projeto",addSubtitle:"Adicione um projeto de crochê ou tricô",
@@ -3887,7 +4146,9 @@ const T={
     obPrivacyLink:"Política de Privacidade",
   },
   hi:{
-    appLabel:"मेरे प्रोजेक्ट",appTitle:"mitime",inProgress:"जारी है",projects:"प्रोजेक्ट",
+    projectReminderBody:"इस पर आख़िरी बार काम किए एक महीना हो गया है। फिर से शुरू करें?",
+    projectDueSoonBody:"3 दिन में पूरा करना है। आख़िरी दौर शुरू!",projectDueTodayBody:"आज पूरा करना है। आप कर सकते हैं!",
+    appLabel:"मेरे प्रोजेक्ट",appTitle:"Miiitime",inProgress:"जारी है",projects:"प्रोजेक्ट",
     hook:"हुक",weight:"मोटाई",balls:"गोले",rows:"पंक्तियाँ",notes:"नोट्स",noNotes:"कोई नोट नहीं जोड़ा गया।",tags:"टैग",
     edit:"संपादित करें",share:"शेयर करें",more:"अधिक",patternBtn:"पैटर्न",
     addProject:"नया प्रोजेक्ट",editProject:"प्रोजेक्ट संपादित करें",addSubtitle:"एक क्रोशिया या बुनाई प्रोजेक्ट जोड़ें",
@@ -24850,6 +25111,35 @@ function SharedPatternPage({sharedPatternId,patterns,setPatterns,projects,setPro
     return()=>{cancelled=true;};
   },[sharedPatternId]);
 
+  // Best-effort per-pattern SEO once the shared row loads: gives this page
+  // (miiitime.com/p/{uuid}) its own <title>/description instead of the
+  // generic app-wide one from index.html's <head>, which Google's own
+  // rendered index picks up (it runs this script during indexing). This does
+  // NOT reach link previews in iMessage/Slack/Discord/X/Facebook — those
+  // fetch the raw HTML and never run JS, so they still show the generic tags
+  // until a server/edge function can inject real per-share-id ones. Restored
+  // on unmount since this overlay can close back into the still-mounted app
+  // behind it rather than a fresh page load.
+  useEffect(()=>{
+    if(state!=="ready"||!shared?.pattern_snapshot?.name)return;
+    const name=shared.pattern_snapshot.name;
+    const craft=(shared.pattern_snapshot.craft||"crochet").toLowerCase();
+    const title=`${name} — Miiitime Pattern`;
+    const desc=(shared.creator_name
+      ?`A ${craft} pattern shared by ${shared.creator_name} on Miiitime.`
+      :`A ${craft} pattern shared on Miiitime.`)+" Open it to view the chart, save it, or add it to a project.";
+    const prevTitle=document.title;
+    document.title=title;
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.content=val;};
+    set("seo-og-title",title);set("seo-tw-title",title);
+    set("seo-og-desc",desc);set("seo-tw-desc",desc);
+    return()=>{
+      document.title=prevTitle;
+      set("seo-og-title",SEO_DEFAULT_TITLE);set("seo-tw-title",SEO_DEFAULT_TITLE);
+      set("seo-og-desc",SEO_DEFAULT_DESC);set("seo-tw-desc",SEO_DEFAULT_DESC);
+    };
+  },[state,shared]);
+
   const ensureSaved=()=>{
     if(savedLocalId)return savedLocalId;
     const localId=uid();
@@ -27034,6 +27324,7 @@ function DashboardPage({projects,yarnLib,patterns,myPartyIds,setMyPartyIds,joine
     if(!ids.length){setDashParties([]);return;}
     fetchPartiesByIds(ids)
       .then(async parties=>{
+        resyncPartyReminders(parties,[],joinedParties);
         setDashParties(parties);
         setDashCounts(await fetchAttendeeCounts(parties.map(p=>p.id)));
       }).catch(()=>{});
@@ -27419,7 +27710,7 @@ function DashboardPage({projects,yarnLib,patterns,myPartyIds,setMyPartyIds,joine
           onLeave={async()=>{
             const entry=joinedParties.find(j=>j.partyId===dashDetail.id);
             if(!entry)return;
-            if(sb&&entry.signupId){try{const cs=getSignupCancelSecret(entry.signupId);if(cs)await sb.rpc("party_signup_cancel",{p_signup_id:entry.signupId,p_secret:cs});}catch{}}
+            if(entry.signupId){try{await leavePartySignup(entry.partyId,entry.signupId);}catch{}}
             cancelPartyReminder(entry.signupId);
             setJoinedParties(j=>j.filter(j=>j.partyId!==dashDetail.id));
             setDashDetail(null);
@@ -28666,7 +28957,7 @@ function SettingsPage({settings, setSettings, lang, setLang, onBack, onReplayOnb
               </select>
             </SetRow>
             <SetRow label={t.settingsNotifications}>
-              <SetSwitch label={t.settingsNotifications} value={settings.notifications} onChange={v=>{set("notifications",v);if(!v)cancelAllPartyReminders();setPartyPushEnabled(v);}}/>
+              <SetSwitch label={t.settingsNotifications} value={settings.notifications} onChange={v=>{set("notifications",v);if(!v)cancelAllPartyReminders();setPartyPushEnabled(v);scheduleProjectReminderSync();}}/>
             </SetRow>
           </SetSection>
 
@@ -28743,7 +29034,7 @@ function SettingsPage({settings, setSettings, lang, setLang, onBack, onReplayOnb
           {/* Help & About */}
           <SetSection title={t.settingsAbout}>
             <div style={{padding:"12px 16px",fontSize:13,color:"var(--text-secondary)",lineHeight:1.6}}>
-              <div style={{fontWeight:700,color:"var(--text-primary)",marginBottom:2}}>mitime</div>
+              <div style={{fontWeight:700,color:"var(--text-primary)",marginBottom:2}}>Miiitime</div>
               <div>{t.settingsAboutDesc}</div>
               <div style={{marginTop:6}}>{t.settingsAboutHelp}</div>
             </div>
@@ -29249,7 +29540,7 @@ function DesktopSidebar({page,setPage,t,onAdd,settings,settingsOpen,onOpenSettin
   return(
     <div style={{position:"fixed",top:0,left:0,bottom:0,width:DESKTOP_SIDEBAR_W,overflowY:"auto",display:"flex",flexDirection:"column",background:"var(--nav-bg)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",borderRight:"1px solid var(--nav-border)",padding:"28px 18px",zIndex:30}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:40,paddingLeft:6}}>
-        <img src="Sec_logo_nobg.png" alt="mitime" style={{height:30,width:"auto",display:"block"}}/>
+        <img src="Sec_logo_nobg.png" alt="Miiitime" style={{height:30,width:"auto",display:"block"}}/>
         <button type="button" onClick={onAdd} title="New project" aria-label="New project" className="desk-tile tap"
           style={{width:32,height:32,borderRadius:10,background:"#778EE3",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="white" d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1"/></svg>
@@ -32612,8 +32903,111 @@ function CircularPatternMaker({initialPattern=null,onSave=null,onClose=null,yarn
   );
 }
 
+/* ─── Home / landing intro ───────────────────────────────────────────────────
+   Miiitime has no separate marketing site: "/" boots straight into this same
+   Projects page (page defaults to "projects" in App()), and a brand-new
+   visitor — or a search-engine crawler, which carries no localStorage and so
+   always sees a pristine, zero-project state — lands exactly here. This
+   replaces what used to be a bare "No projects yet" placeholder with a real,
+   lightweight introduction: what Miiitime is, what it does, and that it's on
+   both the web and iOS. Once even one project exists this never renders again
+   (see the active.length check at its one call site) — the app itself is
+   still the app, this is only ever the empty-state's content, not a second
+   page or a new route. English-only for now: this is real prose (not short UI
+   labels, which the app's own t.* system already handles well throughout),
+   and machine-translating marketing copy into the other 9 languages without a
+   native speaker checking each one risks reading as stilted or wrong — worth
+   doing deliberately later, not silently done badly here.
+   Visual language is deliberately borrowed, not invented: the same italic
+   Fraunces headline treatment and --hero-bg wash already used for the Create
+   page's own hero (below), the same solid/outline button styles used
+   throughout Settings, and the app's own existing logo/icon assets — no new
+   illustrations, gradients, animation, or library. */
+const LANDING_FEATURES=[
+  {icon:"basil:edit-outline",title:"Pattern Maker",body:"Design crochet and knitting patterns with flexible grids, charts and stitch tools — rows, rounds, colourwork and knit charts."},
+  {icon:"basil:clipboard-outline",title:"Row & Round Counter",body:"Keep count as you craft. Miiitime remembers exactly where you left off, even if you come back days later."},
+  {icon:"basil:book-open-outline",title:"Step Mode",body:"Read a pattern one step at a time, and tick off each row as you go."},
+  {icon:"basil:book-outline",title:"Pattern Library",body:"Save, organise and revisit your patterns and crafting projects, all in one place."},
+  {icon:"basil:image-outline",title:"Image to Pattern",body:"Turn a photo into a colour-grid pattern, or scan a written pattern to read and follow."},
+  {icon:"basil:share-outline",title:"Craft Parties",body:"Host or join a craft meetup near you, and chat with everyone going."},
+];
+function HomeIntro({isDesktop, onStartCreating, t}){
+  const btnPrimary={display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"12px 22px",borderRadius:12,border:"none",background:"#778EE3",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",textDecoration:"none"};
+  const btnSecondary={display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"12px 22px",borderRadius:12,border:"1.5px solid #778EE3",background:"var(--accent-soft)",color:"#778EE3",fontWeight:700,fontSize:14,cursor:"pointer",textDecoration:"none"};
+  return(
+    <div style={{textAlign:"left", color:"var(--text-secondary)",...(isDesktop?{gridColumn:"1/-1"}:{})}}>
+      {/* Hero */}
+      <div style={{background:"var(--hero-bg)",borderRadius:24,padding:isDesktop?"48px 56px":"32px 20px",marginBottom:28}}>
+        <h1 style={{margin:0,maxWidth:640,fontFamily:"'Fraunces',-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif",fontStyle:"italic",fontWeight:700,fontSynthesis:"weight",fontSize:isDesktop?34:24,lineHeight:1.2,color:"var(--text-primary)"}}>
+          Your creative space for crochet &amp; knitting.
+        </h1>
+        <p style={{margin:"14px 0 0",maxWidth:520,fontSize:isDesktop?15:13,lineHeight:1.6,color:"var(--text-secondary)"}}>
+          Design patterns, keep count row by row, and pick up right where you left off. Miiitime works right here in this browser — no download needed.
+        </p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:22}}>
+          <button type="button" onClick={onStartCreating} style={btnPrimary} aria-label="Start creating a new project in Miiitime">
+            Start Creating
+          </button>
+          <a href="#miiitime-ios" style={btnSecondary} aria-label="Jump to the iOS app section">
+            Download the App
+          </a>
+        </div>
+      </div>
+
+      {/* Features — every one below is real, existing Miiitime functionality,
+          not aspirational copy. */}
+      <h2 style={{margin:"0 0 14px",fontSize:isDesktop?12:11,fontWeight:700,color:"#778EE3",letterSpacing:"0.08em",textTransform:"uppercase"}}>
+        What you can do with Miiitime
+      </h2>
+      <div style={{display:"grid",gridTemplateColumns:isDesktop?"repeat(auto-fill,minmax(260px,1fr))":"1fr",gap:14,marginBottom:32}}>
+        {LANDING_FEATURES.map(f=>(
+          <div key={f.title} style={{border:"1px solid var(--border-soft)",borderRadius:16,background:"var(--bg-card)",padding:"18px 18px 20px"}}>
+            <div style={{width:34,height:34,borderRadius:10,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}}>
+              <Ico n={f.icon} sz={17} style={{color:"#778EE3"}}/>
+            </div>
+            <h3 style={{margin:"0 0 4px",fontSize:14,fontWeight:700,color:"var(--text-primary)"}}>{f.title}</h3>
+            <p style={{margin:0,fontSize:13,lineHeight:1.55,color:"var(--text-secondary)"}}>{f.body}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* iOS + "still just a web app" — anchored to by the hero's secondary
+          CTA above via #miiitime-ios. */}
+      <div id="miiitime-ios" style={{border:"1px solid var(--border-soft)",borderRadius:20,background:"var(--bg-card)",padding:isDesktop?"28px 32px":"22px 20px",marginBottom:24}}>
+        <h2 style={{margin:"0 0 8px",fontSize:isDesktop?18:16,fontWeight:800,color:"var(--text-primary)"}}>Take Miiitime with you</h2>
+        <p style={{margin:"0 0 16px",maxWidth:520,fontSize:13,lineHeight:1.6}}>
+          Miiitime works right here in your browser, on desktop, iPad or phone — nothing to install. It's also available as a native iOS app, so your patterns and progress travel with you.
+        </p>
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:12}}>
+          {APP_STORE_URL ? (
+            // Once APP_STORE_URL is set, this should be swapped for Apple's own
+            // official "Download on the App Store" badge artwork (Apple's
+            // Marketing Guidelines require their exact badge, not an
+            // improvised icon+text button) — this text link is a safe interim
+            // state, not the final treatment.
+            <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" style={btnPrimary} aria-label="Download Miiitime on the App Store">
+              Download on the App Store
+            </a>
+          ) : (
+            // Honest placeholder, not a dead link: no App Store URL exists in
+            // this project yet (checked Info.plist, xcconfigs, pbxproj, every
+            // migration and Edge Function — see APP_STORE_URL's own comment).
+            // Swapping in the real URL there is the only change this needs.
+            <span role="status" style={{display:"inline-flex",alignItems:"center",padding:"11px 20px",borderRadius:12,border:"1.5px dashed var(--border)",color:"var(--text-secondary)",fontWeight:700,fontSize:13}}>
+              iOS app — coming soon to the App Store
+            </span>
+          )}
+          <span style={{fontSize:12,color:"var(--text-secondary)"}}>
+            Prefer to stay on the web? You're already here — everything above works right in this browser.
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Projects View (active + archive) ─────────────────────────────────────── */
-function ProjectsView({projects, patterns=[], setProjects, setEditingProject, t, onJustCompleted}) {
+function ProjectsView({projects, patterns=[], setProjects, setEditingProject, t, onJustCompleted, onStartCreating}) {
   const [showArchive, setShowArchive] = useState(false);
   const active = projects.filter(p => !p.archived);
   const archived = projects.filter(p => p.archived);
@@ -32691,11 +33085,7 @@ function ProjectsView({projects, patterns=[], setProjects, setEditingProject, t,
 
       <div style={isDesktop?{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16,alignItems:"start"}:{display:"flex", flexDirection:"column", gap:12}}>
         {active.length===0 ? (
-          <div style={{textAlign:"center", padding:"40px 20px", color:"var(--text-secondary)",...(isDesktop?{gridColumn:"1/-1"}:{})}}>
-            <img src="empty_projects_folder.png" alt="" style={{display:"block", width:138, height:"auto", margin:"0 auto 12px",opacity:0.85}}/>
-            <div style={{fontSize:16, fontWeight:600, color:"#4B5563"}}>{t.emptyTitle}</div>
-            <div style={{fontSize:13, marginTop:4}}>{t.emptyHint}</div>
-          </div>
+          <HomeIntro isDesktop={isDesktop} onStartCreating={onStartCreating} t={t}/>
         ) : active.map(p => <Card {...cardProps(p, false)}/>)}
 
         {/* Archive section */}
@@ -33097,6 +33487,7 @@ function CreatePartyModal({onClose,onCreated,settings}){
       // so the success screen below must show immediately regardless of how
       // long the (possibly permission-prompting) push registration takes.
       registerHostPushToken(data.id,data.edit_secret);
+      schedulePartyReminder({title:form.title.trim(),date:form.date,time:form.time,place_name:form.place_name.trim()||locationData?.place_name||null,formatted_address:locationData?.formatted_address||null},hostReminderKey(data.id));
       onCreated(data.id);
       // The human-facing code is the short join_code, not the real id --
       // onCreated above still gets the real id, since that's what every
@@ -33539,6 +33930,7 @@ function ManagePartyModal({partyId,onClose,onDeleted,onSaved,settings}){
       const patch={...editForm,max_attendees:editForm.max_attendees?parseInt(editForm.max_attendees):null,latitude:editLocationData?.latitude||party.latitude,longitude:editLocationData?.longitude||party.longitude,place_name:editLocationData?.place_name||party.place_name,formatted_address:editLocationData?.formatted_address||party.formatted_address};
       setParty(p=>({...p,...patch}));
       onSaved?.(partyId,patch);
+      schedulePartyReminder({...party,...patch},hostReminderKey(partyId),{ask:false});
       setSaveMsg(t.partyEditSaved);setTimeout(()=>setSaveMsg(""),2500);
       // Fire-and-forget, same as postAnnouncement below — the edit is already
       // fully saved above regardless of whether either of these succeed. Both
@@ -33591,6 +33983,7 @@ function ManagePartyModal({partyId,onClose,onDeleted,onSaved,settings}){
       await notifyAttendeesOfAnnouncement(partyId,"cancelled");
       const{error:err}=await sb.rpc("party_delete",{p_id:partyId,p_secret:secret});
       if(err)throw err;
+      cancelPartyReminder(hostReminderKey(partyId));
       onDeleted(partyId);onClose();
     }catch(e){setError(e.message||"Error deleting.");setDeleting(false);setConfirmDelete(false);}
   };
@@ -35386,6 +35779,7 @@ function HostPartiesPage({myPartyIds,setMyPartyIds,joinedParties,setJoinedPartie
         // which the parties table itself doesn't return.
         const parties=await fetchPartiesByIds(ids);
         if(stale?.current)return;
+        resyncPartyReminders(parties,myPartyIds,joinedParties);
         setMyParties(parties.filter(p=>myPartyIds.includes(p.id)));
         setJoinedPartyData(parties.filter(p=>joinedParties.some(j=>j.partyId===p.id)));
         const counts=await fetchAttendeeCounts(ids);
@@ -35481,7 +35875,7 @@ function HostPartiesPage({myPartyIds,setMyPartyIds,joinedParties,setJoinedPartie
           onLeave={joinedParties.some(j=>j.partyId===detailTarget?.id)?async()=>{
             const entry=joinedParties.find(j=>j.partyId===detailTarget.id);
             if(!entry)return;
-            if(sb&&entry.signupId){try{const cs=getSignupCancelSecret(entry.signupId);if(cs)await sb.rpc("party_signup_cancel",{p_signup_id:entry.signupId,p_secret:cs});}catch{}}
+            if(entry.signupId){try{await leavePartySignup(entry.partyId,entry.signupId);}catch{}}
             cancelPartyReminder(entry.signupId);
             setJoinedParties(j=>j.filter(j=>j.partyId!==detailTarget.id));
             setDetailTarget(null);
@@ -37692,6 +38086,15 @@ function App(){
   },[]);
   const[projects,setProjects]=useState(()=>{try{const s=localStorage.getItem("sc_projects");return s?JSON.parse(s):DEFAULTS;}catch{return DEFAULTS;}});
   useEffect(()=>{try{localStorage.setItem("sc_projects",JSON.stringify(projects));}catch{};syncWidgetFinishedProjects(projects);syncWidgetCurrentProject(projects);},[projects]);
+  // Catch-up reminders (see noteProjectActivity) -- after the save above, so
+  // the sync reads the same projects. prevProjectsRef starts null, so the
+  // first run (app launch) records nothing as "changed" and never prompts.
+  const prevProjectsRef=useRef(null);
+  useEffect(()=>{
+    const added=noteProjectActivity(prevProjectsRef.current,projects);
+    prevProjectsRef.current=projects;
+    scheduleProjectReminderSync(added);
+  },[projects]);
   useCloudPush('projects',projects,cloudSkipRef,session,cloudSyncEnabled);
   const[yarnLib,setYarnLib]=useState(()=>{try{const s=localStorage.getItem("sc_yarn_lib");return s?JSON.parse(s):DEFAULT_YARNS;}catch{return DEFAULT_YARNS;}});
   useEffect(()=>{try{localStorage.setItem("sc_yarn_lib",JSON.stringify(yarnLib));}catch{};},[yarnLib]);
@@ -38027,7 +38430,7 @@ function App(){
             </div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:22}}>
               <div>
-                <img src="Sec_logo_nobg.png" alt="mitime" style={{height:74,width:"auto",display:"block"}}/>
+                <img src="Sec_logo_nobg.png" alt="Miiitime" style={{height:74,width:"auto",display:"block"}}/>
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" style={{display:"none"}} xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1536 1024" xmlSpace="preserve">
 <path fill="#000000" opacity="1" d="M142.487,658.976C145.019,661.331 147.362,663.941 150.119,665.994C159.002,672.607 169.093,674.747 180.071,674.069C189.335,673.496 197.173,669.516 203.145,663.151C212.967,652.683 216.505,639.245 216.926,625.214C217.326,611.869 214.736,598.793 211.506,585.869C207.747,570.831 206.063,555.802 210.986,540.611C216.920,522.295 236.679,520.875 246.564,531.954C255.163,541.591 256.433,553.366 256.789,565.128C257.121,576.091 254.970,587.122 255.198,598.096C255.464,610.933 258.673,622.958 268.751,632.329C283.386,645.940 304.652,643.087 315.653,627.524C324.440,615.093 325.869,600.262 324.913,585.457C323.849,568.973 320.333,552.622 322.993,535.977C324.311,527.728 326.463,519.926 331.981,513.349C338.416,505.677 349.213,507.119 354.174,514.315C362.496,526.387 359.972,539.577 359.544,552.479C359.250,561.354 356.384,570.153 356.185,579.020C355.945,589.650 356.655,600.411 358.141,610.948C360.715,629.184 369.519,644.583 384.245,655.440C399.820,666.921 417.587,672.624 437.367,668.994C448.403,666.969 458.142,662.305 466.646,654.930C469.943,652.071 473.327,649.024 477.204,647.186C484.925,643.524 491.955,647.351 498.306,651.178C510.863,658.746 524.587,662.129 538.885,662.826C552.301,663.480 564.869,659.606 575.783,651.620C581.949,647.108 587.970,646.687 594.451,650.237C598.408,652.404 602.138,655.007 606.168,657.016C631.113,669.449 657.368,674.125 685.193,671.130C699.059,669.637 712.010,666.164 724.217,659.421C738.339,651.620 748.573,640.910 751.779,624.595C753.376,616.469 749.102,603.916 741.966,598.936C734.677,593.848 728.285,588.010 725.528,579.035C720.281,561.955 722.115,544.702 724.356,527.538C726.043,514.617 727.222,501.727 723.583,489.119C717.579,468.320 691.496,460.549 675.393,477.034C667.162,485.461 662.813,495.861 660.134,506.876C657.960,515.815 656.924,525.080 656.004,534.262C655.216,542.130 654.791,550.108 655.133,557.998C655.631,569.497 658.650,580.743 657.142,592.515C655.276,607.094 644.088,610.854 633.467,603.896C626.772,599.509 623.185,592.739 621.132,585.413C618.107,574.619 615.801,563.719 617.911,552.237C619.586,543.122 619.732,533.732 621.302,524.592C623.473,511.960 625.411,499.364 622.956,486.617C621.325,478.142 616.922,471.129 609.301,466.821C597.624,460.218 583.830,464.242 575.953,475.925C568.116,487.550 562.695,500.285 559.100,513.706C556.642,522.884 554.776,532.318 553.761,541.758C552.810,550.604 552.811,559.639 553.341,568.535C553.859,577.228 554.400,585.676 552.338,594.360C549.876,604.725 536.234,608.709 527.849,600.459C519.141,591.891 516.147,581.222 515.064,569.773C513.078,548.775 519.025,528.480 521.142,507.842C522.407,495.505 521.407,483.961 513.405,473.814C500.114,456.960 482.253,459.965 470.470,472.484C462.922,480.503 458.623,491.158 454.967,501.732C450.976,513.277 448.140,525.049 448.025,537.327C447.915,549.152 447.078,561.073 448.284,572.774C449.165,581.320 449.115,589.378 445.820,597.133C444.672,599.836 441.990,602.534 439.326,603.813C433.635,606.546 426.615,602.819 422.873,596.466C417.838,587.916 416.349,578.527 416.067,568.931C415.511,550.023 415.466,531.100 414.938,512.190C414.560,498.638 410.762,485.777 405.987,473.197C398.779,454.206 388.560,437.643 370.914,426.205C354.255,415.407 330.971,415.205 314.342,426.031C304.360,432.528 297.545,441.657 290.868,451.168C284.340,460.465 275.895,461.872 267.971,452.349C265.714,449.637 263.910,446.507 262.162,443.419C256.216,432.916 249.853,422.890 240.008,415.338C226.884,405.272 211.943,402.153 196.172,404.186C179.406,406.346 165.372,415.304 153.757,427.021C143.641,437.226 136.138,449.534 130.311,462.958C120.683,485.141 116.197,508.429 115.252,532.241C114.553,549.845 115.524,567.629 117.272,585.181C118.640,598.918 121.546,612.643 125.247,625.963C128.520,637.744 133.276,649.250 142.487,658.976M814.028,658.584C818.160,660.413 822.260,662.317 826.429,664.056C841.468,670.333 857.223,672.720 873.165,669.784C888.708,666.921 902.516,660.228 912.564,647.067C919.493,637.993 923.504,628.595 922.141,616.779C920.241,600.296 905.584,592.104 891.009,593.779C883.992,594.585 876.667,594.889 870.090,590.623C860.038,584.103 857.046,573.964 856.092,563.103C854.492,544.885 859.234,527.606 865.183,510.626C867.457,504.135 872.724,499.713 878.073,500.058C884.406,500.467 890.795,500.918 897.003,502.146C908.434,504.408 918.977,502.715 928.371,495.891C945.503,483.446 945.832,458.460 928.003,445.917C918.383,439.149 907.254,439.214 896.402,438.041C886.288,436.948 884.311,433.051 886.957,425.131C891.597,411.242 895.591,397.353 895.139,382.332C894.566,363.303 876.890,349.745 858.890,355.561C843.198,360.630 834.602,373.109 828.182,386.991C823.211,397.740 819.896,409.254 815.799,420.411C814.116,424.995 809.795,428.051 804.838,427.931C796.923,427.738 789.016,427.229 781.101,427.035C766.301,426.673 752.564,436.228 748.971,451.864C746.228,463.800 750.153,476.087 758.690,482.028C766.412,487.402 775.195,489.191 784.240,489.970C796.105,490.992 799.079,497.901 798.733,507.354C798.486,514.126 796.083,520.922 794.006,527.506C788.540,544.837 781.135,561.703 780.052,580.105C779.418,590.873 778.397,602.063 780.528,612.452C784.567,632.147 795.891,647.632 814.028,658.584M1136.607,485.026C1135.179,483.627 1133.655,482.313 1132.338,480.817C1118.589,465.202 1093.265,465.539 1077.480,477.898C1066.024,486.867 1057.861,498.100 1052.218,511.347C1046.139,525.619 1042.002,540.377 1042.070,556.000C1042.122,568.087 1043.089,580.178 1042.922,592.257C1042.756,604.262 1040.907,616.273 1041.198,628.248C1041.579,643.930 1047.212,656.913 1063.370,663.165C1077.364,668.579 1092.890,661.733 1098.830,649.508C1103.168,640.579 1102.922,631.001 1100.806,621.752C1097.614,607.800 1095.123,593.831 1096.085,579.511C1096.636,571.304 1097.780,563.135 1102.975,556.118C1105.427,552.807 1108.141,549.488 1112.278,550.298C1116.689,551.161 1119.546,554.867 1120.953,559.241C1124.636,570.695 1123.001,582.409 1121.788,593.915C1120.515,606.005 1120.745,617.541 1126.820,628.428C1130.560,635.128 1136.553,638.958 1143.829,638.799C1151.529,638.630 1157.670,634.389 1160.676,626.862C1164.336,617.693 1163.141,608.184 1162.464,598.664C1161.763,588.786 1159.988,578.739 1165.863,569.489C1168.078,565.999 1170.690,564.158 1174.839,564.026C1179.318,563.884 1182.083,565.795 1184.248,569.666C1188.386,577.068 1188.693,584.788 1188.137,593.046C1187.456,603.164 1187.298,613.427 1188.216,623.508C1188.908,631.110 1191.225,638.662 1193.576,645.993C1196.853,656.212 1203.893,664.009 1211.653,671.127C1224.257,682.687 1238.993,688.557 1256.212,686.922C1263.040,686.274 1269.502,683.104 1273.434,677.846C1284.224,663.416 1279.786,648.104 1265.105,638.616C1258.473,634.330 1251.181,630.960 1244.943,626.189C1230.414,615.077 1226.668,598.630 1225.112,581.688C1223.670,565.975 1220.536,550.994 1211.024,538.018C1200.128,523.152 1181.268,517.227 1164.270,527.118C1157.248,531.204 1148.926,529.273 1147.925,518.702C1146.811,506.933 1144.390,495.403 1136.607,485.026M1280.980,629.461C1282.263,630.768 1283.381,632.310 1284.855,633.345C1302.851,645.991 1322.250,653.574 1344.888,652.205C1356.192,651.521 1366.671,649.018 1376.437,643.794C1388.735,637.217 1398.805,628.396 1403.298,614.397C1405.871,606.382 1404.362,599.460 1398.895,593.485C1391.573,585.482 1380.875,583.624 1370.565,589.338C1361.434,594.399 1353.314,601.249 1344.468,606.868C1335.227,612.738 1325.425,613.398 1315.729,607.838C1312.393,605.924 1309.521,602.796 1310.293,598.740C1310.960,595.234 1313.826,593.027 1317.857,592.966C1319.269,592.945 1320.670,592.347 1322.079,592.027C1332.232,589.716 1342.094,586.512 1349.995,579.463C1366.153,565.046 1374.919,547.419 1374.151,525.143C1373.675,511.341 1368.595,499.844 1359.536,490.156C1346.075,475.761 1328.697,471.294 1309.995,475.222C1285.081,480.455 1268.138,496.808 1257.153,519.029C1248.315,536.907 1245.811,555.987 1249.932,575.855C1254.314,596.987 1264.436,614.618 1280.980,629.461M1015.652,498.062C1008.591,485.155 994.395,481.636 982.479,488.050C975.206,491.965 970.791,498.223 966.725,504.805C958.831,517.583 952.934,531.279 948.599,545.697C942.651,565.481 939.388,585.346 942.870,606.104C945.274,620.442 950.553,632.930 961.868,642.304C971.897,650.613 983.562,652.849 996.110,649.975C1003.873,648.197 1010.051,643.951 1015.133,637.552C1021.657,629.336 1023.509,613.162 1015.912,604.654C1009.352,597.306 1007.218,588.734 1007.094,579.591C1006.893,564.686 1011.232,550.494 1015.365,536.345C1019.015,523.851 1021.487,511.386 1015.652,498.062M1041.098,425.506C1037.670,422.378 1034.242,419.250 1030.303,415.656C1037.299,414.155 1040.718,409.407 1043.970,404.561C1045.055,402.944 1045.302,400.976 1045.642,399.031C1046.435,394.490 1041.116,394.546 1041.570,391.131C1042.169,386.632 1039.772,384.554 1035.996,382.037C1029.913,377.983 1027.996,377.090 1022.131,380.940C1021.226,381.534 1020.024,381.777 1018.923,381.952C1015.441,382.506 1011.942,382.951 1007.546,383.564C1006.671,377.988 1006.405,372.480 1004.840,367.369C1003.200,362.013 1004.937,356.000 1000.831,351.086C997.491,347.089 993.527,349.603 989.928,349.236C988.775,349.119 986.618,351.656 986.155,353.322C984.830,358.081 984.140,363.016 983.167,368.052C978.678,365.117 973.991,362.450 969.767,359.185C964.937,355.452 959.958,355.869 955.035,358.085C950.535,360.111 949.942,365.608 953.311,370.756C959.796,380.664 966.356,390.523 972.939,400.483C971.279,400.967 969.854,401.158 968.640,401.770C958.411,406.931 948.112,412.006 939.223,419.386C935.872,422.167 933.133,425.616 934.766,430.262C937.394,437.739 941.549,440.916 947.404,440.187C951.037,439.735 954.602,438.727 958.197,437.969C961.675,437.236 965.173,436.586 968.625,435.745C971.275,435.099 973.867,434.213 977.205,433.219C976.249,441.273 975.461,447.904 974.674,454.534C975.283,454.376 975.891,454.217 976.500,454.058C977.347,455.470 978.175,456.894 979.048,458.290C979.626,459.214 980.070,460.455 980.921,460.927C983.021,462.093 985.251,463.171 987.562,463.760C989.381,464.224 992.084,464.724 993.206,463.787C997.068,460.560 1003.786,462.964 1006.081,457.048C1011.060,457.308 1009.447,453.738 1009.035,450.294C1011.080,451.583 1012.410,452.425 1013.742,453.261C1018.354,456.155 1022.661,460.042 1028.719,458.827C1032.192,458.131 1035.545,456.361 1039.005,456.196C1043.516,455.980 1047.592,456.122 1048.338,450.294C1048.384,449.934 1049.256,449.655 1049.768,449.385C1050.805,448.837 1052.676,448.411 1052.745,447.776C1052.914,446.219 1052.445,444.503 1051.886,442.978C1051.092,440.816 1048.864,438.551 1049.219,436.710C1050.474,430.187 1045.366,428.705 1041.098,425.506M510.894,388.381C491.556,375.772 468.780,386.408 464.647,407.017C460.767,426.369 479.319,446.409 499.513,440.828C505.230,439.248 511.211,436.436 515.523,432.496C521.201,427.306 524.148,419.646 523.768,411.867C523.314,402.578 518.889,394.759 510.894,388.381M577.983,395.533C567.584,408.913 572.200,427.529 583.341,436.044C593.557,443.853 607.873,444.347 617.476,437.555C627.794,430.256 634.388,419.686 629.103,404.445C623.369,387.909 609.870,381.930 595.106,384.292C588.671,385.321 582.099,388.435 577.983,395.533M720.003,396.516C710.978,389.259 700.976,387.818 690.420,392.285C676.870,398.018 671.361,410.475 673.121,424.046C675.118,439.452 688.663,449.317 702.835,448.748C715.082,448.256 725.967,441.895 730.122,426.503C733.218,415.035 729.036,404.057 720.003,396.516z"/>
 <path fill="#768EE2" opacity="1" d="M142.237,658.720C133.276,649.250 128.520,637.744 125.247,625.963C121.546,612.643 118.640,598.918 117.272,585.181C115.524,567.629 114.553,549.845 115.252,532.241C116.197,508.429 120.683,485.141 130.311,462.958C136.138,449.534 143.641,437.226 153.757,427.021C165.372,415.304 179.406,406.346 196.172,404.186C211.943,402.153 226.884,405.272 240.008,415.338C249.853,422.890 256.216,432.916 262.162,443.419C263.910,446.507 265.714,449.637 267.971,452.349C275.895,461.872 284.340,460.465 290.868,451.168C297.545,441.657 304.360,432.528 314.342,426.031C330.971,415.205 354.255,415.407 370.914,426.205C388.560,437.643 398.779,454.206 405.987,473.197C410.762,485.777 414.560,498.638 414.938,512.190C415.466,531.100 415.511,550.023 416.067,568.931C416.349,578.527 417.838,587.916 422.873,596.466C426.615,602.819 433.635,606.546 439.326,603.813C441.990,602.534 444.672,599.836 445.820,597.133C449.115,589.378 449.165,581.320 448.284,572.774C447.078,561.073 447.915,549.152 448.025,537.327C448.140,525.049 450.976,513.277 454.967,501.732C458.623,491.158 462.922,480.503 470.470,472.484C482.253,459.965 500.114,456.960 513.405,473.814C521.407,483.961 522.407,495.505 521.142,507.842C519.025,528.480 513.078,548.775 515.064,569.773C516.147,581.222 519.141,591.891 527.849,600.459C536.234,608.709 549.876,604.725 552.338,594.360C554.400,585.676 553.859,577.228 553.341,568.535C552.811,559.639 552.810,550.604 553.761,541.758C554.776,532.318 556.642,522.884 559.100,513.706C562.695,500.285 568.116,487.550 575.953,475.925C583.830,464.242 597.624,460.218 609.301,466.821C616.922,471.129 621.325,478.142 622.956,486.617C625.411,499.364 623.473,511.960 621.302,524.592C619.732,533.732 619.586,543.122 617.911,552.237C615.801,563.719 618.107,574.619 621.132,585.413C623.185,592.739 626.772,599.509 633.467,603.896C644.088,610.854 655.276,607.094 657.142,592.515C658.650,580.743 655.631,569.497 655.133,557.998C654.791,550.108 655.216,542.130 656.004,534.262C656.924,525.080 657.960,515.815 660.134,506.876C662.813,495.861 667.162,485.461 675.393,477.034C691.496,460.549 717.579,468.320 723.583,489.119C727.222,501.727 726.043,514.617 724.356,527.538C722.115,544.702 720.281,561.955 725.528,579.035C728.285,588.010 734.677,593.848 741.966,598.936C749.102,603.916 753.376,616.469 751.779,624.595C748.573,640.910 738.339,651.620 724.217,659.421C712.010,666.164 699.059,669.637 685.193,671.130C657.368,674.125 631.113,669.449 606.168,657.016C602.138,655.007 598.408,652.404 594.451,650.237C587.970,646.687 581.949,647.108 575.783,651.620C564.869,659.606 552.301,663.480 538.885,662.826C524.587,662.129 510.863,658.746 498.306,651.178C491.955,647.351 484.925,643.524 477.204,647.186C473.327,649.024 469.943,652.071 466.646,654.930C458.142,662.305 448.403,666.969 437.367,668.994C417.587,672.624 399.820,666.921 384.245,655.440C369.519,644.583 360.715,629.184 358.141,610.948C356.655,600.411 355.945,589.650 356.185,579.020C356.384,570.153 359.250,561.354 359.544,552.479C359.972,539.577 362.496,526.387 354.174,514.315C349.213,507.119 338.416,505.677 331.981,513.349C326.463,519.926 324.311,527.728 322.993,535.977C320.333,552.622 323.849,568.973 324.913,585.457C325.869,600.262 324.440,615.093 315.653,627.524C304.652,643.087 283.386,645.940 268.751,632.329C258.673,622.958 255.464,610.933 255.198,598.096C254.970,587.122 257.121,576.091 256.789,565.128C256.433,553.366 255.163,541.591 246.564,531.954C236.679,520.875 216.920,522.295 210.986,540.611C206.063,555.802 207.747,570.831 211.506,585.869C214.736,598.793 217.326,611.869 216.926,625.214C216.505,639.245 212.967,652.683 203.145,663.151C197.173,669.516 189.335,673.496 180.071,674.069C169.093,674.747 159.002,672.607 150.119,665.994C147.362,663.941 145.019,661.331 142.237,658.720z"/>
@@ -38048,7 +38451,7 @@ function App(){
         )}
 
         {page==="projects"?(
-          <ProjectsView projects={projects} patterns={patterns} setProjects={setProjects} setEditingProject={setEditingProject} t={t} onJustCompleted={id=>setPendingPhotoProjectId(id)}/>
+          <ProjectsView projects={projects} patterns={patterns} setProjects={setProjects} setEditingProject={setEditingProject} t={t} onJustCompleted={id=>setPendingPhotoProjectId(id)} onStartCreating={()=>setShowAdd(true)}/>
         ):page==="dashboard"?(
           <DashboardPage projects={projects} yarnLib={yarnLib} patterns={patterns} myPartyIds={myPartyIds} setMyPartyIds={setMyPartyIds} joinedParties={joinedParties} setJoinedParties={setJoinedParties} settings={settings} setPage={setPage} dashLayout={dashLayout} setDashLayout={setDashLayout}/>
         ):page==="create"?(
