@@ -1918,6 +1918,11 @@ function detectDeviceLang(){
 }
 const LANGS={en:{code:"en",flag:"EN",label:"English"},fr:{code:"fr",flag:"FR",label:"Français"},ja:{code:"ja",flag:"JA",label:"日本語"},zh:{code:"zh",flag:"ZH",label:"繁體中文"},ko:{code:"ko",flag:"KO",label:"한국어"},es:{code:"es",flag:"ES",label:"Español"},de:{code:"de",flag:"DE",label:"Deutsch"},th:{code:"th",flag:"TH",label:"ไทย"},pt:{code:"pt",flag:"PT",label:"Português"},hi:{code:"hi",flag:"HI",label:"हिन्दी"}};
 const PATTERN_CATEGORIES=["Shawl","Hat","Sweater","Blanket","Amigurumi","Socks","Mittens","Bag","Scarf","Other"];
+// Reference photos a pattern can carry — same cap in the add/edit form and in
+// Pattern Detail's own "add more" control below, since both read/write the
+// same pat.photos field. Not related to MAX_IMAGES (the OCR import picker's
+// separate 5-image cap on how many *source pages* one import can scan).
+const PATTERN_PHOTO_MAX=5;
 const PATTERN_CRAFTS=["Crochet","Knitting","Tunisian","Other"];
 const PATTERN_DIFFICULTIES=["Beginner","Intermediate","Advanced"];
 
@@ -1987,6 +1992,8 @@ const T={
     settingsReadHighlight:"Read Mode Highlight Color",settingsViewerMode:"Viewer Mode",
     settingsViewerStandard:"Standard",settingsViewerFullscreen:"Fullscreen",settingsViewerSplit:"Split View",
     settingsStepGuideDefault:"Expand Step Guide by Default",
+    settingsPatternInfoDefault:"Show Pattern Information by Default",
+    settingsPatternInfoDefaultNote:"Gauge, materials and abbreviations open automatically in Read Mode.",
     stepGuideLabel:"Step Guide",stepGuideEmpty:"No stitch data for this row yet.",
     stepGuideFoundation:"Foundation Chain",stepGuideRow:"Row",stepGuideTapRow:"Tap a row to begin",stepGuideStitch:"Stitch",stepGuideTapStitch:"Tap a stitch",
     settingsDefaultStitches:"Default Crochet Stitches",
@@ -2202,6 +2209,8 @@ const T={
     settingsReadHighlight:"Couleur de surlignage (lecture)",settingsViewerMode:"Mode visionneuse",
     settingsViewerStandard:"Standard",settingsViewerFullscreen:"Plein écran",settingsViewerSplit:"Vue divisée",
     settingsStepGuideDefault:"Développer le guide par défaut",
+    settingsPatternInfoDefault:"Afficher les infos du patron par défaut",
+    settingsPatternInfoDefaultNote:"Jauge, matériel et abréviations s'ouvrent automatiquement en mode Lecture.",
     stepGuideLabel:"Guide de rang",stepGuideEmpty:"Aucune donnée de point pour ce rang.",
     stepGuideFoundation:"Chaînette de base",stepGuideRow:"Rang",stepGuideTapRow:"Touchez un rang pour commencer",stepGuideStitch:"Point",stepGuideTapStitch:"Touchez un point",
     settingsDefaultStitches:"Points de crochet par défaut",
@@ -2417,6 +2426,8 @@ const T={
     settingsReadHighlight:"読み取りハイライト色",settingsViewerMode:"ビューアモード",
     settingsViewerStandard:"標準",settingsViewerFullscreen:"フルスクリーン",settingsViewerSplit:"分割表示",
     settingsStepGuideDefault:"ステップガイドを既定で展開",
+    settingsPatternInfoDefault:"パターン情報を既定で表示",
+    settingsPatternInfoDefaultNote:"ゲージ・材料・略語を読み取りモードで自動的に開きます。",
     stepGuideLabel:"ステップガイド",stepGuideEmpty:"この段の目のデータがありません。",
     stepGuideFoundation:"土台の鎖編み",stepGuideRow:"段",stepGuideTapRow:"段をタップして開始",stepGuideStitch:"目",stepGuideTapStitch:"目をタップ",
     settingsDefaultStitches:"デフォルトのかぎ針目",
@@ -2632,6 +2643,8 @@ const T={
     settingsReadHighlight:"閱讀模式強調色",settingsViewerMode:"檢視模式",
     settingsViewerStandard:"標準",settingsViewerFullscreen:"全螢幕",settingsViewerSplit:"分割檢視",
     settingsStepGuideDefault:"預設展開步驟指南",
+    settingsPatternInfoDefault:"預設顯示織圖資訊",
+    settingsPatternInfoDefaultNote:"密度、材料與縮寫會在閱讀模式中自動開啟。",
     stepGuideLabel:"步驟指南",stepGuideEmpty:"此行尚無針法資料。",
     stepGuideFoundation:"基礎鎖針",stepGuideRow:"行",stepGuideTapRow:"點選一行以開始",stepGuideStitch:"針目",stepGuideTapStitch:"點選一個針目",
     settingsDefaultStitches:"預設鉤針針法",
@@ -2847,6 +2860,8 @@ const T={
     settingsReadHighlight:"읽기 강조 색상",settingsViewerMode:"뷰어 모드",
     settingsViewerStandard:"기본",settingsViewerFullscreen:"전체 화면",settingsViewerSplit:"분할 보기",
     settingsStepGuideDefault:"스텝 가이드 기본적으로 펼치기",
+    settingsPatternInfoDefault:"패턴 정보 기본으로 표시",
+    settingsPatternInfoDefaultNote:"게이지, 재료, 약어를 읽기 모드에서 자동으로 엽니다.",
     stepGuideLabel:"스텝 가이드",stepGuideEmpty:"이 단의 코 데이터가 없습니다.",
     stepGuideFoundation:"기초 사슬뜨기",stepGuideRow:"단",stepGuideTapRow:"단을 탭하여 시작",stepGuideStitch:"코",stepGuideTapStitch:"코를 탭하세요",
     settingsDefaultStitches:"기본 코바늘 코",
@@ -3063,6 +3078,8 @@ const T={
     settingsReadHighlight:"Color de Resaltado en Modo Lectura",settingsViewerMode:"Modo de Visualización",
     settingsViewerStandard:"Estándar",settingsViewerFullscreen:"Pantalla Completa",settingsViewerSplit:"Vista Dividida",
     settingsStepGuideDefault:"Expandir Guía de Pasos por Defecto",
+    settingsPatternInfoDefault:"Mostrar información del patrón por defecto",
+    settingsPatternInfoDefaultNote:"La muestra, los materiales y las abreviaturas se abren automáticamente en el modo Lectura.",
     stepGuideLabel:"Guía de Pasos",stepGuideEmpty:"Aún no hay datos de puntos para esta fila.",
     stepGuideFoundation:"Cadena Base",stepGuideRow:"Fila",stepGuideTapRow:"Toca una fila para empezar",stepGuideStitch:"Punto",stepGuideTapStitch:"Toca un punto",
     settingsDefaultStitches:"Puntos de Crochet Predeterminados",
@@ -3279,6 +3296,8 @@ const T={
     settingsReadHighlight:"Hervorhebungsfarbe im Lesemodus",settingsViewerMode:"Anzeigemodus",
     settingsViewerStandard:"Standard",settingsViewerFullscreen:"Vollbild",settingsViewerSplit:"Geteilte Ansicht",
     settingsStepGuideDefault:"Schritt-Anleitung Standardmäßig Ausklappen",
+    settingsPatternInfoDefault:"Musterinformationen standardmäßig anzeigen",
+    settingsPatternInfoDefaultNote:"Maschenprobe, Material und Abkürzungen öffnen sich im Lesemodus automatisch.",
     stepGuideLabel:"Schritt-Anleitung",stepGuideEmpty:"Noch keine Maschendaten für diese Reihe.",
     stepGuideFoundation:"Anschlagkette",stepGuideRow:"Reihe",stepGuideTapRow:"Tippe auf eine Reihe, um zu beginnen",stepGuideStitch:"Masche",stepGuideTapStitch:"Tippe auf eine Masche",
     settingsDefaultStitches:"Standard-Häkelmaschen",
@@ -3495,6 +3514,8 @@ const T={
     settingsReadHighlight:"สีไฮไลต์ในโหมดอ่าน",settingsViewerMode:"โหมดการแสดงผล",
     settingsViewerStandard:"มาตรฐาน",settingsViewerFullscreen:"เต็มจอ",settingsViewerSplit:"แบ่งหน้าจอ",
     settingsStepGuideDefault:"ขยายคู่มือขั้นตอนโดยค่าเริ่มต้น",
+    settingsPatternInfoDefault:"แสดงข้อมูลแพทเทิร์นโดยค่าเริ่มต้น",
+    settingsPatternInfoDefaultNote:"เกจ วัสดุ และคำย่อจะเปิดขึ้นอัตโนมัติในโหมดอ่าน",
     stepGuideLabel:"คู่มือขั้นตอน",stepGuideEmpty:"ยังไม่มีข้อมูลตะเข็บสำหรับแถวนี้",
     stepGuideFoundation:"โซ่ฐาน",stepGuideRow:"แถว",stepGuideTapRow:"แตะแถวเพื่อเริ่มต้น",stepGuideStitch:"ฝีเข็ม",stepGuideTapStitch:"แตะฝีเข็มเพื่อเริ่มต้น",
     settingsDefaultStitches:"ตะเข็บโครเชต์เริ่มต้น",
@@ -3711,6 +3732,8 @@ const T={
     settingsReadHighlight:"Cor de Destaque no Modo Leitura",settingsViewerMode:"Modo de Visualização",
     settingsViewerStandard:"Padrão",settingsViewerFullscreen:"Tela Cheia",settingsViewerSplit:"Vista Dividida",
     settingsStepGuideDefault:"Expandir Guia de Passos por Padrão",
+    settingsPatternInfoDefault:"Mostrar informações do padrão por padrão",
+    settingsPatternInfoDefaultNote:"Densidade, materiais e abreviações abrem automaticamente no Modo de Leitura.",
     stepGuideLabel:"Guia de Passos",stepGuideEmpty:"Ainda não há dados de pontos para esta fileira.",
     stepGuideFoundation:"Corrente Base",stepGuideRow:"Fileira",stepGuideTapRow:"Toque em uma fileira para começar",stepGuideStitch:"Ponto",stepGuideTapStitch:"Toque em um ponto",
     settingsDefaultStitches:"Pontos de Crochê Padrão",
@@ -3927,6 +3950,8 @@ const T={
     settingsReadHighlight:"रीड मोड हाइलाइट रंग",settingsViewerMode:"व्यूअर मोड",
     settingsViewerStandard:"मानक",settingsViewerFullscreen:"फुलस्क्रीन",settingsViewerSplit:"स्प्लिट व्यू",
     settingsStepGuideDefault:"डिफ़ॉल्ट रूप से स्टेप गाइड विस्तृत करें",
+    settingsPatternInfoDefault:"डिफ़ॉल्ट रूप से पैटर्न जानकारी दिखाएं",
+    settingsPatternInfoDefaultNote:"गेज, सामग्री और संक्षिप्ताक्षर रीड मोड में अपने आप खुल जाते हैं।",
     stepGuideLabel:"स्टेप गाइड",stepGuideEmpty:"इस पंक्ति के लिए अभी तक कोई टांका डेटा नहीं है।",
     stepGuideFoundation:"फाउंडेशन चेन",stepGuideRow:"पंक्ति",stepGuideTapRow:"शुरू करने के लिए किसी पंक्ति पर टैप करें",stepGuideStitch:"टांका",stepGuideTapStitch:"एक टांके पर टैप करें",
     settingsDefaultStitches:"डिफ़ॉल्ट क्रोशिया टांके",
@@ -4264,7 +4289,7 @@ function useNativeKeyboardHeight(enabled){
   },[enabled]);
   return enabled?height:0;
 }
-const SettingsCtx=createContext({readHighlightColor:"#BBC7F1",canvasBg:"#FDFAF6",chartGridVisible:true,chartHighlightRow:true,stepGuideExpanded:false,setSetting:()=>{}});
+const SettingsCtx=createContext({readHighlightColor:"#BBC7F1",canvasBg:"#FDFAF6",chartGridVisible:true,chartHighlightRow:true,stepGuideExpanded:false,patternInfoDefault:true,setSetting:()=>{}});
 const useSettings=()=>useContext(SettingsCtx);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const Ico=({n,sz=16,style={}})=><span className="iconify" data-icon={n} style={{fontSize:sz,...style}}/>;
@@ -16433,9 +16458,9 @@ function StitchCounter({bottomOffset=120}) {
   /* ── CounterBlock ── */
   const totalBadge = rows + stitches;
   const CounterBlock = ({label, value, onChange, color}) => {
-    const dec = () => onChange(v => Math.max(0, v-1));
-    const inc = () => onChange(v => v+1);
-    const rst = () => onChange(0);
+    const dec = () => {hapticImpact("LIGHT");onChange(v => Math.max(0, v-1));};
+    const inc = () => {hapticImpact("LIGHT");onChange(v => v+1);};
+    const rst = () => {hapticImpact("MEDIUM");onChange(0);};
     const press   = e => e.currentTarget.style.transform = "scale(.88)";
     const release = e => e.currentTarget.style.transform = "scale(1)";
     const btn = (bg, col) => ({
@@ -17348,7 +17373,7 @@ function linkedProgressFor(project){
   return lp&&(!lp.patternId||lp.patternId===project.linkedPatternId)?lp:{};
 }
 
-function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRenamePart,onSavePartLinkedProgress,onSetReadProgressMode,onSetMultiReadPartIds,onDuplicate,onMarkComplete,onUpdateRows,onUpdatePattern,onUpdateLinkedProgress,onFinishedPhoto,onArchive,onToggleSaved,isArchived=false}){
+function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRenamePart,onSavePartLinkedProgress,onSetReadProgressMode,onSetMultiReadPartIds,onDuplicate,onMarkComplete,onUpdateRows,onUpdatePattern,onUpdateLinkedProgress,onFinishedPhoto,onArchive,isArchived=false}){
   const{lang,t}=useLang();
   const{canvasBg="#FDFAF6"}=useSettings();
   // Multi-pattern Read Mode is tablet/desktop-only (see its own file-level
@@ -17371,7 +17396,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
   const[notesOpen,setNotesOpen]=useState(false);
   const[checked,setChecked]=useState([]);
   const[showMore,setShowMore]=useState(false);
-  const[shareCopied,setShareCopied]=useState(false);
   const[showPatternView,setShowPatternView]=useState(false);
   const[activePartIdx,setActivePartIdx]=useState(0);
   const[addPartName,setAddPartName]=useState("");
@@ -17455,12 +17479,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
   const[stickerPreview,setStickerPreview]=useState(null);
   const[outlineStep,setOutlineStep]=useState(2);
 
-  const doShare=()=>{
-    const yarnsText=(project.yarns||[]).map(y=>[y.brand,y.name].filter(Boolean).join(" ")).join(", ")||"—";
-    const text=[`${project.title}`,`Status: ${project.status} · ${project.progress||0}% complete`,`Yarns: ${yarnsText}`,project.notes?`Notes: ${project.notes}`:""].filter(Boolean).join("\n");
-    if(navigator.share){navigator.share({title:project.title,text}).catch(()=>{});}
-    else{navigator.clipboard?.writeText(text).then(()=>{setShareCopied(true);setTimeout(()=>setShareCopied(false),2000);}).catch(()=>{});}
-  };
   const st=STATUS[project.status]||STATUS["In Progress"];
   const days=project.dueDate?Math.ceil((new Date(project.dueDate)-new Date())/86400000):null;
   const dueLabel=days===null?"":days<0?`${Math.abs(days)} ${t.overdue}`:days===0?t.dueToday:`${days} ${t.daysLeft}`;
@@ -17547,11 +17565,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
                 <div style={{fontSize:16,fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:185}}>{project.title}</div>
                 <div style={{fontSize:11,color:"var(--text-secondary)",marginTop:1}}>{(project.yarns||[]).map(y=>y.brand||y.name).filter(Boolean).join(", ")||"—"}</div>
               </div>
-            </div>
-            <div style={{display:"flex",gap:4,flexShrink:0}}>
-              <button onClick={e=>{e.stopPropagation();onToggleSaved?.(!project.saved);}} style={{color:project.saved?"#3850A6":"var(--border)",background:"none",border:"none",cursor:"pointer",padding:2}}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill={project.saved?"currentColor":"none"} stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-              </button>
             </div>
           </div>
           <div style={{display:"flex",gap:5,marginTop:9,flexWrap:"wrap",alignItems:"center"}}>
@@ -17697,9 +17710,9 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
               <span style={{fontSize:11,fontWeight:600,color:"var(--text-secondary)"}}>{t.rows}{activePart?` · ${activePart.name}`:""}</span>
               <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <button onClick={e=>{e.stopPropagation();const r=Math.max(0,activeRows-1);onUpdateRows(r,activePart?.id);}} style={{width:22,height:22,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0}} disabled={!activeRows}>−</button>
+                <button onClick={e=>{e.stopPropagation();hapticImpact("LIGHT");const r=Math.max(0,activeRows-1);onUpdateRows(r,activePart?.id);}} style={{width:22,height:22,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0}} disabled={!activeRows}>−</button>
                 <span style={{fontSize:12,fontWeight:700,color:accentText,minWidth:55,textAlign:"center"}}>{activeRows}{activeTotalRows>0?` / ${activeTotalRows}`:""}</span>
-                <button onClick={e=>{e.stopPropagation();const r=activeTotalRows>0?Math.min(activeTotalRows,activeRows+1):activeRows+1;onUpdateRows(r,activePart?.id);}} style={{width:22,height:22,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0}} disabled={activeTotalRows>0&&activeRows>=activeTotalRows}>+</button>
+                <button onClick={e=>{e.stopPropagation();hapticImpact("LIGHT");const r=activeTotalRows>0?Math.min(activeTotalRows,activeRows+1):activeRows+1;onUpdateRows(r,activePart?.id);}} style={{width:22,height:22,borderRadius:7,border:"1.5px solid var(--border)",background:"var(--bg-subtle)",color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0}} disabled={activeTotalRows>0&&activeRows>=activeTotalRows}>+</button>
               </div>
             </div>
             {activeTotalRows>0&&(
@@ -17723,7 +17736,7 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
         );
         const continueCtaBlock=project.status!=="Completed"&&(activeTotalRows===0||activeRows<activeTotalRows)&&(
             <div style={{padding:"0 18px 14px"}}>
-              <button onClick={e=>{e.stopPropagation();const r=activeTotalRows>0?Math.min(activeTotalRows,activeRows+1):activeRows+1;onUpdateRows(r,activePart?.id);}}
+              <button onClick={e=>{e.stopPropagation();hapticImpact("LIGHT");const r=activeTotalRows>0?Math.min(activeTotalRows,activeRows+1):activeRows+1;onUpdateRows(r,activePart?.id);}}
                 style={{width:"100%",padding:"10px 14px",borderRadius:12,background:"#778EE3",color:"white",fontSize:13,fontWeight:700,cursor:"pointer",border:"none",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 Row {activeRows} <Ico n="lucide:arrow-right" style={{fontSize:"inherit"}}/> Row {activeTotalRows>0?Math.min(activeTotalRows,activeRows+1):activeRows+1}
                 {activePart&&<span style={{fontSize:11,opacity:.75,fontWeight:500}}>· {activePart.name}</span>}
@@ -17772,7 +17785,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
               </div>
             </>
           );
-        const shareToastBlock=shareCopied&&<div style={{margin:"0 18px 8px",padding:"7px 12px",background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,fontSize:12,color:"#15803D",fontWeight:600,textAlign:"center"}}>{t.shareCopied}</div>;
         const photoStripBlock=project.status==="Completed"&&onFinishedPhoto&&(
             <>
               <input ref={photoCardRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
@@ -17823,14 +17835,10 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
             </>
           );
         const actionsFooterBlock=(
-          <div style={{borderTop:"1px solid var(--border-soft)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr"}}>
+          <div style={{borderTop:"1px solid var(--border-soft)",display:"grid",gridTemplateColumns:"1fr 1fr"}}>
             <button onClick={e=>{e.stopPropagation();onEdit();}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"10px 0",background:"none",border:"none",cursor:"pointer",color:"var(--text-secondary)",borderRight:"1px solid var(--border-soft)",transition:"color .15s"}} onMouseEnter={e=>{e.currentTarget.style.color="#778EE3";e.currentTarget.style.background="var(--accent-soft)";}} onMouseLeave={e=>{e.currentTarget.style.color="var(--text-secondary)";e.currentTarget.style.background="transparent"}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               <span style={{fontSize:10}}>{t.edit}</span>
-            </button>
-            <button onClick={e=>{e.stopPropagation();doShare();}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"10px 0",background:"none",border:"none",cursor:"pointer",color:"var(--text-secondary)",borderRight:"1px solid var(--border-soft)",transition:"color .15s"}} onMouseEnter={e=>{e.currentTarget.style.color="#778EE3";e.currentTarget.style.background="var(--accent-soft)";}} onMouseLeave={e=>{e.currentTarget.style.color="var(--text-secondary)";e.currentTarget.style.background="transparent";}}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-              <span style={{fontSize:10}}>{t.share}</span>
             </button>
             <button onClick={e=>{e.stopPropagation();setShowMore(true);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"10px 0",background:"none",border:"none",cursor:"pointer",color:"var(--text-secondary)",transition:"color .15s"}} onMouseEnter={e=>{e.currentTarget.style.color="#778EE3";e.currentTarget.style.background="var(--accent-soft)";}} onMouseLeave={e=>{e.currentTarget.style.color="var(--text-secondary)";e.currentTarget.style.background="transparent";}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
@@ -17854,7 +17862,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
                   {notesBlock}
                   {tagsBlock}
                   {refsBlock}
-                  {shareToastBlock}
                   {photoStripBlock}
                 </div>
               </div>
@@ -17867,7 +17874,6 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
                 {notesBlock}
                 {tagsBlock}
                 {refsBlock}
-                {shareToastBlock}
                 {photoStripBlock}
               </>
             )}
@@ -17900,7 +17906,7 @@ function Card({project,patterns=[],onDelete,onEdit,onAddPart,onRemovePart,onRena
               <span style={{width:30,height:30,borderRadius:10,background:"#7C5CBF18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" fillRule="evenodd" d="M21.488 10.25a22 22 0 0 0-.08-.543l-.064-.401a2.91 2.91 0 0 0-2.872-2.45h-8.117A2.55 2.55 0 0 0 7.903 5H5.612a2.93 2.93 0 0 0-2.909 2.58l-.272 2.27a24.5 24.5 0 0 0 .224 7.318a2.88 2.88 0 0 0 2.626 2.354l1.514.108c3.466.248 6.945.248 10.41 0l1.638-.117a2.72 2.72 0 0 0 1.986-1.087a5.9 5.9 0 0 0 1.409-2.111l1.25-3.213a2.093 2.093 0 0 0-1.952-2.852zM5.612 6.5a1.43 1.43 0 0 0-1.42 1.26l-.272 2.268a23 23 0 0 0 .21 6.87c.113.62.63 1.083 1.258 1.128l.086.006l2.332-6.025a2.75 2.75 0 0 1 2.564-1.757h9.603q-.021-.153-.046-.306l-.064-.402a1.41 1.41 0 0 0-1.39-1.186H9.758a.81.81 0 0 1-.809-.81c0-.577-.469-1.046-1.047-1.046z" clipRule="evenodd"/></svg></span>{isArchived?t.unarchiveLabel:t.archiveLabel}
             </button>
           )}
-          <button onClick={()=>{onDelete();setShowMore(false);}} style={{width:"100%",padding:"14px 18px",paddingBottom:`calc(14px + ${SAFE_BOTTOM})`,background:"none",border:"none",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,fontSize:14,fontWeight:600,color:"#EF4444"}}>
+          <button onClick={()=>{hapticNotify("WARNING");onDelete();setShowMore(false);}} style={{width:"100%",padding:"14px 18px",paddingBottom:`calc(14px + ${SAFE_BOTTOM})`,background:"none",border:"none",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,fontSize:14,fontWeight:600,color:"#EF4444"}}>
             <span style={{width:30,height:30,borderRadius:10,background:"var(--bg-subtle)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ico n="basil:trash-outline" sz={16}/></span>{t.delete||"Delete"}
           </button>
         </div>
@@ -18034,6 +18040,7 @@ function ProjectModal({onClose,onSave,yarnLib,patterns=[],editMode=false,initial
       linkedPatternId:linkedPat?.id||null,linkedPatternName:linkedPat?.name||null,linkedPatternMode:linkedPattern?.mode||null,
       finishedPhoto:effectiveForm.finishedPhoto||null,
     };
+    if(!editMode)hapticNotify("SUCCESS"); // new project only — editing an existing one isn't a "created" moment
     onSave(data);onClose();
   };
 
@@ -18796,7 +18803,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
             </>
           )}
         <AddModalFooter>
-          <AddModalCTA wide={wide} dense={editing} onClick={()=>{const data=buildYarnData();if(editing){onEdit(data);}else{onAdd({...data,id:uid()});}onClose();}}>{editing?t.saveChanges:t.addYarnBtn}</AddModalCTA>
+          <AddModalCTA wide={wide} dense={editing} onClick={()=>{const data=buildYarnData();if(editing){onEdit(data);}else{hapticNotify("SUCCESS");onAdd({...data,id:uid()});}onClose();}}>{editing?t.saveChanges:t.addYarnBtn}</AddModalCTA>
         </AddModalFooter>
         <AddModalOverlays>
       {showCloseSheet&&(
@@ -18804,7 +18811,7 @@ function AddYarnModal({onClose,onAdd,initialYarn,onEdit}){
           message={t.closeSaveYarnMsg}
           saveDraftLabel={t.saveYarnLabel}
           discardLabel={t.discardGeneric}
-          onSaveDraft={()=>{const data=buildYarnData();onAdd({...data,id:uid()});onClose();}}
+          onSaveDraft={()=>{const data=buildYarnData();hapticNotify("SUCCESS");onAdd({...data,id:uid()});onClose();}}
           onDiscard={()=>{setShowCloseSheet(false);onClose();}}
           onCancel={()=>setShowCloseSheet(false)}
         />
@@ -19082,7 +19089,7 @@ function YarnLibPage({yarnLib,setYarnLib,projects,swatches=[],setSwatches,onShow
                       {confirmDelete===yarn.id?(
                         <>
                           <span style={{fontSize:10,fontWeight:700,color:"#EF4444",marginRight:2}}>Delete?</span>
-                          <button onClick={()=>{deleteYarn(yarn);setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>Yes</button>
+                          <button onClick={()=>{hapticNotify("WARNING");deleteYarn(yarn);setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>Yes</button>
                           <button onClick={()=>setConfirmDelete(null)} style={{fontSize:10,fontWeight:700,color:"var(--text-secondary)",background:"var(--bg-subtle)",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>No</button>
                         </>
                       ):(
@@ -19127,7 +19134,7 @@ function YarnLibPage({yarnLib,setYarnLib,projects,swatches=[],setSwatches,onShow
                     {confirmDelete===yarn.id?(
                       <>
                         <span style={{fontSize:10,fontWeight:700,color:"#EF4444",marginRight:2}}>Delete?</span>
-                        <button onClick={()=>{deleteYarn(yarn);setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>Yes</button>
+                        <button onClick={()=>{hapticNotify("WARNING");deleteYarn(yarn);setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>Yes</button>
                         <button onClick={()=>setConfirmDelete(null)} style={{fontSize:10,fontWeight:700,color:"var(--text-secondary)",background:"var(--bg-subtle)",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>No</button>
                       </>
                     ):(
@@ -19234,7 +19241,7 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
       <AddModalFooter>
         {isEdit
           ?<AddModalCTA wide={wide} dense onClick={()=>{onEdit({...editing,...form,qty:Number(form.qty)});onClose();}}>{t.saveChanges}</AddModalCTA>
-          :<AddModalCTA wide={wide} onClick={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}}>{t.addToolBtn}</AddModalCTA>
+          :<AddModalCTA wide={wide} onClick={()=>{hapticNotify("SUCCESS");onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}}>{t.addToolBtn}</AddModalCTA>
         }
       </AddModalFooter>
       <AddModalOverlays>
@@ -19243,7 +19250,7 @@ function AddToolModal({onClose,onAdd,editing,onEdit}){
             message={t.closeSaveToolMsg}
             saveDraftLabel={t.saveToolLabel}
             discardLabel={t.discardGeneric}
-            onSaveDraft={()=>{onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}}
+            onSaveDraft={()=>{hapticNotify("SUCCESS");onAdd({...form,id:uid(),qty:Number(form.qty)});onClose();}}
             onDiscard={()=>{setShowCloseSheet(false);onClose();}}
             onCancel={()=>setShowCloseSheet(false)}
           />
@@ -19313,7 +19320,7 @@ function ToolsLibPage({tools,setTools}){
                 </span>
                 <div style={{display:"flex",alignItems:"center",gap:2}}>
                   <LibCardIconBtn kind="edit" label="Edit Tool" onClick={()=>setEditingTool(tool)}/>
-                  <LibCardIconBtn kind="delete" label="Delete" onClick={()=>setTools(p=>p.filter(x=>x.id!==tool.id))}/>
+                  <LibCardIconBtn kind="delete" label="Delete" onClick={()=>{hapticNotify("WARNING");setTools(p=>p.filter(x=>x.id!==tool.id));}}/>
                 </div>
               </div>
             </div>
@@ -19336,7 +19343,7 @@ function ToolsLibPage({tools,setTools}){
                     <button onClick={()=>setEditingTool(tool)} style={{color:"#93C5FD",background:"none",border:"none",cursor:"pointer",padding:0}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
-                    <button onClick={()=>setTools(p=>p.filter(x=>x.id!==tool.id))} style={{color:"#FCA5A5",background:"none",border:"none",cursor:"pointer",padding:0}}>
+                    <button onClick={()=>{hapticNotify("WARNING");setTools(p=>p.filter(x=>x.id!==tool.id));}} style={{color:"#FCA5A5",background:"none",border:"none",cursor:"pointer",padding:0}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
@@ -19478,7 +19485,7 @@ function AddSwatchModal({onClose,onSave,initialSwatch,yarnLib,swatches}){
       createdAt:initialSwatch?.createdAt||new Date().toISOString(),
     };
   };
-  const save=()=>{if(!canSave)return;onSave(buildSwatch());onClose();};
+  const save=()=>{if(!canSave)return;if(!editing)hapticNotify("SUCCESS");onSave(buildSwatch());onClose();};
   const handleClose=()=>{if(isDirty&&hasContent){setShowCloseSheet(true);}else{onClose();}};
 
   // Sizes already used on this craft's swatches, most recent first — quick
@@ -19790,7 +19797,7 @@ function SwatchesLibPage({swatches,setSwatches,yarnLib,presetYarnId}){
                   {confirmDelete===sw.id?(
                     <>
                       <span style={{fontSize:10,fontWeight:700,color:"#EF4444",marginRight:2}}>{t.swatchDeleteQ}</span>
-                      <button onClick={()=>{setSwatches(p=>p.filter(x=>x.id!==sw.id));setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>{t.swatchYes}</button>
+                      <button onClick={()=>{hapticNotify("WARNING");setSwatches(p=>p.filter(x=>x.id!==sw.id));setConfirmDelete(null);}} style={{fontSize:10,fontWeight:700,color:"white",background:"#EF4444",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>{t.swatchYes}</button>
                       <button onClick={()=>setConfirmDelete(null)} style={{fontSize:10,fontWeight:700,color:"var(--text-secondary)",background:"var(--bg-subtle)",border:"none",borderRadius:6,cursor:"pointer",padding:"3px 8px"}}>{t.swatchNo}</button>
                     </>
                   ):(
@@ -21658,6 +21665,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
         designData={type:'imported',steps:_applyStepKindOverrides(lines,prevMap)};
       }
     }
+    if(!editing)hapticNotify("SUCCESS"); // new pattern only — editing an existing one isn't a "created" moment
     onSave({...form,designData,id:editing?initial.id:uid(),
       tags:typeof form.tags==="string"?form.tags.split(",").map(x=>x.trim()).filter(Boolean):form.tags,
       photos,
@@ -21811,7 +21819,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
   return createPortal(
     <AddItemModal wide={isWide} dense={editing} title={editing?t.editProject.replace("Project","Pattern"):t.addPatternTitle} onClose={handleClose} zIndex={Z_SECONDARY} scrim={0.45} sheetMaxVh={90}>
 
-          {/* Photos — up to 3 */}
+          {/* Photos — up to PATTERN_PHOTO_MAX */}
           <div style={{marginBottom:14}}>
             {(form.photos||[]).length>0&&(
               <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
@@ -21825,13 +21833,13 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
                 ))}
               </div>
             )}
-            {(form.photos||[]).length<3&&(
+            {(form.photos||[]).length<PATTERN_PHOTO_MAX&&(
               <button type="button" onClick={()=>imgPick(v=>s("photos",[...(form.photos||[]),v]))}
                 style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <div style={{textAlign:"left"}}>
                   <div style={{fontSize:editing&&isWide?12:13,fontWeight:600,color:"var(--text-primary)"}}>{t.addPhoto}</div>
-                  <div style={{fontSize:editing&&isWide?10:11,color:"var(--text-secondary)",marginTop:2}}>{t.photosRemaining.replace("{n}",3-(form.photos||[]).length)}</div>
+                  <div style={{fontSize:editing&&isWide?10:11,color:"var(--text-secondary)",marginTop:2}}>{t.photosRemaining.replace("{n}",PATTERN_PHOTO_MAX-(form.photos||[]).length)}</div>
                 </div>
               </button>
             )}
@@ -22218,7 +22226,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   // Read from the Color Grid editor (previewOnly): Chart = the chart below, Realistic = the same pattern
   // drawn by the knitted-stitch renderer at the same geometry, so zoom/pan/pinch work the same in both.
   const[readView,setReadView]=useState("chart");
-  const legendRef=useRef(null),centerRef=useRef(null),readLayerRef=useRef({});
+  const legendRef=useRef(null),centerRef=useRef(null),readLayerRef=useRef({}),bottomBarRef=useRef(null);
   const[knitTexStatus,setKnitTexStatus]=useState(KNIT_TEX.status);
   useEffect(()=>{
     if(readView!=="realistic")return;
@@ -22254,65 +22262,72 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   const dragRef=useRef(null); // {startX,startY,startPanX,startPanY,moved}
   const suppressClick=useRef(false);
   const krcPinchRef=useRef(null);
-  const krcPinchLiveScaleRef=useRef(1);
   const zoomWrapRef=useRef(null);
+
+  // Where the chart may be panned (CSS px) at a live zoom factor k over the committed layout. The visible
+  // band is the reading area minus whatever is pinned over its bottom (the phone's colour legend, the reading
+  // panel). Bigger than the band on an axis → pan until its edge meets the band's edge (so rows under the
+  // legend can always be brought into view); fits → it sits centred in the band. Used live and on commit alike,
+  // so nothing jumps when the fingers lift.
+  const clampPan=(q,k=1)=>{
+    const cont=containerRef.current,w=zoomWrapRef.current;if(!cont||!w)return q;
+    const z=getAmbientZoom()||1,cr=cont.getBoundingClientRect();
+    const pb=centerRef.current?parseFloat(centerRef.current.style.paddingBottom)||0:0;
+    let cover=pb;
+    for(const o of [legendRef.current,bottomBarRef.current]){
+      if(!o)continue;const r=o.getBoundingClientRect();
+      if(r.height>0&&r.top<cr.bottom)cover=Math.max(cover,(cr.bottom-Math.max(r.top,cr.top))/z);
+    }
+    const fit=(t,size,centre,v0,v1)=>{const h=k*size/2;return 2*h<=v1-v0?(v0+v1)/2-centre:Math.max(v1-(centre+h),Math.min(v0-(centre-h),t));};
+    return{x:fit(q.x,w.offsetWidth,cont.clientWidth/2,0,cont.clientWidth),y:fit(q.y,w.offsetHeight,(cont.clientHeight-pb)/2,0,cont.clientHeight-cover)};
+  };
+  const setWrapTransform=(t,k=1)=>{if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${t.x}px,${t.y}px)`+(k!==1?` scale(${k})`:"");};
 
   useEffect(()=>{
     const el=containerRef.current;if(!el)return;
-    // Live CSS-transform zoom during the gesture instead of a full canvas
-    // redraw on every touchmove — see the identical comment in KnitSymbolReader.
-    const commitLiveTransform=()=>{
-      if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${panRef.current.x}px,${panRef.current.y}px) scale(${krcPinchLiveScaleRef.current})`;
+    // Pinch = a live CSS transform (no canvas redraw per touchmove; one redraw when the fingers lift),
+    // anchored between the fingers: the part of the chart under them stays under them, and moving both
+    // fingers pans. krcPinchRef holds the gesture: {ready,m0x,m0y,d0,cx,cy,t0,k,t}.
+    const two=e=>({x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2,
+      d:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)});
+    // Baseline = where the two fingers are now; the chart's untransformed centre in CSS px.
+    const baseline=(g,e)=>{
+      const w=zoomWrapRef.current;if(!w)return;
+      const z=getAmbientZoom()||1,m=two(e),r=w.getBoundingClientRect(),t0={...panRef.current};
+      Object.assign(g,{ready:true,m0x:m.x/z,m0y:m.y/z,d0:Math.max(1,m.d),cx:(r.left+r.width/2)/z-t0.x,cy:(r.top+r.height/2)/z-t0.y,t0,k:1,t:t0});
     };
     const onTS=e=>{
-      if(e.touches.length>=2){
-        e.preventDefault();
-        // Only (re)establish a fresh baseline when this is genuinely a new pinch —
-        // real devices can fire a spurious extra touchstart mid-gesture (e.g. while
-        // fingers are lifting and touch identities get renumbered). Resetting
-        // krcPinchLiveScaleRef in that case would wipe the zoom already accumulated
-        // this gesture, which is what caused "zooms in, then snaps back."
-        if(krcPinchRef.current===null){
-          dragRef.current=null;
-          krcPinchRef.current=0; // sentinel: wait for first touchmove to init distance
-          krcPinchLiveScaleRef.current=1;
-        }
-      }
+      if(e.touches.length!==2)return;
+      e.preventDefault();
+      // Only a genuinely new pinch starts fresh — real devices can fire a spurious extra touchstart
+      // mid-gesture (touch identities renumbered as fingers lift), which must not reset the zoom so far.
+      if(krcPinchRef.current===null){dragRef.current=null;krcPinchRef.current={ready:false};baseline(krcPinchRef.current,e);}
     };
     const onTM=e=>{
-      if(e.touches.length===2&&krcPinchRef.current!==null){
-        e.preventDefault();
-        const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-        if(krcPinchRef.current===0){krcPinchRef.current=d;return;} // first move: init, skip scale
-        // Clamp the LIVE multiplier to the same [0.3,4] range endPinch()'s setScale()
-        // commit enforces. Unclamped, pinching past either end kept shrinking/growing
-        // on screen during the gesture, then jumped back to the clamped value the
-        // instant fingers lifted — the "shaky, zooms back in" snap. Most noticeable
-        // zooming OUT since that's the direction most likely to hit the floor (trying
-        // to fit a whole repeated pattern in view).
-        const raw=krcPinchLiveScaleRef.current*(d/krcPinchRef.current);
-        krcPinchLiveScaleRef.current=Math.max(0.3,Math.min(4,scaleRef.current*raw))/scaleRef.current;
-        krcPinchRef.current=d;
-        commitLiveTransform();
-      }
+      const g=krcPinchRef.current;if(!g||e.touches.length!==2)return;
+      e.preventDefault();
+      const z=getAmbientZoom()||1,m=two(e);
+      if(!g.ready){baseline(g,e);return;}
+      // Same [0.3,4] range the commit enforces, so nothing jumps back when the fingers lift.
+      const S=scaleRef.current,k=Math.max(0.3,Math.min(4,S*m.d/g.d0))/S;
+      // the chart point first under the fingers follows their midpoint
+      g.k=k;g.t=clampPan({x:m.x/z-g.cx-k*(g.m0x-g.t0.x-g.cx),y:m.y/z-g.cy-k*(g.m0y-g.t0.y-g.cy)},k);
+      setWrapTransform(g.t,k);
     };
-    const endPinch=()=>{
+    const endPinch=e=>{
+      const g=krcPinchRef.current;if(!g)return;
       krcPinchRef.current=null;
-      const target=Math.max(0.3,Math.min(4,scaleRef.current*krcPinchLiveScaleRef.current));
-      krcPinchLiveScaleRef.current=1;
-      // Only clear the live transform here when scale isn't actually changing — if it
-      // is, setScale (below) triggers a re-render, and the transform gets cleared by
-      // the dedicated effect keyed on `scale` instead, *after* draw() has redrawn the
-      // canvas at the new size. Clearing unconditionally right here (the old
-      // behavior) could land before that redraw, showing the canvas at its old size
-      // for a frame — visually a snap back to where the gesture started.
-      if(target===scaleRef.current){
-        if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${panRef.current.x}px,${panRef.current.y}px)`;
-      }else{
-        setScale(target);
-      }
+      if(!g.ready){setWrapTransform(panRef.current);return;}
+      const S=scaleRef.current,target=S*g.k;
+      panRef.current=g.t;setPan(g.t);
+      // Scale unchanged → just settle the transform. Changed → setScale redraws the canvas at the new
+      // size, and the layout effect keyed on `scale` swaps the live transform for translate(pan) only
+      // after that redraw, so there's no frame at the old size.
+      if(Math.abs(target-S)<1e-4)setWrapTransform(g.t);else setScale(target);
+      // A finger still down carries straight on panning.
+      if(e&&e.touches&&e.touches.length===1){const f=e.touches[0];dragRef.current={startX:f.clientX,startY:f.clientY,startPanX:g.t.x,startPanY:g.t.y,moved:false};}
     };
-    const onTE=e=>{if(e.touches.length<2)endPinch();};
+    const onTE=e=>{if(e.touches.length<2)endPinch(e);};
     const onTC=()=>{endPinch();dragRef.current=null;setGrabbing(false);};
     el.addEventListener("touchstart",onTS,{passive:false});
     el.addEventListener("touchmove",onTM,{passive:false});
@@ -22368,7 +22383,6 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   },[]);
 
   const resetView=useCallback(()=>{setScale(1);setPan({x:0,y:0});},[]);
-  useEffect(()=>{if(scale<=1)setPan({x:0,y:0});},[scale]);
 
   /* ── Draw ── */
   const draw=useCallback(()=>{
@@ -22550,29 +22564,37 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
   // draw() effect immediately above — the canvas is already the right size by the
   // time this runs, every single time, not just "usually" the way a manually-guessed
   // requestAnimationFrame delay was.
+  // It also settles the pan for the new size (clampPan): centred in the visible band when the chart fits,
+  // kept in bounds when it doesn't — e.g. on open, a short chart centres above the phone's colour legend.
   useLayoutEffect(()=>{
-    if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${panRef.current.x}px,${panRef.current.y}px)`;
-  },[scale]);
+    const c=clampPan(panRef.current);panRef.current=c;
+    if(zoomWrapRef.current)zoomWrapRef.current.style.transform=`translate(${c.x}px,${c.y}px)`;
+    setPan(p=>p.x===c.x&&p.y===c.y?p:c);
+  },[draw]);
 
   /* ── Pan: pointer events on the container ── */
+  // Moves the transform directly (no re-render per move), kept in bounds; the pan is committed on lift.
   const onPD=useCallback(e=>{
-    if(!e.isPrimary||scale<=1)return;
-    dragRef.current={startX:e.clientX,startY:e.clientY,startPanX:pan.x,startPanY:pan.y,moved:false};
-    e.currentTarget.setPointerCapture(e.pointerId);
+    if(!e.isPrimary||krcPinchRef.current)return; // any zoom — clampPan decides how far it can go
+    dragRef.current={startX:e.clientX,startY:e.clientY,startPanX:panRef.current.x,startPanY:panRef.current.y,moved:false};
+    try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}
     setGrabbing(true);
-  },[scale,pan]);
+  },[scale]);
 
   const onPM=useCallback(e=>{
-    if(!dragRef.current)return;
-    const dx=e.clientX-dragRef.current.startX,dy=e.clientY-dragRef.current.startY;
-    if(Math.abs(dx)+Math.abs(dy)>4)dragRef.current.moved=true;
-    setPan({x:dragRef.current.startPanX+dx,y:dragRef.current.startPanY+dy});
+    const d=dragRef.current;if(!d||krcPinchRef.current)return;
+    const z=getAmbientZoom()||1,dx=(e.clientX-d.startX)/z,dy=(e.clientY-d.startY)/z;
+    if(Math.abs(dx)+Math.abs(dy)>4)d.moved=true;
+    const t=clampPan({x:d.startPanX+dx,y:d.startPanY+dy});
+    panRef.current=t;setWrapTransform(t);
   },[]);
 
   const onPU=useCallback(e=>{
-    if(dragRef.current?.moved)suppressClick.current=true;
+    const d=dragRef.current;
+    if(d?.moved)suppressClick.current=true;
     dragRef.current=null;
     setGrabbing(false);
+    if(d)setPan({...panRef.current});
   },[]);
 
   /* ── Row selection + box candidate on click ── */
@@ -22666,7 +22688,7 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
           reading a saved pattern one row at a time over multiple sessions, not for a quick
           look at a design still being edited. */}
       {!previewOnly&&(
-      <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:221,padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)"}}>
+      <div ref={bottomBarRef} style={{position:"fixed",bottom:0,left:0,right:0,zIndex:221,padding:`12px 14px calc(8px + ${SAFE_BOTTOM}) 14px`,background:"var(--bg-card)",borderTop:"1px solid var(--nav-border)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
           <div style={{minWidth:0}}>
             <div style={{fontSize:10,color:"var(--text-secondary)",fontWeight:600,marginBottom:1}}>{displayRow!==null?`Row ${displayRow}`:"— —"}</div>
@@ -22773,7 +22795,8 @@ function KnitReadChart({grid,onBack,progressMarker=null,onSaveProgress,rowNotes=
         </div>
       </ReadModeBottomSheet>
       <ReadModeBottomSheet title={t.colorsLabel} open={krcColorsOpen} onClose={()=>setKrcColorsOpen(false)}>
-        <ColorUseStrip colors={usedColorsInGrid} colorLabels={colorLabels} readOnly layout="strip"/>
+        {/* Wraps onto as many rows as it needs (the sheet scrolls past its max height) — no sideways dragging */}
+        <ColorUseStrip colors={usedColorsInGrid} colorLabels={colorLabels} readOnly layout="grid"/>
       </ReadModeBottomSheet>
     </>
   );
@@ -23215,6 +23238,7 @@ function StepModeInfoPanel({patName,infoCards,collapsed,onToggle}){
 
 function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgress,stitchColors={},notes="",memoryScope}){
   const{t}=useLang();
+  const{patternInfoDefault}=useSettings();
   // Step Mode is a workspace for completing actionable instructions, not a
   // document viewer — steps classifyStepsForDisplay finds to be reference
   // information (sizes, gauge, materials, a title/description with no
@@ -23252,7 +23276,10 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   })),[classified]);
 
   const stepItems=useMemo(()=>runMode
-    ?items.filter(i=>i.runs).flatMap(i=>i.runs.map((run,k)=>({id:`${i.id}_${k}`,text:i.text,run})))
+    // rowId groups a row's runs back together — see toggleCheck's row-complete
+    // haptic below, which fires once every run sharing a rowId is checked,
+    // not on each individual one.
+    ?items.filter(i=>i.runs).flatMap(i=>i.runs.map((run,k)=>({id:`${i.id}_${k}`,text:i.text,run,rowId:i.id})))
     :items.filter(i=>!i.isSection&&!i.isCondition&&!i.isVariant),[items,runMode]);
   const[checked,setChecked]=useState(()=>{
     if(progressMarker==null||progressMarker<0)return{};
@@ -23326,13 +23353,23 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
   // panel, so the checklist stays the focused, uncluttered mobile
   // experience while the same reference information stays one tap away.
   const isWidePanel=useMinWidthMediaQuery(768);
-  const[panelCollapsed,setPanelCollapsed]=useState(false);
+  // Settings > Pattern & Reading's "Show Pattern Information by Default"
+  // drives both surfaces' starting state: the desktop panel starts expanded
+  // rather than collapsed, and the mobile sheet auto-opens once on entry —
+  // see the mount effect below infoCards, which needs infoCards itself
+  // (empty means nothing to show, so it stays closed regardless of the
+  // setting) and so can't be this initializer.
+  const[panelCollapsed,setPanelCollapsed]=useState(()=>patternInfoDefault===false);
   const[infoSheetOpen,setInfoSheetOpen]=useState(false);
   const infoCards=useMemo(()=>{
     const fromNotes=_notesToInfoCards(notes);
     const fromSteps=infoItems.map(s=>s.text);
     return fromSteps.length?[...fromNotes,{heading:null,body:fromSteps.join("\n")}]:fromNotes;
   },[notes,infoItems]);
+  useEffect(()=>{
+    if(!isWidePanel&&patternInfoDefault!==false&&infoCards.length)setInfoSheetOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]); // once per Step Mode visit, deliberately not on every infoCards/setting change — see doc comment above
   const STEP_PALETTE=["#FAFAF9","#FCD34D","#FCA5A5","#F97316","#EF4444","#EC4899","#C084FC","#778EE3","#60A5FA","#34D399","#A3E635","#D97706","#9CA3AF","#374151"];
   const yarnColors=useMemo(()=>{
     try{
@@ -23355,6 +23392,18 @@ function StepReader({steps=[],patName="",onBack,progressMarker=null,onSaveProgre
       if(next[id]){
         justChecked.current.add(id);
         setTimeout(()=>{justChecked.current.delete(id);forceRender(n=>n+1);},260);
+        // Row-complete haptic, checking only (never on uncheck). In run mode
+        // (a Color Grid read as text — see runMode's own doc comment) a row
+        // is several color runs, so this waits for the last run in that row
+        // rather than firing on every single color; outside run mode each
+        // step already IS one row/instruction, so checking it always
+        // qualifies.
+        if(runMode){
+          const item=stepItems.find(s=>s.id===id);
+          if(item&&stepItems.filter(s=>s.rowId===item.rowId).every(s=>next[s.id]))hapticNotify("SUCCESS");
+        }else{
+          hapticNotify("SUCCESS");
+        }
         const newActive=stepItems.find(s=>!next[s.id]);
         if(newActive) setTimeout(()=>{
           stepRefs.current[newActive.id]?.scrollIntoView({behavior:"smooth",block:"center"});
@@ -25167,12 +25216,12 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                       </div>
                     ))}
                   </div>
-                  {(pat.photos||[]).length<3&&(
+                  {(pat.photos||[]).length<PATTERN_PHOTO_MAX&&(
                     <button onClick={()=>imgPick(v=>{
-                      const photos=[...(pat.photos||[]),v].slice(0,3);
+                      const photos=[...(pat.photos||[]),v].slice(0,PATTERN_PHOTO_MAX);
                       onUpdate({...pat,photos,image:photos[0]});
                     })} style={{marginTop:8,fontSize:isDesktop?10:11,fontWeight:600,color:"var(--text-secondary)",background:"none",border:"1.5px dashed #E5E7EB",borderRadius:10,padding:"5px 12px",cursor:"pointer"}}>
-                      {t.addPhotoCountLeft.replace("{n}",3-(pat.photos||[]).length)}
+                      {t.addPhotoCountLeft.replace("{n}",PATTERN_PHOTO_MAX-(pat.photos||[]).length)}
                     </button>
                   )}
                 </div>
@@ -25457,7 +25506,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                   already right next to Read Chart in the chart section
                   above, which is the more discoverable, direct path to the
                   same action. */}
-              <button onClick={()=>{onDelete();setShowPatMore(false);}} style={{width:"100%",padding:"14px 18px",paddingBottom:`calc(14px + ${SAFE_BOTTOM})`,background:"none",border:"none",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,fontSize:14,fontWeight:600,color:"#EF4444"}}>
+              <button onClick={()=>{hapticNotify("WARNING");onDelete();setShowPatMore(false);}} style={{width:"100%",padding:"14px 18px",paddingBottom:`calc(14px + ${SAFE_BOTTOM})`,background:"none",border:"none",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,fontSize:14,fontWeight:600,color:"#EF4444"}}>
                 <span style={{width:30,height:30,borderRadius:10,background:"var(--bg-subtle)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ico n="basil:trash-outline" sz={16}/></span>{t.delete||"Delete"}
               </button>
             </div>
@@ -27743,7 +27792,7 @@ function SetSub({children}) {
 }
 function SetSwitch({label, value, onChange}) {
   return (
-    <button type="button" role="switch" aria-checked={!!value} aria-label={label} onClick={()=>onChange(!value)}
+    <button type="button" role="switch" aria-checked={!!value} aria-label={label} onClick={()=>{hapticImpact("LIGHT");onChange(!value);}}
       style={{width:44,height:26,borderRadius:13,background:value?"#778EE3":"var(--switch-off)",border:"none",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0,padding:0}}>
       <div style={{position:"absolute",top:3,left:value?21:3,width:20,height:20,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,.25)",transition:"left .2s"}}/>
     </button>
@@ -28644,6 +28693,9 @@ function SettingsPage({settings, setSettings, lang, setLang, onBack, onReplayOnb
             <SetRow label={t.settingsStepGuideDefault}>
               <SetSwitch label={t.settingsStepGuideDefault} value={!!settings.stepGuideExpanded} onChange={v=>set("stepGuideExpanded", v)}/>
             </SetRow>
+            <SetRow label={t.settingsPatternInfoDefault} hint={t.settingsPatternInfoDefaultNote}>
+              <SetSwitch label={t.settingsPatternInfoDefault} value={settings.patternInfoDefault!==false} onChange={v=>set("patternInfoDefault", v)}/>
+            </SetRow>
             <SetRow label="Crochet Terminology">
               <select value={settings.crochetTerm||"us"} onChange={e=>set("crochetTerm",e.target.value)} style={setSelectSt}>
                 <option value={"us"}>US Terms</option><option value={"uk"}>UK Terms</option>
@@ -28799,16 +28851,20 @@ function PaletteGeneratorModal({onClose,yarnLib=[]}){
   const[locked,setLocked]=useState([false,false,false,false]);
   const[copied,setCopied]=useState(null);
   const handleMode=m=>{
+    hapticSelect();
     setMode(m);
     setPalette(cur=>generatePalette(m,locked,cur));
   };
   const handleGenerate=()=>{
+    hapticImpact("MEDIUM"); // the generator's own "click" — this is the button people tap repeatedly to roll a new palette
     setPalette(cur=>generatePalette(mode,locked,cur));
   };
   const toggleLock=i=>{
+    hapticSelect();
     setLocked(prev=>{const nl=[...prev];nl[i]=!nl[i];return nl;});
   };
   const copyHex=i=>{
+    hapticImpact("LIGHT"); // lighter than the other feedback here — copying a hex code isn't a "created something" moment
     navigator.clipboard.writeText(palette[i]).catch(()=>{});
     setCopied(i);setTimeout(()=>setCopied(null),320);
   };
@@ -28827,6 +28883,7 @@ function PaletteGeneratorModal({onClose,yarnLib=[]}){
   },[yarnLib]);
   const activeYarnSeed=locked[0]?palette[0]?.toLowerCase():null;
   const seedFromYarn=hex=>{
+    hapticSelect();
     if(activeYarnSeed===hex.toLowerCase()){
       setLocked(prev=>{const nl=[...prev];nl[0]=false;return nl;});
       return;
@@ -29202,7 +29259,7 @@ function DesktopSidebar({page,setPage,t,onAdd,settings,settingsOpen,onOpenSettin
         {items.map(item=>{
           const active=page===item.id;
           return(
-            <button key={item.id} type="button" onClick={()=>{hapticSelect();setPage(item.id);}}
+            <button key={item.id} type="button" onClick={()=>{hapticImpact("LIGHT");setPage(item.id);}}
               className={`desk-nav-row tap${active?" active":""}`}
               style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:14,border:"none",cursor:"pointer",textAlign:"left",background:active?"var(--accent-soft)":"transparent",color:active?"#778EE3":"var(--text-secondary)"}}>
               {item.id==="create"
@@ -29225,7 +29282,7 @@ function DesktopSidebar({page,setPage,t,onAdd,settings,settingsOpen,onOpenSettin
           established above rather than inventing a new style. ── */}
       <div style={{marginTop:"auto",paddingTop:14}}>
         <div style={{height:1,background:"var(--border-soft)",margin:"0 14px 10px"}}/>
-        <button type="button" onClick={()=>{hapticSelect();setPage("dashboard");}}
+        <button type="button" onClick={()=>{hapticImpact("LIGHT");setPage("dashboard");}}
           className={`desk-nav-row tap${page==="dashboard"?" active":""}`}
           style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"7px 14px",borderRadius:14,border:"none",cursor:"pointer",textAlign:"left",background:page==="dashboard"?"var(--accent-soft)":"transparent",color:page==="dashboard"?"#778EE3":"var(--text-secondary)"}}>
           {/* Fixed 20px-wide slot — same effective icon-column width every other
@@ -29277,7 +29334,7 @@ function BottomNav({page,setPage,t,onAdd}){
 
   const NavBtn=({tab})=>{
     const active=page===tab.id;
-    const handleClick=()=>{hapticSelect();setPage(tab.id);};
+    const handleClick=()=>{hapticImpact("LIGHT");setPage(tab.id);};
     return(
       <button type="button" onClick={handleClick}
         style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4.6px 0 4px",background:"none",border:"none",cursor:"pointer",color:active?C:INACTIVE,transition:"color .2s"}}>
@@ -29341,6 +29398,13 @@ const DEFAULT_SETTINGS = {
   readHighlightColor: "#BBC7F1",
   canvasBg: "#FDFAF6",
   stepGuideExpanded: false,
+  // Whether Step Mode's Pattern Information starts open: the persistent side
+  // panel expanded on iPad/desktop, the bottom sheet auto-opened once per
+  // visit on mobile (see StepReader's isWidePanel/panelCollapsed/
+  // infoSheetOpen). Defaults on — gauge, materials, and abbreviations are
+  // things people re-check mid-row, not just read once before starting, so
+  // starting hidden mainly risks people never finding it.
+  patternInfoDefault: true,
   avatarConfig: {hair:"hair_1",eyes:"eyes_1",nose:"nose_1",mouth:"mouth_1",glasses:null},
   profileImageMode: "avatar",
   yarnShowTotal: false,
@@ -32612,7 +32676,6 @@ function ProjectsView({projects, patterns=[], setProjects, setEditingProject, t,
       if (p.status === "Completed") setTimeout(() => setProjects(prev => prev.map(x => x.id===p.id ? {...x, archived:true} : x)), 3000);
     },
     onArchive: isArchived ? () => unarchiveProject(p.id) : () => archiveProject(p.id),
-    onToggleSaved: val => setProjects(prev => prev.map(x => x.id===p.id ? {...x, saved:val} : x)),
   });
 
   // Desktop: the App-level shell now gives this page the wide
@@ -33027,6 +33090,7 @@ function CreatePartyModal({onClose,onCreated,settings}){
         p_icon_color:form.icon?form.icon_color:null,
       }).single();
       if(err)throw err;
+      hapticNotify("SUCCESS"); // matches the other create flows (Project/Pattern/Yarn/Tool/Swatch) — party creation is already fully committed here
       savePartyEditSecret(data.id,data.edit_secret);
       // Fire-and-forget, same as schedulePartyReminder in JoinPartyModal's
       // confirm() — party creation is already fully committed at this point,
@@ -33513,6 +33577,7 @@ function ManagePartyModal({partyId,onClose,onDeleted,onSaved,settings}){
   };
 
   const deleteParty=async()=>{
+    hapticNotify("WARNING");
     setDeleting(true);
     try{
       const secret=getPartyEditSecret(partyId);
