@@ -68,6 +68,7 @@ async function sendApns(
   }
   return result;
 }
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // old_when / old_location are the only client-supplied text that reaches a
 // push. Only the host can send them now, but keep them to a sane length.
