@@ -877,39 +877,29 @@ const useAuth=()=>useContext(AuthCtx);
 // "this kind was left mid-save last time" and leave it alone until the
 // retried push (which happens automatically — see useCloudPush below) lands.
 const DIRTY_KINDS_KEY="sc_cloud_dirty_kinds";
-// A dirty flag only ever gets cleared by its own push actually succeeding —
-// so if a push is ever silently broken (as useCloudPush's session/
-// cloudSyncEnabled wiring briefly was), every kind edited during that window
-// gets permanently stuck "dirty" on that device even after the real bug is
-// fixed, since nothing was ever there to clear it. That's indistinguishable
-// from a genuinely-still-pending push from in here, so instead of trusting
-// the flag forever, treat one older than this as abandoned rather than
-// in-flight — generous next to the 1.5s debounce + a slow request, but short
-// enough that a stuck flag self-heals within a couple of app opens instead
-// of silently blocking that kind's cross-device sync forever.
-const DIRTY_KIND_MAX_AGE_MS=2*60*1000;
+// A dirty flag only ever gets cleared by its own push actually succeeding,
+// and it never expires on its own. It used to be treated as abandoned after
+// 2 minutes, but a push that fails ("TypeError: Load failed" -- the request
+// cut off when iOS suspends the app mid-push, or no signal) is only retried
+// on the next edit of that kind or the next launch, so an edit whose push
+// failed lost its flag within minutes, and the next cold launch's pull put
+// the stale cloud copy over it -- pattern/project progress silently rolling
+// back days later, whenever iOS next killed the app. A flag left stuck by a
+// once-broken push needs no expiry to heal either: pullCloudData leaves the
+// kind alone, and once cloudSyncEnabled flips true useCloudPush pushes it
+// (skipRef is only set for kinds the pull applied), which clears it.
 function readDirtyStore(){
   try{
     const raw=JSON.parse(localStorage.getItem(DIRTY_KINDS_KEY));
-    // Pre-dates timestamped tracking (plain array of kind names, no ages to
-    // check) — those entries can only be leftovers from before this existed,
-    // so there's nothing worth migrating; just start clean.
+    // Pre-dates timestamped tracking (plain array of kind names) — those
+    // entries can only be leftovers from before this existed, so there's
+    // nothing worth migrating; just start clean.
     if(!raw||Array.isArray(raw))return{};
     return raw;
   }catch{return{};}
 }
 function getDirtyKinds(){
-  const raw=readDirtyStore();
-  const now=Date.now();
-  const fresh={};
-  const kinds=new Set();
-  Object.keys(raw).forEach(kind=>{
-    if(now-raw[kind]<DIRTY_KIND_MAX_AGE_MS){fresh[kind]=raw[kind];kinds.add(kind);}
-  });
-  if(Object.keys(fresh).length!==Object.keys(raw).length){
-    try{localStorage.setItem(DIRTY_KINDS_KEY,JSON.stringify(fresh));}catch{}
-  }
-  return kinds;
+  return new Set(Object.keys(readDirtyStore()));
 }
 function markKindDirty(kind){
   try{
