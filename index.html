@@ -928,11 +928,24 @@ const pendingCloudPushes={};
 function flushPendingCloudPushes(){
   Object.keys(pendingCloudPushes).forEach(kind=>pendingCloudPushes[kind]());
 }
+// Pushes whose request failed ("TypeError: Load failed" -- no signal, or
+// iOS suspending the app mid-upload), keyed by kind. Without this a failed
+// push only went out again on the next edit of that kind or the next launch,
+// leaving the edit cloud-less (and only protected by its dirty flag) in
+// between. Retried as soon as the app is back in the foreground or the
+// connection returns. Only the latest value of a kind is ever registered
+// here: useCloudPush drops a kind's entry whenever a newer value comes in.
+const failedCloudPushes={};
+function retryFailedCloudPushes(){
+  Object.keys(failedCloudPushes).forEach(kind=>failedCloudPushes[kind]());
+}
 if(typeof document!=="undefined"){
   document.addEventListener("visibilitychange",()=>{
     if(document.visibilityState==="hidden")flushPendingCloudPushes();
+    else retryFailedCloudPushes();
   });
   document.addEventListener("pagehide",flushPendingCloudPushes);
+  window.addEventListener("online",retryFailedCloudPushes);
 }
 
 // Debounced upsert of one synced-data "kind" to Supabase once a real session
@@ -941,8 +954,25 @@ if(typeof document!=="undefined"){
 // a shared {kind:bool} ref (owned by App()) that reconciliation sets right
 // before it force-applies a pulled-down remote value, so that resulting
 // re-render doesn't immediately push the same data straight back up.
+// A pattern's `image` (its cover, read by the library cards) is always set to
+// photos[0] whenever it has photos, so every saved copy carried that photo
+// twice -- and a camera photo is easily 1 MB of base64, re-uploaded on every
+// progress tap since the whole pattern list syncs as one row. Both stored
+// copies (localStorage and cloud_data) drop `image` when it's just photos[0],
+// and it's filled back in on every way in. Any other image (no photos, or a
+// different one) is kept untouched.
+function packPatternsForStorage(list){
+  if(!Array.isArray(list))return list;
+  return list.map(p=>p&&p.image&&Array.isArray(p.photos)&&p.photos[0]===p.image?{...p,image:null}:p);
+}
+function unpackStoredPatterns(list){
+  if(!Array.isArray(list))return list;
+  return list.map(p=>p&&!p.image&&Array.isArray(p.photos)&&p.photos.length?{...p,image:p.photos[0]}:p);
+}
+
 function useCloudPush(kind,value,skipRef,session,cloudSyncEnabled){
   useEffect(()=>{
+    delete failedCloudPushes[kind];
     if(!sb||!session||!cloudSyncEnabled)return;
     if(skipRef.current[kind]){skipRef.current[kind]=false;return;}
     let json;
@@ -950,20 +980,34 @@ function useCloudPush(kind,value,skipRef,session,cloudSyncEnabled){
     if(json.length>5000000){console.warn(`cloud sync skipped for ${kind}: too large`);return;}
     markKindDirty(kind);
     let sent=false;
+    // False once a newer value of this kind has come in (cleanup below) --
+    // that value's own push takes over, so this one must neither register a
+    // retry nor clear the dirty flag the newer edit set.
+    let current=true;
     const push=()=>{
       if(sent)return;
       sent=true;
       delete pendingCloudPushes[kind];
+      delete failedCloudPushes[kind];
       sb.from('cloud_data').upsert({user_id:session.user.id,kind,data:value}).then(({error})=>{
-        if(error){console.warn(`cloud push failed for ${kind}:`,error.message);logClientError('cloud_push','warning',error.message,null,{kind});return;}
-        clearKindDirty(kind);
+        if(error){
+          console.warn(`cloud push failed for ${kind}:`,error.message);logClientError('cloud_push','warning',error.message,null,{kind});
+          // Only a network failure is worth retrying: a rejection from the
+          // database itself carries a code (e.g. the swatches kind check) and
+          // would just fail the same way on every foregrounding.
+          if(current&&!error.code){sent=false;failedCloudPushes[kind]=push;}
+          return;
+        }
+        if(current)clearKindDirty(kind);
       });
     };
     const timer=setTimeout(push,1500);
     pendingCloudPushes[kind]=push;
     return()=>{
+      current=false;
       clearTimeout(timer);
       if(!sent)delete pendingCloudPushes[kind];
+      if(failedCloudPushes[kind]===push)delete failedCloudPushes[kind];
     };
   },[value,session,cloudSyncEnabled]);
 }
@@ -19861,6 +19905,23 @@ const DIFF_COLOR={Beginner:"#059669",Intermediate:"#E3C277",Advanced:"#EF4444"};
 const CRAFT_COLOR={Crochet:"#778EE3",Knitting:"#3B6FD4",Tunisian:"#0891B2",Other:"#6B7280"};
 const CAT_ICON={Shawl:"basil:tag-outline",Hat:"basil:tag-outline",Sweater:"basil:tag-outline",Blanket:"basil:grid-outline",Amigurumi:"basil:star-outline",Socks:"basil:tag-outline",Mittens:"basil:tag-outline",Bag:"basil:shopping-bag-outline",Scarf:"basil:tag-outline",Other:"basil:tag-outline"};
 
+// Pattern photos are re-encoded on the way in, like swatch photos (see
+// SWATCH_PHOTO_MAX_DIM) but a little larger and sharper, since a pattern
+// photo is often a page or chart that has to stay readable. A camera photo
+// at 1600px / JPEG 0.8 is a few hundred KB of base64 instead of 1-3 MB, and
+// every pattern photo is re-uploaded with the whole pattern list on each
+// progress change. If re-encoding fails the original is kept.
+const PATTERN_PHOTO_MAX_DIM=1600;
+const PATTERN_PHOTO_QUALITY=0.8;
+function pickPatternPhoto(cb){
+  imgPick(async v=>{
+    let photo=v;
+    try{photo=await resizeImageDataUrl(v,PATTERN_PHOTO_MAX_DIM,{quality:PATTERN_PHOTO_QUALITY,reencode:true});}
+    catch(err){console.warn("Pattern photo resize failed, keeping the original:",err);}
+    cb(photo);
+  });
+}
+
 /* shared image-upload helper */
 function imgPick(cb,{capture}={}){
   const inp=document.createElement("input");
@@ -21824,7 +21885,7 @@ function PatternFormModal({onClose,onSave,initial,yarnLib=[],initialMethod,patte
               </div>
             )}
             {(form.photos||[]).length<PATTERN_PHOTO_MAX&&(
-              <button type="button" onClick={()=>imgPick(v=>s("photos",[...(form.photos||[]),v]))}
+              <button type="button" onClick={()=>pickPatternPhoto(v=>s("photos",[...(form.photos||[]),v]))}
                 style={{width:"100%",height:76,borderRadius:12,border:"2px dashed var(--border)",background:"var(--bg-subtle)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text-secondary)"}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <div style={{textAlign:"left"}}>
@@ -25207,7 +25268,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                     ))}
                   </div>
                   {(pat.photos||[]).length<PATTERN_PHOTO_MAX&&(
-                    <button onClick={()=>imgPick(v=>{
+                    <button onClick={()=>pickPatternPhoto(v=>{
                       const photos=[...(pat.photos||[]),v].slice(0,PATTERN_PHOTO_MAX);
                       onUpdate({...pat,photos,image:photos[0]});
                     })} style={{marginTop:8,fontSize:isDesktop?10:11,fontWeight:600,color:"var(--text-secondary)",background:"none",border:"1.5px dashed #E5E7EB",borderRadius:10,padding:"5px 12px",cursor:"pointer"}}>
@@ -25326,7 +25387,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
                 <div style={{padding:"28px 16px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
                   <Ico n={CAT_ICON[pat.category]||"basil:tag-outline"} sz={56}/>
                   <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>imgPick(v=>onUpdate({...pat,photos:[v],image:v}))} style={{padding:isDesktop?"6px 12px":"7px 14px",borderRadius:12,background:"var(--bg-subtle)",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:isDesktop?11:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ico n="basil:camera-outline" sz={isDesktop?11:12}/>{t.addPhotoBtn}</button>
+                    <button onClick={()=>pickPatternPhoto(v=>onUpdate({...pat,photos:[v],image:v}))} style={{padding:isDesktop?"6px 12px":"7px 14px",borderRadius:12,background:"var(--bg-subtle)",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:isDesktop?11:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ico n="basil:camera-outline" sz={isDesktop?11:12}/>{t.addPhotoBtn}</button>
                     <button onClick={()=>setOpenMaker(true)} style={{padding:isDesktop?"6px 12px":"7px 14px",borderRadius:12,background:accentColor,border:"none",cursor:"pointer",color:"white",fontSize:isDesktop?11:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ico n="basil:paint-outline" sz={isDesktop?11:12}/>{t.designPattern}</button>
                   </div>
                 </div>
@@ -25336,7 +25397,7 @@ function PatternDetailModal({pat,onClose,onEdit,onDelete,onUpdate,yarnLib=[],pat
             const addRefPhotoBlock=(
               !(pat.photos||[]).length&&!pat.image&&hasDesign&&(
                 <div style={{padding:"8px 16px 0",textAlign:"center"}}>
-                  <button onClick={()=>imgPick(v=>onUpdate({...pat,photos:[v],image:v}))} style={{fontSize:isDesktop?11:12,color:"var(--text-secondary)",background:"none",border:"1.5px dashed #E5E7EB",borderRadius:10,padding:"6px 14px",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4}}><Ico n="basil:camera-outline" sz={isDesktop?11:12}/>{t.addRefPhoto}</button>
+                  <button onClick={()=>pickPatternPhoto(v=>onUpdate({...pat,photos:[v],image:v}))} style={{fontSize:isDesktop?11:12,color:"var(--text-secondary)",background:"none",border:"1.5px dashed #E5E7EB",borderRadius:10,padding:"6px 14px",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4}}><Ico n="basil:camera-outline" sz={isDesktop?11:12}/>{t.addRefPhoto}</button>
                 </div>
               )
             );
@@ -37690,9 +37751,12 @@ function App(){
   useEffect(()=>{try{localStorage.setItem("sc_swatches",JSON.stringify(swatches));}catch{};},[swatches]);
   useCloudPush('swatches',swatches,cloudSkipRef,session,cloudSyncEnabled);
   const[tools,setTools]=useState(DEFAULT_TOOLS);
-  const[patterns,setPatterns]=useState(()=>{try{const s=localStorage.getItem("sc_pattern_lib");return s?JSON.parse(s):DEFAULT_PATTERNS;}catch{return DEFAULT_PATTERNS;}});
-  useEffect(()=>{try{localStorage.setItem("sc_pattern_lib",JSON.stringify(patterns));}catch{};},[patterns]);
-  useCloudPush('patterns',patterns,cloudSkipRef,session,cloudSyncEnabled);
+  const[patterns,setPatterns]=useState(()=>{try{const s=localStorage.getItem("sc_pattern_lib");return s?unpackStoredPatterns(JSON.parse(s)):DEFAULT_PATTERNS;}catch{return DEFAULT_PATTERNS;}});
+  // The stored/synced shape of `patterns` (see packPatternsForStorage).
+  const storedPatterns=useMemo(()=>packPatternsForStorage(patterns),[patterns]);
+  const setPatternsFromStorage=useCallback(v=>setPatterns(unpackStoredPatterns(v)),[]);
+  useEffect(()=>{try{localStorage.setItem("sc_pattern_lib",JSON.stringify(storedPatterns));}catch{};},[storedPatterns]);
+  useCloudPush('patterns',storedPatterns,cloudSkipRef,session,cloudSyncEnabled);
   const[page,setPage]=useState("projects");
   // Settings renders as an overlay on top of whatever page is currently mounted
   // (like PatternDetailModal sits on top of the always-mounted library page),
@@ -37751,7 +37815,7 @@ function App(){
     const uid=session?.user?.id||null;
     if(uid&&uid!==prevUserIdRef.current){
       prevUserIdRef.current=uid;
-      const cloudSetters={projects:setProjects,yarnLib:setYarnLib,patterns:setPatterns,settings:setSettings,dashLayout:setDashLayout,parties:setPartiesFromCloud,swatches:setSwatches};
+      const cloudSetters={projects:setProjects,yarnLib:setYarnLib,patterns:setPatternsFromStorage,settings:setSettings,dashLayout:setDashLayout,parties:setPartiesFromCloud,swatches:setSwatches};
       if(isDeviceLinked(uid)){
         // Already been through the one-time reconcile on this device — just
         // pull the account's current data, no prompts. This is what runs on
@@ -37762,7 +37826,7 @@ function App(){
       }else{
         reconcileCloudData(
           session,
-          {projects,yarnLib,patterns,settings,dashLayout,parties:partiesBundle,swatches},
+          {projects,yarnLib,patterns:storedPatterns,settings,dashLayout,parties:partiesBundle,swatches},
           cloudSetters,
           cloudSkipRef,
           conflicts=>setSyncConflicts(conflicts)
@@ -38141,7 +38205,7 @@ function App(){
           <CloudSyncConflictModal
             conflicts={syncConflicts}
             onKeepLocal={()=>{
-              const localByKind={projects,yarnLib,patterns,settings,dashLayout,parties:partiesBundle,swatches};
+              const localByKind={projects,yarnLib,patterns:storedPatterns,settings,dashLayout,parties:partiesBundle,swatches};
               syncConflicts.forEach(({kind})=>{
                 sb.from('cloud_data').upsert({user_id:session.user.id,kind,data:localByKind[kind]}).then(({error})=>{
                   if(error)console.warn(`cloud push failed for ${kind}:`,error.message);
@@ -38152,7 +38216,7 @@ function App(){
               setCloudSyncEnabled(true);
             }}
             onKeepRemote={()=>{
-              const setterByKind={projects:setProjects,yarnLib:setYarnLib,patterns:setPatterns,settings:setSettings,dashLayout:setDashLayout,parties:setPartiesFromCloud,swatches:setSwatches};
+              const setterByKind={projects:setProjects,yarnLib:setYarnLib,patterns:setPatternsFromStorage,settings:setSettings,dashLayout:setDashLayout,parties:setPartiesFromCloud,swatches:setSwatches};
               syncConflicts.forEach(({kind,remote})=>{
                 cloudSkipRef.current[kind]=true;
                 setterByKind[kind](remote);
