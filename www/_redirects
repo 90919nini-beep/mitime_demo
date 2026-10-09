@@ -9,3 +9,13 @@
 # DNS at all, so no Party link could ever have opened a working page; this is
 # what makes the miiitime.com version actually resolve.
 /join/*  /index.html  200
+
+# The app itself: https://miiitime.com/ is the public marketing site,
+# https://miiitime.com/app is the actual Miiitime application (see
+# BOOT_IS_APP_PATH / isAppRoute in App()). Same "serve the one index.html and
+# let the app read its own URL" shape as /p/* and /join/* above -- there's no
+# app/index.html file to fall back to. Bare /app plus /app/* (not just the
+# bare path) so a stray trailing slash or future deep link under it still
+# resolves instead of 404ing.
+/app  /index.html  200
+/app/*  /index.html  200

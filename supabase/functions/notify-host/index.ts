@@ -17,6 +17,13 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // they get a 403 and no push is sent -- the join itself is unaffected (this
 // call is fire-and-forget).
 //
+// kind "left" (sent by the leaving guest's device just BEFORE
+// party_signup_cancel, since that removes the row this reads): "X can't make
+// it anymore". Same secret check, but no age limit -- a guest can leave any
+// time after joining. Skipped once the party's date is behind us, when it's
+// no longer news. Any other/missing kind is "joined", so builds that don't
+// send one keep working unchanged.
+//
 // Title/body convention (all notify-* functions): title = the party's own
 // name, body = a short description of what happened, without repeating the
 // party name a second time since the title already carries it.
@@ -28,11 +35,54 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 //   APNS_KEY_ID        the Key ID shown next to it in the Developer Portal
 //   APNS_TEAM_ID       the Apple Developer Team ID
 // Optional:
-//   APNS_ENVIRONMENT   "sandbox" (default -- matches the app's current
-//                       aps-environment=development entitlement) or
-//                       "production", once this ships to the App Store.
+//   APNS_ENVIRONMENT   "sandbox" (default) or "production" -- only which
+//                       APNs server is tried first; a BadDeviceToken there
+//                       falls back to the other (see sendApns below), so
+//                       Xcode and TestFlight/App Store builds both work.
 
 const APNS_BUNDLE_ID = "com.miiitime.app.ios";
+
+// APNs has two servers, and a device token only works on the one matching
+// how the app was signed: builds run from Xcode get sandbox tokens, while
+// TestFlight and App Store builds get production tokens (Xcode rewrites
+// aps-environment to "production" when exporting for distribution, whatever
+// App.entitlements says). Both kinds end up in the same push_token columns,
+// so try APNS_ENVIRONMENT's server first (sandbox by default) and, only if it
+// rejects the token as BadDeviceToken, retry once on the other one. The same
+// JWT is valid for both.
+const APNS_HOSTS = { production: "api.push.apple.com", sandbox: "api.sandbox.push.apple.com" };
+
+function apnsHostOrder(): string[] {
+  const environment = (Deno.env.get("APNS_ENVIRONMENT") || "sandbox").toLowerCase();
+  return environment === "production"
+    ? [APNS_HOSTS.production, APNS_HOSTS.sandbox]
+    : [APNS_HOSTS.sandbox, APNS_HOSTS.production];
+}
+
+async function sendApns(
+  token: string,
+  jwt: string,
+  payload: unknown,
+): Promise<{ ok: true } | { ok: false; status: number; body: string }> {
+  let result: { ok: false; status: number; body: string } = { ok: false, status: 0, body: "" };
+  for (const host of apnsHostOrder()) {
+    const res = await fetch(`https://${host}/3/device/${token}`, {
+      method: "POST",
+      headers: {
+        "authorization": `bearer ${jwt}`,
+        "apns-topic": APNS_BUNDLE_ID,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return { ok: true };
+    result = { ok: false, status: res.status, body: await res.text() };
+    if (!(res.status === 400 && result.body.includes("BadDeviceToken"))) break;
+  }
+  return result;
+}
 
 // The joining client calls this straight after the RPC returns, so a real
 // call is always seconds old; anything older is a replay.
@@ -100,13 +150,14 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: corsHeaders });
   }
 
-  let body: { party_id?: string; signup_id?: string; secret?: string };
+  let body: { party_id?: string; signup_id?: string; secret?: string; kind?: string };
   try {
     body = await req.json();
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: corsHeaders });
   }
   const { party_id, signup_id, secret } = body;
+  const kind: "joined" | "left" = body.kind === "left" ? "left" : "joined";
   if (!party_id || !signup_id) {
     return new Response(JSON.stringify({ error: "Missing party_id or signup_id" }), { status: 400, headers: corsHeaders });
   }
@@ -133,17 +184,24 @@ Deno.serve(async (req: Request) => {
   if (!signup) {
     return new Response(JSON.stringify({ error: "Not authorized" }), { status: 403, headers: corsHeaders });
   }
-  if (Date.now() - new Date(signup.created_at).getTime() > SIGNUP_MAX_AGE_MS) {
+  if (kind === "joined" && Date.now() - new Date(signup.created_at).getTime() > SIGNUP_MAX_AGE_MS) {
     return new Response(JSON.stringify({ ok: true, skipped: "signup too old to notify" }), { status: 200, headers: corsHeaders });
   }
 
   const { data: party, error: partyErr } = await sb
     .from("parties")
-    .select("title, host_push_token")
+    .select("title, host_push_token, date")
     .eq("id", party_id)
     .single();
   if (partyErr || !party) {
     return new Response(JSON.stringify({ error: "Party not found" }), { status: 404, headers: corsHeaders });
+  }
+  // party.date is a floating local YYYY-MM-DD with no timezone, so compare
+  // against yesterday (UTC) -- a day's slack means no time zone can see a
+  // party that's still today counted as over.
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  if (kind === "left" && party.date && party.date < yesterday) {
+    return new Response(JSON.stringify({ ok: true, skipped: "party already over" }), { status: 200, headers: corsHeaders });
   }
   if (!party.host_push_token) {
     // Not an error -- the host just never registered for push (older app
@@ -159,9 +217,6 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ ok: true, skipped: "APNs not configured" }), { status: 200, headers: corsHeaders });
   }
 
-  const environment = (Deno.env.get("APNS_ENVIRONMENT") || "sandbox").toLowerCase();
-  const host = environment === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
-
   try {
     const key = await importApnsKey(apnsKeyRaw);
     const jwt = await buildApnsJwt(apnsTeamId, apnsKeyId, key);
@@ -170,28 +225,19 @@ Deno.serve(async (req: Request) => {
       aps: {
         alert: {
           title: party.title || "Craft Party",
-          body: `${signup.attendee_name} joined your party`,
+          body: kind === "left"
+            ? `${signup.attendee_name} can't make it anymore`
+            : `${signup.attendee_name} joined your party`,
         },
         sound: "default",
       },
     };
 
-    const res = await fetch(`https://${host}/3/device/${party.host_push_token}`, {
-      method: "POST",
-      headers: {
-        "authorization": `bearer ${jwt}`,
-        "apns-topic": APNS_BUNDLE_ID,
-        "apns-push-type": "alert",
-        "apns-priority": "10",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const res = await sendApns(party.host_push_token, jwt, payload);
 
     if (!res.ok) {
-      const errBody = await res.text();
-      console.warn(`notify-host: APNs responded ${res.status}: ${errBody}`);
-      return new Response(JSON.stringify({ ok: false, apnsStatus: res.status, apnsBody: errBody }), { status: 502, headers: corsHeaders });
+      console.warn(`notify-host: APNs responded ${res.status}: ${res.body}`);
+      return new Response(JSON.stringify({ ok: false, apnsStatus: res.status, apnsBody: res.body }), { status: 502, headers: corsHeaders });
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: corsHeaders });

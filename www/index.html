@@ -97,7 +97,13 @@
        explicit font-size can render at visibly different sizes depending on
        where they sit in the page, which is exactly why some filter-pill
        dropdowns looked bigger than others despite sharing the same style. */
-    *{-webkit-font-smoothing:antialiased;box-sizing:border-box;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+    /* Native iOS/Android apps don't let a long-press on ordinary chrome (cards, buttons, nav,
+       labels, canvas/editor controls) select text and pop up the blue handles + Copy menu --
+       only actual content you're meant to type into or copy behaves that way. This app is
+       plain HTML text, so without this every one of those long-presses does exactly that.
+       Reversed below (input/textarea/contentEditable/.user-selectable) for the few places
+       selection is the point: form fields and the two on-screen party join codes. */
+    *{-webkit-font-smoothing:antialiased;box-sizing:border-box;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
     html,body{background:var(--bg-page,#F2F2F7);min-height:100dvh;}
     #root{min-height:100dvh;background:var(--bg-page);}
     body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Segoe UI',sans-serif;margin:0;}
@@ -238,6 +244,10 @@
     /* iOS Safari/WKWebView auto-zooms the page on focus for any field under 16px —
        force it here rather than chasing every inline fontSize in the component tree. */
     input,select,textarea{font-size:16px!important;}
+    /* Reverses the global touch-callout/user-select:none above wherever selecting/copying IS
+       the point: native form fields, any contentEditable, and .user-selectable for the couple
+       of non-input spots that show a join code as plain text to copy (see its two usages). */
+    input,textarea,[contenteditable],[contenteditable] *,.user-selectable,.user-selectable *{-webkit-touch-callout:default;-webkit-user-select:text;user-select:text;}
     ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:#E5E7EB;border-radius:99px;}
     canvas{touch-action:none;}
     /* Ancestors set touch-action:pan-y to lock modal scrolling to vertical only

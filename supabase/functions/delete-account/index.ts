@@ -16,7 +16,15 @@
 //
 // public.cloud_data.user_id has ON DELETE CASCADE on its auth.users(id)
 // foreign key, so deleting the user takes their synced projects/patterns/
-// yarnLib/settings/dashLayout rows with it — no extra cleanup needed here.
+// yarnLib/settings/dashLayout rows with it — no extra cleanup needed there.
+//
+// public.email_campaign_recipients.user_id references auth.users(id) with NO
+// cascade (it is delivery history, written only by service-role functions),
+// so it would block deleteUser with a 23503 FK violation. This function
+// therefore deletes the caller's own recipient rows first (scoped strictly
+// to the verified user.id; email_events rows go with them via their own
+// ON DELETE CASCADE) — the recipient rows hold the user's email address, so
+// removing them on account deletion is also the right privacy behaviour.
 //
 // CORS: the app calls this from a Capacitor WKWebView origin, which the
 // browser treats as cross-origin from *.supabase.co — a real first attempt
@@ -72,6 +80,15 @@ Deno.serve(async (req: Request) => {
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+  const { error: recipientsError } = await adminClient
+    .from("email_campaign_recipients")
+    .delete()
+    .eq("user_id", user.id);
+  if (recipientsError) {
+    return jsonResponse({ error: `Failed to clean up email records: ${recipientsError.message}` }, 500);
+  }
+
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
   if (deleteError) {
     return jsonResponse({ error: deleteError.message }, 500);
